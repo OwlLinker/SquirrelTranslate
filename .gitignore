@@ -39,3 +39,25 @@ luac.out
 *.x86_64
 *.hex
 
+# macOS and editor files
+.DS_Store
+.AppleDouble
+.LSOverride
+.vscode/
+.idea/
+
+# Native build trees and fetched dependencies
+build/
+cmake-build-*/
+native/**/build/
+runtime/
+
+# Local Rime runtime data, caches, requests and logs
+input_translation.*.tsv
+translation.providers.yaml
+*.log
+
+# Local configuration or credentials
+.env
+.env.*
+!.env.example

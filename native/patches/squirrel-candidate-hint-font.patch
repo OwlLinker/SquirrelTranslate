@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SquirrelTranslate <local>
+Date: Thu, 17 Sep 2026 00:00:00 +0800
+Subject: [PATCH] Shrink translation hint font
+
+---
+ sources/SquirrelPanel.swift | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/sources/SquirrelPanel.swift b/sources/SquirrelPanel.swift
+index a9e2dae..76ebcce 100644
+--- a/sources/SquirrelPanel.swift
++++ b/sources/SquirrelPanel.swift
+@@ -252,6 +252,26 @@ final class SquirrelPanel: NSPanel {
+       line.mutableString.replaceOccurrences(of: "[label]", with: label, range: NSRange(location: 0, length: line.length))
+       let labeledLine = line.copy() as! NSAttributedString
+       line.mutableString.replaceOccurrences(of: "[candidate]", with: candidate, range: NSRange(location: 0, length: line.length))
+       line.mutableString.replaceOccurrences(of: "[comment]", with: comment, range: NSRange(location: 0, length: line.length))
++
++      // The translation extension wraps its last-row help text with private
++      // control markers so only that range can use a smaller comment font.
++      let hintStartMarker = "\u{001E}"
++      let hintEndMarker = "\u{001F}"
++      if let hintStart = line.string.range(of: hintStartMarker),
++         let hintEnd = line.string.range(of: hintEndMarker),
++         hintStart.lowerBound < hintEnd.lowerBound {
++        let hintStartLocation = hintStart.lowerBound.utf16Offset(in: line.string)
++        let hintEndLocation = hintEnd.lowerBound.utf16Offset(in: line.string)
++        let hintLength = hintEndLocation - hintStartLocation - hintEndMarker.utf16.count
++        line.mutableString.replaceCharacters(
++          in: NSRange(location: hintEndLocation, length: hintEndMarker.utf16.count), with: "")
++        line.mutableString.replaceCharacters(
++          in: NSRange(location: hintStartLocation, length: hintStartMarker.utf16.count), with: "")
++        let hintFontSize = max(1, theme.commentFont.pointSize * 0.5)
++        line.addAttribute(
++          .font, value: theme.commentFont.withSize(hintFontSize),
++          range: NSRange(location: hintStartLocation, length: hintLength))
++      }
++
+       if line.length <= 10 {
+         line.addAttribute(.noBreak, value: true, range: NSRange(location: 1, length: line.length-1))
+       }
+
+-- 
+2.45.2

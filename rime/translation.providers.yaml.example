@@ -1,0 +1,61 @@
+# Copy this file to ~/Library/Rime/translation.providers.yaml and edit it.
+# Keep the real file outside the repository; do not put API secrets in Git.
+
+provider_order:
+  - mac_dictionary
+  - google
+  - bing
+  - youdao_web
+  - youdao_api
+  - deepl_web
+  - deepl
+  - caiyun_web
+  - caiyun_api
+  - sogou
+
+providers:
+  mac_dictionary:
+    enabled: true  # macOS 本地词典；启用后优先查询本机已安装词典。
+
+  google:
+    enabled: false
+    endpoint: https://translate.google.com/translate_a/single
+
+  bing:
+    enabled: false
+    endpoint: https://cn.bing.com/translator
+
+  youdao_web:
+    enabled: false
+    endpoint: https://dict.youdao.com/webtranslate
+
+  youdao_api:
+    enabled: false
+    api_endpoint: https://openapi.youdao.com/api
+    app_key: ""
+    app_secret: ""
+
+  deepl_web:
+    enabled: false
+    # DeepL 网页端匿名会话地址，无需 API Key；每次请求使用短期内存会话。
+    endpoint: https://ita-free.www.deepl.com/v2
+
+  deepl:
+    enabled: false
+    endpoint: https://api-free.deepl.com/v2/translate
+    api_key: ""
+
+  caiyun_api:
+    enabled: false
+    endpoint: https://api.interpreter.caiyunai.com/v1/translator
+    token: ""
+
+  caiyun_web:
+    enabled: false
+    # 彩云网页地址：用于自动获取网页公开授权信息。
+    web_url: https://fanyi.caiyunapp.com/
+
+  # Existing provider retained as the default fallback.
+  sogou:
+    enabled: true
+    endpoint: https://fanyi.sogou.com/api/transpc/hunyuan/translate
