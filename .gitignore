@@ -51,6 +51,8 @@ build/
 cmake-build-*/
 native/**/build/
 runtime/
+__pycache__/
+*.py[cod]
 
 # Local Rime runtime data, caches, requests and logs
 input_translation.*.tsv
