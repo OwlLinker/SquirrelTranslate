@@ -194,6 +194,19 @@ local function format_translation(translation, phonetic)
     return translation .. " /" .. phonetic .. "/"
 end
 
+local function strip_previous_translation(comment, translation)
+    if not comment or comment == "" or not translation or translation == "" then
+        return comment or ""
+    end
+    local prefix, last_column = comment:match("^(.*)\t([^\t]*)$")
+    if not last_column then return comment end
+    if last_column == translation or
+        last_column:sub(1, #translation + 2) == translation .. " /" then
+        return prefix
+    end
+    return comment
+end
+
 local function load_revealed(context)
     local revealed = {}
     local order = {}
@@ -343,6 +356,10 @@ local function filter(input, env)
                 local show_phonetic = phonetic_enabled and show_translation
                 local phonetic = show_phonetic and type(entry) == "table" and entry.phonetic or nil
                 if translation then
+                    -- Async refresh can feed the previous ShadowCandidate back
+                    -- into this filter. Replace its stale translation column so
+                    -- a newly cached phonetic is visible in the same TAB column.
+                    comment = strip_previous_translation(comment, translation)
                     comment = append_translation(comment,
                                                   format_translation(translation, phonetic))
                     if should_request and phonetic_candidate and not phonetic then
