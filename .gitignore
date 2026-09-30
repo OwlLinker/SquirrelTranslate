@@ -1,0 +1,105 @@
+# Compiled Lua sources
+luac.out
+
+# luarocks build files
+*.src.rock
+*.zip
+*.tar.gz
+
+# Object files
+*.o
+*.os
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+*.def
+*.exp
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# macOS and editor files
+.DS_Store
+.AppleDouble
+.LSOverride
+.vscode/
+.idea/
+
+# Native build trees and fetched dependencies
+build/
+cmake-build-*/
+native/**/build/
+runtime/
+__pycache__/
+*.py[cod]
+
+# Xcode and Swift build products
+DerivedData/
+.build/
+.swiftpm/
+*.xcuserstate
+*.xcuserdata/
+*.dSYM/
+*.dSYM.zip
+*.ipa
+*.pkg
+*.dmg
+
+# Imported Squirrel frontend local dependencies and generated packages
+SquirrelFrontend/Frameworks/
+SquirrelFrontend/download/
+SquirrelFrontend/librime/
+SquirrelFrontend/plum/
+SquirrelFrontend/Sparkle/
+SquirrelFrontend/data/opencc/
+SquirrelFrontend/data/plum/
+SquirrelFrontend/package/sign/
+SquirrelFrontend/package/test-*/
+SquirrelFrontend/package/generate_keys
+SquirrelFrontend/package/sign_update
+
+# Local Rime runtime data, caches, requests and logs
+input_translation.*.tsv
+translation.providers.yaml
+*.log
+
+# Local configuration or credentials
+.env
+.env.*
+!.env.example
+
+# Preserved Git metadata for the imported Squirrel frontend source
+SquirrelFrontend.git/
+
+# Private full translation implementation and configuration
+native/src/translation_refresh.cc
+native/src/deepl_web_session.py
+rime/translation.providers.yaml.example
+native/src/squirrel_status_injector*.m
+native/src/squirrel_status_injector*.swift
+native/src/squirrel_status_injector_call_show.S
+native/scripts/*injector*.sh
+
+# Local installation metadata
+installation.yaml

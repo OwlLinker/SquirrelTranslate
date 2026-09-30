@@ -1,0 +1,27 @@
+# 公共发布版翻译提供者配置。
+# 只包含：macOS 本地词典、Google、Bing、DeepL 官方 API。
+# 复制到 ~/Library/Rime/translation.providers.yaml 后再填写 DeepL API Key。
+# 不要把真实 API Key 提交到 Git。
+
+provider_order:
+  - mac_dictionary
+  - google
+  - bing
+  - deepl
+
+providers:
+  mac_dictionary:
+    enabled: true  # 优先查询 macOS 当前启用的第一个系统词典。
+
+  google:
+    enabled: false
+    endpoint: https://translate.google.com/translate_a/single
+
+  bing:
+    enabled: false
+    endpoint: https://cn.bing.com/translator
+
+  deepl:
+    enabled: false
+    endpoint: https://api-free.deepl.com/v2/translate
+    api_key: ""
