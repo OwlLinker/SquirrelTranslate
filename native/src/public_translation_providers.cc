@@ -417,6 +417,44 @@ std::string FetchMacDictionaryAt(const Request& request,
                                : std::string();
 }
 
+std::string FetchMacDictionaryPhonetic(const std::string& english_text) {
+  if (!IsEnglishWord(english_text)) return {};
+  std::string result;
+  std::string word;
+  auto append_word = [&result, &word] {
+    if (word.size() < 2 || word.size() > 64) {
+      word.clear();
+      return;
+    }
+    const std::string definition = DictionaryDefinition(word, nullptr);
+    size_t opening = definition.find('/');
+    while (opening != std::string::npos) {
+      const size_t closing = definition.find('/', opening + 1);
+      if (closing == std::string::npos) break;
+      const std::string pronunciation = Clean(
+          definition.substr(opening + 1, closing - opening - 1));
+      if (!pronunciation.empty() && pronunciation.size() <= 96 &&
+          pronunciation.find(' ') == std::string::npos) {
+        if (!result.empty()) result += " ";
+        result += pronunciation;
+        break;
+      }
+      opening = definition.find('/', closing + 1);
+    }
+    word.clear();
+  };
+  for (unsigned char character : english_text) {
+    if ((character >= 'A' && character <= 'Z') ||
+        (character >= 'a' && character <= 'z')) {
+      word += static_cast<char>(character);
+    } else {
+      append_word();
+    }
+  }
+  append_word();
+  return result;
+}
+
 std::string Fetch(const std::string& provider, const Request& request,
                   const ProviderConfig& config) {
   if (provider == "mac_dictionary") return FetchMacDictionaryDefault(request);

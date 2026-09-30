@@ -53,7 +53,11 @@ if [ "$private_translation" = "ON" ]; then
   artifact="$output_dir/librime-translation-refresh.dylib"
 else
   artifact="$output_dir/librime-public-translation-providers.dylib"
-  echo "Private translator integration is not included; built the public provider library only."
+  echo "Private translator integration is not included; built the public query bridge and provider components."
 fi
 file "$artifact"
 otool -L "$artifact"
+if [ "$private_translation" != "ON" ]; then
+  file "$output_dir/libsquirrel-query-bridge.dylib"
+  file "$output_dir/squirrel-open-url"
+fi

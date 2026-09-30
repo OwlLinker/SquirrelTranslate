@@ -86,9 +86,9 @@ else()
     OUTPUT_NAME "rime-public-translation-providers"
   )
   if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/translation_refresh.cc")
-    message(STATUS "Private translation integration disabled; building public provider library only")
+    message(STATUS "Private translation integration disabled; building the public query bridge and provider components")
   else()
-    message(STATUS "Private translation integration source is absent; building public provider library only")
+    message(STATUS "Private translation integration source is absent; building the public query bridge and provider components")
   endif()
 endif()
 
@@ -134,7 +134,11 @@ add_library(squirrel_escape_guard SHARED
 
 add_library(squirrel_query_bridge SHARED
   src/squirrel_query_bridge.m
+  src/query_translation_service.cc
+  src/public_translation_providers.cc
 )
+
+target_compile_features(squirrel_query_bridge PRIVATE cxx_std_17)
 
 set_target_properties(squirrel_query_bridge PROPERTIES
   OUTPUT_NAME "squirrel-query-bridge"
@@ -142,6 +146,7 @@ set_target_properties(squirrel_query_bridge PROPERTIES
 
 target_link_libraries(squirrel_query_bridge PRIVATE
   "${RIME_LIBRARY}"
+  "-framework CoreServices"
   "-framework AppKit"
   "-framework ApplicationServices"
   "-framework Carbon"

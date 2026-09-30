@@ -1,0 +1,5 @@
+patch:
+  "engine/translators/@next": lua_translator@*input_translation_waiting
+  # 右 Shift 切换输入方案；左 Shift 由翻译原生处理器在释放时上屏当前编码。
+  "ascii_composer/switch_key/Shift_R": commit_code
+  "ascii_composer/switch_key/Shift_L": noop

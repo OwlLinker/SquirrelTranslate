@@ -1,0 +1,93 @@
+# 技术设计
+
+## 鼠须管进程内查询桥
+
+- `native/src/squirrel_query_bridge.m` 作为独立原生 dylib 加载到 Squirrel 进程，在 Rime 已初始化后创建自己的会话、全局事件监听和非激活候选面板；不修改 Hammerspoon。
+- 公开 U 查询面板将四种可公开提供者直接链接到 `squirrel-query-bridge`，不依赖忽略提交的完整翻译刷新源文件。`query_translation_service.cc` 只读取 `translation.providers.yaml` 中的 macOS 系统词典、Google、Bing、DeepL API；本地词典始终优先，其余按 `provider_order` 处理。最多 2 个后台 worker、32 个排队项、400 条进程内结果缓存；输入代次变化会清空旧队列并让运行中的 curl 请求取消。新请求停顿 300ms 后执行，失败结果 5 秒内不重复请求；音标只通过 macOS Dictionary Services 补充。配置在 Squirrel 启动查询桥时载入，改配置需重启 Squirrel；查询桥缓存不写入磁盘，API Key 不写日志。
+- 仅在启用 `~/Library/Rime/input_translation.query_bridge.enabled` 且当前输入源为鼠须管时工作；仅当辅助功能 API 明确识别为非编辑焦点时才拦截小写 `u`，明确的输入框和无法读取的焦点均把按键交回宿主。系统明确返回“无焦点元素”时视为非编辑区域，以支持 Finder 或浏览器空白区域；单次焦点读取超时设为 20ms，避免无响应应用拖住键盘事件。无活动查询时，第一个普通字符会关闭本轮 `u` 前缀入口，直到鼠标点击或上一查询结束才重新开启，不用时间超时在输入串中途重新武装。查询会话在每次 `u` 唤起时惰性创建，并用 `find_session` 检查有效性，避免 Rime 回收闲置超过五分钟的会话后继续复用失效 ID。拦截器在主线程同步初始化查询组合；`u` 仅作为启动触发键，先尝试用 Rime `set_input` 建立临时 `u` 组合，失败时回退到 Rime 按键处理。只有初始化成功才吞掉原事件，失败则将原事件交给 Squirrel。私有查询会话单独设置 `ascii_mode: false`，不改变用户活动会话状态；后续查询串优先用 `set_input` 更新，失败时按键回退，避免启动前缀与普通拼音处理相互干扰。
+- 该桥接复用 Rime Lua 翻译逻辑和候选评论，但面板由插件独立绘制，不调用 Squirrel 私有 Swift 方法。字体族读取当前 `squirrel` 配置及选中配色方案；字号按候选、译文、序号和拼音建立层级。面板背景为半透明，边框和圆角选中卡片自适应深浅外观，浅色主题使用低刺激蓝底与深色文字；候选词与高亮底色使用 CoreText 字形墨迹边界垂直居中，候选列从序号后 27pt 起，译文列按页面最宽候选固定左对齐且间隔 6pt。候选及译文超出受限面板宽度时以尾部省略号裁切，不能绘制到卡片外；输入串带单下划线。Squirrel 升级后需重新验证；辅助功能权限需要授予 Squirrel.app 本身。
+- 面板显示当前 Rime 组合编码；数字输入不论是否已满足手机号或 IP 识别条件，都立即以 `u+query_text` 显示在输入行。拼音区、候选区采用统一的水平／垂直留白；宽度按编码、候选及对齐后的评论列估算并限制在鼠标所在屏幕可用区域内，高度按输入区、行高和候选数自适应。
+- 查询面板激活时拦截 `Command+V`，将剪贴板纯文本（换行／制表符规范为空格，其他控制字符剔除）追加到查询串并重建 Rime 组合；同步消费对应的按键释放，避免粘贴快捷键落到宿主应用。含非 ASCII 字符时使用 Rime `set_input` 更新组合；剪贴板内容不写入诊断日志。
+- 组合期间每 150ms 检查翻译缓存和 Rime 上下文。缓存变更且用户暂停输入至少 350ms 后，创建替代 Rime 会话、注入新的缓存代次并重放当前查询串，以重新运行 Lua 翻译过滤器；成功后销毁旧会话。退格通过删除查询串末字符并重建组合，方向键和翻页键映射为 Rime keycode。
+- 鼠标左键、右键或其他按键在面板外按下时关闭查询面板，但不吞掉鼠标事件；未修饰 Escape 同时消费按下和释放事件，避免释放事件落入前台应用。
+- 进程内事件 tap 由主线程每秒检查一次 Squirrel 辅助功能授权；授权撤销时立即退出查询态、取消异步任务、销毁 Rime 会话并移除/释放事件 tap。tap 因系统或用户操作禁用时不盲目重新启用；仅 timeout 且授权仍有效时允许恢复。fail-closed 后需要重启 Squirrel 才能重新安装 tap，避免权限切换时继续截获全局按键。
+- 查询桥将不含输入文本的单行诊断状态原子写入 `~/Library/Rime/input_translation.query_bridge.status`，标记权限等待、Rime/API/tap 初始化、前缀被焦点门禁忽略（焦点读取失败时附 AX 错误码）、Rime 拒绝前缀、面板请求和 fail-closed 原因；文件权限为 `0600`，不记录候选、按键内容、应用名称或窗口内容。
+- 独立助手仍保留为回退实现，两个模式不能同时启用，否则会重复捕获 `u`。
+- `u` 后输入以 1 开头的手机号前三位即进入手机号提示模式并显示已输入内容；3–10 位提示继续输入，完整 11 位才本地二分查找随插件安装的 `phone-region-phone.dat`（数据版本 2025-02）并显示号段归属地和数据库中的原始运营商。手机号不发起网络请求。号码归属只反映号段分配，不承诺携号转网后的当前运营商或号码持有者位置。
+- 精确输入 `uip` 后面板立即显示通过 `getifaddrs` 取得的局域网地址；停顿 350ms 后才向 `https://ipwho.is/` 请求公网 IP 和地理区域，返回结果只应用于同一活动查询代次，关闭面板或改写查询时取消旧任务。响应可能包含公网 IP、地区和 ISP；请求服务方会收到本机公网 IP。网络请求失败时保留本地 IP 并显示失败提示。
+- `u` 后输入完整 IPv4（如 `u8.8.8.8`）时，仅在地址格式完整且最后一次按键后停顿 350ms 才请求 `https://ipwho.is/{IPv4}`；部分地址只显示输入提示，不发网络请求。退格、继续输入或关闭面板会取消/作废旧请求；返回的地区为 IP 粗略地理信息，目标 IP 会发送给 ipwho.is。该查询面板仅一条结果，`Command+C` 复制当前高亮行的译文栏内容。
+- 查询会话设置 `_translation_query_all_candidates`，由 Lua 将自动查询上限临时覆盖为 9，并让九条候选都显示译文、补查音标和允许在线回退；不改写用户方案中的全局候选数。缓存导致重建会话时，根据旧菜单的页码和页内高亮索引调用 Rime `highlight_candidate` 恢复选中位置。
+- 拼音行按实际字形墨迹垂直居中并在上下各留 9pt 空间。IP 面板上下键在两行间切换；`Command+C` 消费按下与释放并复制当前高亮行译文栏内容。
+- 修改鼠须管应用包内扩展时必须用固定的有效代码签名身份重签。安装脚本先检查身份、再改动应用包；禁止 ad-hoc 回退，并且不保留旧 designated requirement，避免 cdhash 被钉住。`SQUIRREL_SIGN_IDENTITY` 指定鼠须管签名身份；辅助程序用 `ST_INPUT_BAR_SIGN_IDENTITY`。身份切换首次仍需要在 macOS 辅助功能设置中重新确认，此后相同身份重建可保持 TCC 识别。
+- 查询面板显式设置 `hidesOnDeactivate = NO`，避免 Squirrel 作为后台输入法进程时由 AppKit 自动隐藏；不通过反复置顶或激活鼠须管来维持显示。源码修复和进程内临时属性修改须分别验证，临时修改会在鼠须管退出后失效。
+
+## 鼠须管候选翻译
+
+- Rime Lua 过滤器读取 `~/Library/Rime/input_translation.cache.tsv`，没有缓存时追加请求；原生扩展监听请求文件并在独立线程按提供者配置调用翻译接口。
+- 翻译成功后立即原子写入缓存并刷新候选；英文单词再调用有道词典接口提取 `usphone`、`ukphone` 或 `phonetic`，补写第四列并再次刷新。
+- 原生扩展按输入代次对翻译请求做 300ms 防抖：只有连续击键停止后才启动本地词典或网络查询；新按键到达时，尚未开始处理的旧代请求直接丢弃，已启动的 curl 或其他子进程请求约 50ms 内、DeepL 会话约 100ms 内收到终止信号，且旧结果不会写入缓存。
+- Lua 过滤器在一次候选重算中复用配置、状态和 Emoji 缓存，并将同一轮产生的翻译/Emoji 请求合并到单次文件打开与刷新；输入线程不为每个候选重复打开、写入和关闭文件。
+- 音标查询仅限长度不超过 64 字符的英文译文，不阻塞 Rime 输入线程；只为当前选中候选查询，翻译队列最多 32 条，缓存最多 400 条，响应体最多 128 KiB。
+- Lua 过滤器负责音标格式化和候选展示，接口失败或空结果不写入占位内容。
+- 朗读和输入翻译均由 Rime Lua 处理器触发，原生扩展通过本地请求文件调用系统 `say`；快捷键仅在候选面板激活时处理。
+- 音标开关由 Lua 状态文件持久化；关闭时过滤器不显示音标，也不写入新的音标请求。
+- `input_translation_state.lua` 在候选菜单状态变化时原子更新 `~/Library/Rime/input_translation.composition.state`：`1` 仅表示 Rime 候选菜单可见，`0` 表示没有候选菜单；单有未确认拼音不再置为 `1`，避免外部 Esc 处理器误判面板仍开启。该文件是只读状态接口，不承载翻译数据。
+- 菜单栏指示器通过 `squirrel.custom.yaml` 的 `status_icon/show` 关闭；左 Shift 由翻译原生处理器在释放时提交当前编码，右 Shift 保留输入方案切换，`default.custom.yaml` 将左 Shift 设为 `noop` 防止重复处理。
+- 提供者配置独立于 Rime schema，读取 `~/Library/Rime/translation.providers.yaml`；原生扩展通过 Rime Config 解析 YAML，按 `provider_order` 尝试启用的 Google、Bing、Sogou、`youdao_web`、`youdao_api`、`deepl_web`、`deepl`、`caiyun_web` 或 `caiyun_api`。`youdao_web` 使用网页端动态密钥和 AES 解密流程，`youdao_api` 独立使用 `api_endpoint/app_key/app_secret` 及 v3 SHA-256 签名；`deepl_web` 由原生扩展调用独立 Python 辅助进程，通过网页端 ITA Protobuf + SignalR MessagePack 建立常驻匿名会话，后续请求复用同一 WebSocket，断线后自动重连，不读取或保存 Cookie、Token；`caiyun_web` 动态读取网页公开授权标识、申请短期 JWT 并只在内存缓存，`caiyun_api` 使用官方 API 的 Token。当 `caiyun_api` 启用时，处理器直接跳过 `caiyun_web`，不做网页版到 API 的回退；密钥只存在运行时配置，不写入源码或日志。
+- 翻译缓存兼容三列、四列旧格式，并新增第五列 provider 作为内部调试元数据；Lua 过滤器不在候选面板显示提供者图标。
+- `translation.providers.yaml` 增加 `providers/mac_dictionary/enabled`。在 macOS 且开关启用时，Lua 为所有可见候选写入本地查询请求，原生扩展先通过 DictionaryServices 查询本机已启用词典，并将结果以 `mac_dictionary` 写入缓存；本地无结果的非选中候选直接结束，不进入网络队列。当前选中候选的本地查询请求带有在线补充标记，本地无结果时才按 `provider_order` 调用在线提供者。
+- DictionaryServices 使用公开的 `DCSCopyTextDefinition(nullptr, ...)`，由 macOS 按系统活动词典顺序查询，不直接调用未公开的活动词典枚举符号。
+- 第一个词典返回单个英文译文但查不到音标时，使用 macOS `NSSpellChecker` 获取拼写建议；仅当系统默认词典能为建议词返回音标时，才将修正后的词作为译文。常规词条和无法验证的建议不变更。
+- 本地词典缓存使用系统默认活动顺序的版本化 provider 标识；Lua 与原生缓存加载均忽略旧版本地词典记录，防止旧译文在新逻辑生效前继续显示。
+- 本地词典的完整首条释义保存在缓存中，候选面板默认只显示第一个分号分隔释义并追加省略号；候选输入状态下按 `Shift+^` 仅临时展开当前选中候选的完整释义，切换候选或重新输入后恢复单条显示。
+- 音标使用同样的分号分隔裁剪规则，默认只显示当前第一条翻译对应的第一条音标；临时展开时同时恢复完整翻译和完整音标。
+- 左 Shift 原始编码上屏由原生翻译处理器在按键释放时执行；按下阶段不吞掉按键，若释放前收到其他组合键（例如 `Shift+^`），取消单 Shift 上屏，让组合键继续进入 Rime 原生处理链，避免快捷键冲突。
+- 候选显示层移除词典标签形式的 `【…】` 及其内容，不改变缓存原文和查询流程。
+- Lua 过滤器按原生扩展提供的缓存代次复用内存中的翻译缓存，只有缓存代次变化时才重新读取 TSV 文件，避免候选重绘反复同步读盘。
+- macOS 本地词典的多释义音标按分号释义逐项查询并以相同分隔符保存，确保默认第一条翻译只显示第一条音标；翻译先入缓存刷新，音标查询在后台完成。
+- 本地词典关闭时，Lua 恢复单候选策略，仅第一个候选自动发起请求和显示翻译；请求文件第四列 `allow_online_fallback` 用于区分“选中项可联网补充”和“非选中项仅本地查询”。
+- 本地查询与在线补充使用独立的 Lua 去重状态；若候选先进入本地查询队列，之后被选中时，原生扩展会升级排队请求，或在正在执行的本地查询返回空结果后自动重排一次在线请求。
+- 本地译文保存后立即触发候选刷新，不在同一个翻译 worker 中同步查询音标；Lua 下一轮保留第一候选音标，并在移动选择后仅为当前选中候选补发音标请求，其他候选不触发在线音标查询。
+- 音标请求使用独立去重表，不与同一候选的译文请求共享节流状态，保证译文到达后能及时补查音标；移动到其他候选时只补查新的当前选中项。
+- 请求文件第五列可标记 `phonetic`，避免短语、数字或标点导致 Lua 的英文判断跳过音标请求；原生扩展对该请求使用本地英文词典优先、在线音标补充的顺序。
+- macOS 本地词典模式下，英文译文再次通过 DictionaryServices 查询词条并提取 `/.../` 音标；选中候选的译文保存后由原生 worker 异步补查，优先使用本地音标，本地无音标才调用有道音标接口，非选中候选不补查。
+- Bing 凭据页单独允许最多 1 MiB 的受控响应缓冲；其他系统命令和翻译响应仍保持默认 128 KiB 上限，避免网页凭据页截断导致解析失败。
+- 过滤器读取选中项时依次采用“刷新期间临时选中项、原生扩展记忆的箭头选中项、Context 当前选中项”，避免候选菜单重建时 Context 短暂回到第 1 项并覆盖真实选中项；在迭代候选前直接检查选中项缓存，已有本地译文但缺少音标时立即发起专用音标请求，不依赖 Rime 的惰性候选迭代是否到达该行。已存在缓存的候选译文和音标继续保留显示，仅对当前候选发起新查询。箭头导航由原生扩展保存候选文字和索引，并在整个“RefreshNonConfirmedComposition 重跑 Lua filter、Context::Highlight 恢复原生选中状态、最后写回 selected_index”过程保持临时选中保护；异步缓存刷新期间临时保存当前候选。
+- 已展开候选集合在每次 filter 产出候选前写回 Context 属性；候选列表按需迭代时即使没有执行到 filter 末尾，也不会丢失之前已经显示的译文。
+- 异步重算可能把上一轮的 ShadowCandidate 再次送入过滤器；更新译文或音标前先移除其末尾旧翻译 TAB 列，再以最新缓存重建同一列，避免新音标落到第二个 TAB 列而无法显示。
+- 异步缓存刷新重建 menu 后恢复保存的 selected_index；已展开候选的音标与译文一起保留，仅对当前候选补查缺失音标。
+- 快捷键帮助项由 `lua/input_translation_help.lua` 统一提供；filter 以影子候选替换当前候选页内容，快捷键位于 candidate 列、功能说明位于 comment 列，页数沿用 `menu/page_size` 并将页码附在该页末项说明后。processor 保存当前页，截获 PageUp/PageDown 与上下键翻页，并阻止帮助视图中的输入被当作候选提交。
+- 普通 Squirrel 候选面板的帮助图标由前端绘制和命中测试；进程内跨应用查询面板由 `native/src/squirrel_query_bridge.m` 自绘帮助按钮，并原生呈现快捷键及说明条目，避免依赖合成按键触发 Lua 刷新。按菜单页大小分页，末行右侧独立显示页码；上下键和 PageUp/PageDown 翻页，Escape 或按钮返回候选列表。首次显示时保存面板左上角坐标，此后候选刷新、异步翻译和帮助展开均以该坐标布局，仅重算宽高。帮助中的 `Control+G`／`Control+B` 只在候选栏显示快捷键；动态引擎名位于翻译栏功能说明中，来源为持久化 URL 覆盖或会话配置；配置提示展示 `u<engine>1/2` 命令和示例。查询面板图标随查询桥 dylib 安装；普通候选面板图标仍需修改版 Squirrel 前端。
+- 查询面板中 `Command+C` 读取当前高亮行对应的 `view.comments` 完整字符串并写入系统剪贴板；空格复制 `view.candidates` 当前高亮候选词。两项均消费按键释放，不依赖文字是否因面板宽度而被视觉截断；译文栏不显示复制提示。
+- 查询面板中无修饰数字 `1`–`9` 映射到当前可见行；普通候选通过当前页码、页大小计算全局索引并调用 Rime `highlight_candidate`，工具候选更新面板高亮索引。数字选择只移动高亮、不上屏，并同步消费对应 key-up，避免按键泄漏到前台应用。
+- 鼠须管前端源码统一保存在项目内的 `./SquirrelFrontend`；项目还保留了可选的 `activateServer` 原生状态提示实现，但默认不编译、不安装、不加载。扩展项目本身不替换鼠须管应用。
+- Lua filter 从当前方案的 `translation/candidate_count` 读取自动翻译数量并钳制到 1–9，默认及当前运行配置均为 1，因此初始仅第一个候选查询翻译并补充音标。候选数量配置只扩大初始自动查询范围，箭头当前选中项仍单独加入已展开集合。
+- 翻译、Emoji 和朗读请求文件采用追加写入；扩展启动时将读取偏移初始化到现有文件尾，只消费本次运行后新增的请求，避免重启时重复翻译或重复朗读历史请求。
+- `squirrel.custom.yaml` 保持 `status_icon/show: false`。公开安装默认不挂接右 Shift、候选面板、输入源或菜单栏的运行时注入；私有 Swift 状态注入器仅作为实验性、版本绑定的可选组件，必须显式启用并自行验证兼容性。
+- 若启用实验性状态注入，仅挂接 `SquirrelInputController.activateServer:`，不挂接 `handleEvent:client:`、候选面板、输入源或全局事件。调用原实现后，必须同时通过 `IMKTextInput.selectedRange()`、有效行高矩形、同屏及点击位置距文本光标不超过限定范围的校验，才调用原生状态面板；失败时最多进行两次短延迟重试，之后静默退出。普通安装不启用该路径。
+- Escape 组合仍由 Hammerspoon 的 `config/keyCombo/esc.json` 路由；鼠须管运行时守卫只在未修饰 Escape 到达时检测 Rime 候选菜单，菜单可见且原处理器未消费时才强制消费，避免穿透到应用；没有候选菜单时不由此守卫拦截。组合状态文件必须在输入服务失焦时立即清为不可见；Lua 每次更新时与共享文件对账，兼容原生生命周期钩子清理状态，避免面板已隐藏而 Hammerspoon 仍误判可见、暂时吞掉 Esc。守卫通过独立 dylib 与 `~/Library/Rime/input_translation.escape_guard.enabled` 标记可选加载，不修改 Hammerspoon，也不要求重编译 Squirrel。
+- `Control+g`、`Control+b`、`Control+n` 只在候选面板激活时读取当前选中候选：前两者分别搜索默认／第二引擎，新闻键打开扩展。普通 Rime 面板由处理器打开 HTTPS 搜索 URL，进程内查询桥消费这些快捷键的按下与释放，并从 Lua 暴露的会话属性读取搜索 URL 模板；新闻键通过 `squirrel-open-url` 调用系统默认浏览器。新闻快捷键匹配时规范化 Rime `KeyEvent::repr()` 的修饰键顺序和字母大小写。Squirrel 前端额外识别按键释放事件，并仅在对应 Ctrl+N 按下已被 Rime 消费时吞掉匹配的释放事件，避免前台应用收到按键对；URL 仍只在按下时启动。辅助程序从系统读取默认 HTTPS 浏览器的应用 URL，再直接向该应用发送 `kAEGetURL` Apple Event，因此新闻扩展链接不经 Launch Services 的 URL scheme 分发。候选文本先做 UTF-8 百分号编码；打开失败不清除组合输入。
+- `Command+comma` 在当前组合输入中打开／关闭快捷键帮助视图。Squirrel 前端仅在存在组合输入时将此快捷键交给 Rime，并消费对应释放事件；进程内查询桥在查询面板激活时直接拦截按下与释放。Lua 通过 Context property 保存显示状态、对应输入串和当前帮助页，并刷新未确认组合；输入串变化或候选菜单关闭时自动清除帮助状态。
+- 默认和第二搜索 URL 分别由 Lua processor 从当前 schema 的 `translation/search_url` 与 `translation/secondary_search_url` 读取；旧的有序 `search_url` 列表及单字符串仍兼容，默认模板为 Google 和 Bing。Lua 会在会话初始化及触发搜索快捷键时读取 `~/Library/Rime/input_translation.search-engines` 的持久化覆盖值，并通过会话属性提供给进程内查询桥。`Control+g` 打开默认引擎，`Control+b` 打开第二引擎；候选文本按 UTF-8 字节 URL 编码后替换 `{query}`。非输入区查询桥识别 `u<engine>1/2` 命令，以原子写入更新对应 URL，成功后在面板显示确认信息；支持 Google、Bing、百度、DuckDuckGo、Yahoo、Brave、搜狗和 Yandex。不产生网络请求，也不读取搜索历史。
+
+## 跨应用候选查询（独立辅助程序，实验性）
+
+- InputMethodKit 依赖文本客户端；无输入目标的应用不会因 Rime 插件存在而自动建立会话。`native/src/squirrel_input_bar.m` 用透明 `NSView<NSTextInputClient>` 承载原生输入法，直接沿用 `NSView.inputContext` 自动管理的唯一上下文，不重写 getter、不另建 `NSTextInputContext`。自测校验实际上下文与 `NSView` 实现返回的对象相同且 client 指向该视图，避免助手与 AppKit 各自维护一套转换会话。1×24 的 key window 位于鼠标所在屏幕，不绘制控件或另造候选面板。
+- 启动检查无修饰起始小写 `u`、非重复按下及安全输入保护，不查询宿主 Rime 会话或 `ascii_mode`，不按输入源 ID 类型拒绝触发。只在符合前缀条件时读取一次前台应用的 AX 焦点元数据，单次 AX 请求超时为 20ms：文本／搜索／组合框角色、`AXEditable=true` 或可设置 `AXSelectedText` 均直接放行原按键；焦点、角色读取失败或其他异常也放行，只有已确认的非编辑控件进入助手。此检查不读取任何输入框文字，不创建焦点监听器，不在其他字母或持续输入期间执行。输入框使用宿主原生组合显示，不向宿主模拟 marked text。只保存并沿用用户选择的输入源，不强制选择鼠须管；前台登录／安全授权应用及辅助程序自身不接管。首个普通字母传给宿主后，将宿主输入串标记为进行中，后续 `u/U` 全部放行，不用 300ms 或其他超时重新武装前缀；修饰键也不重置。点击、切换应用／系统输入源、空格／回车／Esc 及助手会话结束清除该标记。
+- 启动先等待透明窗口成为 key window、应用激活且文本客户端成为 first responder（最多 1 秒），再把 `u` 作为一次当前输入法响应探测。收到非空 marked text 后保留同一客户端和输入上下文，不取消、discard 或重建组合，之后直接沿用原生按键路径；候选刷新期间短暂的空 marked text 只更新客户端内容，不视为取消。现有 Lua processor 仅在 `client_app=org.owllinker.SquirrelTranslate.InputBar` 且中文模式时记录空组合的首个 `u`；下一次字母按下，在同一次 Rime 处理事务内清除这个前缀、`push_input` 新字母并返回 `kAccepted`，后续 `u/U` 不再特殊处理。依赖已有的本地 `unsafe/report_bundleid` 配置，不读取其他应用的输入内容。Lua 模块显式声明局部 `kAccepted=1`、`kNoop=2`，不依赖不存在的全局变量，避免返回 nil 后同一字母被后续 speller 再处理一次。真实输入框和其他应用的 Rime 会话完全不应用前缀替换。直接提交或 300ms 内没有组合响应时恢复原应用并回放探测期事件；已确认组合的启动预览不受该超时影响。
+- 保持文本客户端不等于保持原生候选窗口：Squirrel 在 candidates 与面板 preedit 均为空时会隐藏面板，全局 `inline_preedit: true` 会把单独 `u` 的 preedit 送入透明客户端。因此仅为 `org.owllinker.SquirrelTranslate.InputBar` 设置 `app_options/no_inline: true`、`inline: false`，让无候选的启动编码也显示在 Squirrel 原生面板中；其他应用不设置这些选项，保留原输入框显示。该配置需要重新部署，不重编译、注入或修改前端。
+- 启动缓冲使用 `CGEventCreateCopy` 保留原事件的原生底层信息及字符、修饰键、时间戳、长按状态，设置本助手的目标 PID 和自有标记，通过 `NSEvent.eventWithCGEvent` 转换后由 `NSApplication.postEvent` 放入本助手事件队列，让 AppKit 主循环按正常路径分发，再进入唯一输入上下文。不得用 `keyEventWithType` 重建字母后同步调用 `sendEvent`：隔离原生测试确认该路径会直接插入字母而不进入中文组合。自有标记避免测试缓冲器重捕获；不向系统或原应用重新发送启动 CGEvent。投递结果仅表示进入本地队列，不冒充 Rime 已消费。组合已建立后，原始实体按键直接进入 AppKit，不再次捕获或转交。`activate`／`deactivate` 是系统调用的覆写点，不由助手直接调用；先配置文本客户端和 first responder，再激活 key window。投递前检查 key window、应用激活、first responder 和 `currentInputContext`；不重复设置输入源。前缀替换不再发送模拟 Escape、不等待可选的空 marked-text 回调、不调用异步 `discardMarkedText`，避免取消事务吞掉第一条真实拼音。
+- 前缀按键保护只消费启动按下及其尚未被后续按下替代的释放事件，不按 U 的物理键码持续吞键；后续 `u/U`（含长按重复）及配对释放按普通查询路径处理，保留大小写和修饰键。启动探测期间仅缓冲后续原按键，Lua 只替换首个前缀，不再次探测或删除后续 `u/U`。
+- 输入法提交回调不再丢弃文字。启动时只保存原应用 PID 和原 focused element（一次最多 150ms 的 AX 读取，不判角色，不以读取失败阻止启动）；提交后恢复原应用，约 50ms 后确认同一 PID、同一元素、未被新会话取代且非安全输入，仅设置 `AXSelectedText`。不读取文本、不设置 `AXValue`、不覆盖全文、不写剪贴板、不模拟粘贴。无接收目标或目标不支持该属性时提交失败；`--trace` 只记录错误码。
+- 每次唤起使用新的文本客户端，结束时先解除旧客户端的回调关联；旧组合的迟到提交不得关闭新查询或取消待回放按键。透明窗口暂时失去 key 状态不再触发关闭，因为 Squirrel 更新原生候选面板时可能短暂改变 key 状态；跨应用窗口切换和搜索导致失焦时仍关闭透明客户端，不抢回新应用的焦点；回放和提交校验目标 PID。输入法候选处理可能触发 `NSWorkspaceDidActivateApplicationNotification`，助手忽略 Squirrel 及其他 InputMethodKit 进程的激活通知，避免原生候选面板刚显示就被助手误判为切换应用而关闭。切回 Codex 或其他真实应用会按设计关闭当前查询会话；诊断时读取屏幕本身会激活 Codex，因此不能用“发送测试结果后面板是否还在”判断面板是否曾经稳定。Esc 只取消本会话，不转发取消键或组合文字；移交普通输入的探测回放保持原按键语义。
+- 不再依赖 `native/src/query_mode_bridge.m` 的只读状态桥；该接口暂保留在既有翻译扩展中，供旧诊断／注册表测试使用，不参与新辅助程序启动。不再设置查询应用的 `ascii_mode: false` 覆盖。内部模式仍由输入法自身及用户管理，不能把新客户端的默认模式当作原宿主模式。
+- `native/scripts/input_bar.sh install/update` 仅构建、签名并安装用户辅助应用和自己的 LaunchAgent，不更新系统翻译 dylib、不重新签名 Squirrel、不重启输入法。启动参数数组整体重建，避免占位参数残留。缺少授权时每 2 秒重试，获授权后自动建立 event tap，不因两分钟超时永久停用。
+- `--check`／`--diagnose` 通过分布式通知向正在运行的助手请求实际辅助功能权限和 event tap 状态，按目标 PID 和请求令牌匹配响应；不使用诊断子进程可能继承 Codex／Terminal 授权的结果冒充后台服务授权。未运行或未响应时明确失败。默认 ad-hoc 签名的 designated requirement 由二进制 cdhash 决定，重编译可能使旧辅助功能授权失效；可通过 `ST_INPUT_BAR_SIGN_IDENTITY` 使用已有的稳定本地代码签名身份，未配置时需刷新更新后应用的授权。安装流程不创建证书、不绕过 TCC、不编辑系统权限数据库。
+- 自测不安装 event tap、不打开窗口、不投递外部按键、不写真实控件；验证原生事件信息、唯一上下文、焦点门禁、组合响应分流、缓冲顺序、同客户端连续输入、迟到回调隔离、修饰／安全保护及剪贴板不变。Lua 回归在未定义 `kAccepted/kNoop` 全局变量的真实 Lua 运行时执行，覆盖 `u` 保留、`unihao`、`ushuru`、重复 `u/U`、Esc 重启、英文及普通应用放行。`--preview` 验证普通 AppKit 原生输入，`--preview-buffered` 复用启动缓冲路径；两种隔离模式不安装监听、不回放给其他应用、不提交到原控件。隔离原生面板已验证 `u` 保持及 `unihao` 得到“你好”，实体键盘在 Vivaldi／活动监视器的首次与重复唤起仍需用户验收。`--diagnose`／`--trace` 不记录输入文字、URL、AX 文本或剪贴板。
+# 颜色取样点键盘微调
+
+颜色功能继续使用 AppKit `NSColorSampler` 获取屏幕颜色，不自行读取屏幕帧或申请屏幕录制权限。取样期间，事件 tap 截获无修饰方向键，通过 `CGWarpMouseCursorPosition` 将全局指针坐标按当前显示器的像素尺寸／坐标尺寸比移动一个物理像素，并投递 mouse-moved 事件令系统放大镜刷新；Esc 仍交给系统取色器取消，点击仍由系统取色器确认。方向键只在取色器活跃时被此逻辑消费。
+
+## U 面板本地实用工具
+
+颜色输入、时间戳／时区／日期间隔与单位换算均由面板进程本地解析，不访问网络或其他应用数据。工具行复用候选／结果两列和方向键高亮；`Command+C` 复制当前结果列。命令以明确分隔符 `:` 或 `=` 进入参数态，避免覆盖普通拼音查询：`color:#...`、`time:<timestamp-or-zone>`、`date:<day>..<day>`、`conv:<number><unit>`。颜色解析仅接收有边界的 CSS HEX/RGB(A) 输入，HEX 的 `#` 可省略；单位表限定长度、质量、体积和温度；日期按 ISO `YYYY-MM-DD` 并以本地日历确定“今天”、按 UTC 计算日差。

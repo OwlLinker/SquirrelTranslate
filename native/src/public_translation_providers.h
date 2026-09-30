@@ -22,6 +22,7 @@ struct ProviderConfig {
 std::string FetchMacDictionaryAt(const Request& request,
                                  std::size_t dictionary_index);
 std::string FetchMacDictionaryDefault(const Request& request);
+std::string FetchMacDictionaryPhonetic(const std::string& english_text);
 
 // Public provider set: macOS Dictionary, Google, Bing and DeepL API.
 // Returns an empty string when the provider has no result or is unavailable.
