@@ -1,4 +1,5 @@
 #include "../src/json_string.h"
+#include "../src/public_translation_providers.h"
 
 #include <cassert>
 #include <string>
@@ -14,4 +15,9 @@ int main() {
       "\"\\ud83d\"", 0, &decoded, &end));
   assert(!squirrel_translate_json::ParseStringAt(
       "\"raw\nnewline\"", 0, &decoded, &end));
+
+  const std::string color_phonetic =
+      squirrel_translate_public::FetchMacDictionaryPhonetic("color");
+  assert(squirrel_translate_public::FetchMacDictionaryPhonetic(
+      "color; colour") == color_phonetic);
 }

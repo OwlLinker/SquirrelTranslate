@@ -418,7 +418,12 @@ std::string FetchMacDictionaryAt(const Request& request,
 }
 
 std::string FetchMacDictionaryPhonetic(const std::string& english_text) {
-  if (!IsEnglishWord(english_text)) return {};
+  // Bilingual definitions often list alternatives separated by semicolons.
+  // The first displayed translation is the one whose pronunciation belongs
+  // beside the candidate.
+  const std::string first_translation = Clean(
+      english_text.substr(0, english_text.find(';')));
+  if (!IsEnglishWord(first_translation)) return {};
   std::string result;
   std::string word;
   auto append_word = [&result, &word] {
@@ -431,8 +436,11 @@ std::string FetchMacDictionaryPhonetic(const std::string& english_text) {
     while (opening != std::string::npos) {
       const size_t closing = definition.find('/', opening + 1);
       if (closing == std::string::npos) break;
-      const std::string pronunciation = Clean(
+      std::string pronunciation = Clean(
           definition.substr(opening + 1, closing - opening - 1));
+      const size_t dialect = pronunciation.find('$');
+      if (dialect != std::string::npos)
+        pronunciation = Clean(pronunciation.substr(0, dialect));
       if (!pronunciation.empty() && pronunciation.size() <= 96 &&
           pronunciation.find(' ') == std::string::npos) {
         if (!result.empty()) result += " ";
@@ -443,7 +451,7 @@ std::string FetchMacDictionaryPhonetic(const std::string& english_text) {
     }
     word.clear();
   };
-  for (unsigned char character : english_text) {
+  for (unsigned char character : first_translation) {
     if ((character >= 'A' && character <= 'Z') ||
         (character >= 'a' && character <= 'z')) {
       word += static_cast<char>(character);

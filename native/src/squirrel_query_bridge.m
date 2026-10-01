@@ -116,7 +116,9 @@ static void QueryTranslationDidFinish(uint64_t generation, const char *word,
   NSString *wordValue = [NSString stringWithUTF8String:word];
   NSString *targetValue = [NSString stringWithUTF8String:target];
   NSMutableString *result = [NSMutableString stringWithUTF8String:translation];
-  if (phonetic && phonetic[0]) [result appendFormat:@" /%s/", phonetic];
+  NSString *phoneticValue = phonetic && phonetic[0] ?
+      [NSString stringWithUTF8String:phonetic] : nil;
+  if (phoneticValue.length) [result appendFormat:@"  /%@/", phoneticValue];
   dispatch_async(dispatch_get_main_queue(), ^{
     if (!query_active || generation != query_utility_generation) return;
     if (!query_public_translations) {
@@ -600,6 +602,17 @@ static BOOL IsKeywordInputMode(void) {
       QuerySearchEngineURL(query_text) != nil;
 }
 
+static NSString *ActiveUtilityKeyword(void) {
+  // yanse is an alias for the color tool; show the English word whose
+  // pronunciation appears in the result column.
+  if (UtilityPayload(query_text, @"yanse") != nil) return @"color";
+  for (NSString *keyword in @[@"color", @"time", @"date", @"conv",
+                             @"ip", @"phone"]) {
+    if (UtilityPayload(query_text, keyword) != nil) return keyword;
+  }
+  return nil;
+}
+
 static NSString *FormatDateForZone(NSDate *date, NSTimeZone *zone) {
   NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
   formatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
@@ -980,16 +993,17 @@ static void StartQueryColorSampling(void) {
 }
 
 static NSInteger QueryUtilityCandidateCount(void) {
+  NSInteger count = 0;
   if (IsColorQuery())
-    return IsColorConversionQuery() ? (NSInteger)RowsForColorConversion().count :
+    count = IsColorConversionQuery() ? (NSInteger)RowsForColorConversion().count :
         (NSInteger)ColorFormatNames().count;
-  if (IsTimeQuery()) return (NSInteger)RowsForTimeQuery().count;
-  if (IsDateQuery()) return (NSInteger)RowsForDateQuery().count;
-  if (IsUnitQuery()) return (NSInteger)RowsForUnitQuery().count;
-  if ([query_text isEqualToString:@"ip"]) return 2;
-  if (IPv4QueryStatus(SpecificIPInput(), NULL)) return 1;
-  if (UtilityPayload(query_text, @"ip") != nil) return 1;
-  return UtilityPayload(query_text, @"phone") != nil ? 1 : 0;
+  else if (IsTimeQuery()) count = (NSInteger)RowsForTimeQuery().count;
+  else if (IsDateQuery()) count = (NSInteger)RowsForDateQuery().count;
+  else if (IsUnitQuery()) count = (NSInteger)RowsForUnitQuery().count;
+  else if ([query_text isEqualToString:@"ip"]) count = 2;
+  else if (UtilityPayload(query_text, @"ip") != nil ||
+           UtilityPayload(query_text, @"phone") != nil) count = 1;
+  return count + (count > 0 && ActiveUtilityKeyword() != nil ? 1 : 0);
 }
 
 static NSString *LocalIPAddress(void) {
@@ -1869,10 +1883,18 @@ static void ShowQueryContext(void) {
   query_api->free_context(&context);
 
   BOOL utilityMode = QueryUtilityMode(candidates, comments, &input);
-  if (utilityMode)
+  if (utilityMode) {
+    NSString *keyword = ActiveUtilityKeyword();
+    if (keyword) {
+      const char *label = SquirrelQueryKeywordLabel(keyword.UTF8String);
+      if (label) {
+        [candidates addObject:[NSString stringWithUTF8String:label]];
+        [comments addObject:keyword];
+      }
+    }
     highlighted = MIN(query_utility_highlighted,
                       (NSInteger)candidates.count - 1);
-  else if ([query_text rangeOfCharacterFromSet:
+  } else if ([query_text rangeOfCharacterFromSet:
             NSCharacterSet.decimalDigitCharacterSet].location != NSNotFound ||
            [query_text rangeOfCharacterFromSet:
             [NSCharacterSet characterSetWithCharactersInString:@".-+"]].location !=
@@ -1885,29 +1907,30 @@ static void ShowQueryContext(void) {
     highlighted = 0;
   }
   if (!query_help_visible && !query_search_feedback && query_text.length > 0) {
-    // Utility commands replace Rime's lexical candidates with result rows.
-    // Keep those rows focused, but still translate the final row so the
-    // command panel has one standard translation/phonetic result at its end.
-    NSUInteger firstTranslationIndex = utilityMode && candidates.count > 0 ?
-        candidates.count - 1 : 0;
+    // Utility result rows keep their values untouched. Translate only the
+    // final keyword row through the dedicated local keyword path.
+    NSUInteger firstTranslationIndex = utilityMode ?
+        (ActiveUtilityKeyword() ? candidates.count - 1 : candidates.count) : 0;
     for (NSUInteger index = firstTranslationIndex;
          index < candidates.count; ++index) {
       NSString *candidate = candidates[index];
-      NSString *target = QueryTargetForCandidate(candidate);
+      NSString *word = utilityMode ? ActiveUtilityKeyword() : candidate;
+      NSString *target = utilityMode ? @"tool-keyword" :
+          QueryTargetForCandidate(candidate);
       if (!target) continue;
-      NSString *key = QueryTranslationKey(target, candidate);
+      NSString *key = QueryTranslationKey(target, word);
       NSString *translation = query_public_translations[key];
       BOOL hasTranslation =
           [comments[index] rangeOfString:@"\t"].location != NSNotFound;
       if (translation.length) {
         if (!hasTranslation) {
-          comments[index] = [comments[index] stringByAppendingFormat:@"\t%@",
-                             translation];
+          comments[index] = utilityMode ? translation :
+              [comments[index] stringByAppendingFormat:@"\t%@", translation];
         }
         continue;
       }
       if (hasTranslation) continue;
-      SquirrelQueryTranslationRequest(candidate.UTF8String, target.UTF8String,
+      SquirrelQueryTranslationRequest(word.UTF8String, target.UTF8String,
           (uint64_t)query_utility_generation, QueryTranslationDidFinish, NULL);
     }
   }

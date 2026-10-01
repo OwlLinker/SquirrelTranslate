@@ -7,6 +7,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstdlib>
+#include <cstring>
 #include <deque>
 #include <fstream>
 #include <map>
@@ -235,6 +236,13 @@ class QueryTranslationService {
   };
 
   std::pair<std::string, std::string> Translate(const Job& job) {
+    if (job.target == "tool-keyword") {
+      if (!SquirrelQueryKeywordLabel(job.word.c_str())) return {};
+      const std::string phonetic = job.word == "conv" || job.word == "ip" ?
+          std::string() :
+          squirrel_translate_public::FetchMacDictionaryPhonetic(job.word);
+      return {job.word, phonetic};
+    }
     squirrel_translate_public::Request request{
         job.word, job.target, &generation_, job.generation};
     const auto local = settings_.providers.find("mac_dictionary");
@@ -345,6 +353,17 @@ QueryTranslationService& Service() {
 }
 
 }  // namespace
+
+extern "C" const char* SquirrelQueryKeywordLabel(const char* keyword) {
+  if (!keyword) return nullptr;
+  struct Entry { const char* keyword; const char* label; };
+  static constexpr Entry entries[] = {
+      {"color", "颜色"}, {"time", "时间"}, {"date", "日期"},
+      {"conv", "换算"}, {"ip", "网络协议"}, {"phone", "电话"}};
+  for (const Entry& entry : entries)
+    if (std::strcmp(keyword, entry.keyword) == 0) return entry.label;
+  return nullptr;
+}
 
 extern "C" void SquirrelQueryTranslationSetGeneration(uint64_t generation) {
   Service().SetGeneration(generation);
