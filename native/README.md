@@ -5,7 +5,7 @@
 ## 公开发布文件
 
 - 面板、快捷键、颜色／IP／手机号工具：`src/squirrel_query_bridge.m`。
-- 额外本地工具：`ucolor:#HEX`／`rgb(...)` 格式转换，`utime:` 时间戳／时区转换，`udate:` 日期间隔，`uconv:` 常见单位转换；不请求网络。
+- 额外本地工具：`ucolorRRGGBB`／`ucolorrgb(...)` 格式转换，`utime<时间戳或时区>`、`udate<日期>..<日期>`、`uconv<数值和单位>`；不请求网络。
 - 查询专用异步调度、去重、取消和有界缓存：`src/query_translation_service.cc`、`src/query_translation_service.h`。
 - macOS 系统词典、Google、Bing、DeepL 官方 API：`src/public_translation_providers.cc`、`src/public_translation_providers.h`、`src/json_string.h`。
 - 新闻扩展 URL 启动辅助程序：`src/squirrel_open_url.m`。
@@ -45,6 +45,6 @@ SQUIRREL_SIGN_IDENTITY="你的稳定代码签名身份" \
 
 脚本要求 Keychain 中已有有效、稳定的代码签名身份；拒绝 ad-hoc 重签。它安装组件、重新签名并重启 Squirrel。之后必须在“系统设置 > 隐私与安全性 > 辅助功能”允许 Squirrel。该全局按键功能需要此权限，不应关闭它来测试。
 
-取色使用 macOS 系统的点选取色器；取色期间方向键按一个物理像素移动采样点，不自行读取屏幕帧，也不申请屏幕录制权限。IP 地理查询会向桥接代码指定的服务发送目标 IP 或请求方公网 IP；手机号归属地查询使用随项目发布的号段数据库，不上传手机号。
+取色使用 macOS 系统的点选取色器；结果面板和放大镜同时显示，方向键只逐像素移动取样点，不自动确认或重开放大镜，鼠标移动也不自动确认；手动点击或空格选色后更新结果并关闭放大镜，再按空格可重新开启。系统放大镜没有公开的倍数或中心框设置接口。该功能不自行读取屏幕帧，也不申请屏幕录制权限。IP 地理查询会向桥接代码指定的服务发送目标 IP 或请求方公网 IP；手机号归属地查询使用随项目发布的号段数据库，不上传手机号。
 
 卸载查询桥：移除 `~/Library/Rime/input_translation.query_bridge.enabled`，删除 Squirrel 插件目录中的 `libsquirrel-query-bridge.dylib`、`phone-region-phone.dat`、`phone-region-LICENSE.txt`，再重启 Squirrel。`squirrel-open-url` 若不再需要，可删除 `~/Library/Rime/bin/squirrel-open-url`。

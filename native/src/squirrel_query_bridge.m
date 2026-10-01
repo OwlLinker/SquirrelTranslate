@@ -38,8 +38,7 @@ static BOOL query_copy_keyup_pending;
 static BOOL query_space_keyup_pending;
 static BOOL query_paste_keyup_pending;
 static BOOL query_help_keyup_pending;
-static BOOL query_number_keyup_pending;
-static CGKeyCode query_number_keyup_code;
+static uint64_t query_number_keyup_pending;
 static BOOL query_help_visible;
 static NSInteger query_help_page;
 static NSInteger query_help_page_count = 1;
@@ -47,6 +46,7 @@ static BOOL query_panel_position_pinned;
 static NSPoint query_panel_pinned_top_left;
 static CGKeyCode query_search_keyup_pending;
 static NSMutableString *query_text;
+static NSDate *query_time_snapshot;
 static struct timespec query_cache_mtime;
 static off_t query_cache_size = -1;
 static CFAbsoluteTime query_last_key_time;
@@ -66,6 +66,11 @@ static CGPoint query_color_cursor_position;
 static BOOL query_color_cursor_position_valid;
 static BOOL query_color_sampling_active;
 static BOOL query_color_sampler_started;
+static BOOL query_color_confirmation_pending;
+static BOOL query_color_cancel_pending;
+static NSUInteger query_color_session_generation;
+static NSUInteger query_color_confirmation_generation;
+static const int64_t kQueryColorSyntheticClickMarker = 0x5351434C;
 static AXError query_last_focus_error = kAXErrorSuccess;
 static void ShowQueryContext(void);
 
@@ -348,10 +353,13 @@ static BOOL IsSquirrelInputSource(void) {
   return result;
 }
 
+static NSString *UtilityPayload(NSString *text, NSString *command);
+
 static NSString *PhoneDigits(void) {
+  NSString *input = UtilityPayload(query_text, @"phone") ?: @"";
   NSMutableString *digits = [NSMutableString string];
-  for (NSUInteger index = 0; index < query_text.length; ++index) {
-    unichar c = [query_text characterAtIndex:index];
+  for (NSUInteger index = 0; index < input.length; ++index) {
+    unichar c = [input characterAtIndex:index];
     if (c >= '0' && c <= '9') [digits appendFormat:@"%C", c];
   }
   if (digits.length == 13 && [digits hasPrefix:@"86"])
@@ -359,22 +367,10 @@ static NSString *PhoneDigits(void) {
   return digits;
 }
 
-static BOOL IsPhoneQuery(void) {
-  NSString *digits = PhoneDigits();
-  if (digits.length < 3 || digits.length > 11 || ![digits hasPrefix:@"1"])
-    return NO;
-  for (NSUInteger index = 0; index < query_text.length; ++index) {
-    unichar c = [query_text characterAtIndex:index];
-    if (!((c >= '0' && c <= '9') || c == '+' || c == '-' || c == ' '))
-      return NO;
-  }
-  return YES;
-}
-
 static BOOL IPv4QueryStatus(NSString *value, BOOL *complete) {
   if (complete) *complete = NO;
-  // Numeric-only input is ambiguous with a phone number; enter IP mode only
-  // after the user types the first dot.
+  // A complete ip keyword is required by the caller; wait for the first dot
+  // before treating its numeric payload as an IPv4 address.
   if (!value.length || [value rangeOfString:@"."].location == NSNotFound) return NO;
   NSArray<NSString *> *octets = [value componentsSeparatedByString:@"."];
   if (octets.count > 4) return NO;
@@ -403,9 +399,16 @@ static NSString *UtilityPayload(NSString *text, NSString *command) {
   if (text.length <= command.length ||
       ![[text substringToIndex:command.length] isEqualToString:command])
     return nil;
-  unichar separator = [text characterAtIndex:command.length];
-  if (separator != ':' && separator != '=') return nil;
-  return [text substringFromIndex:command.length + 1];
+  // A command's payload begins immediately after its keyword. Legacy
+  // punctuation separators are deliberately not interpreted.
+  unichar first = [text characterAtIndex:command.length];
+  return first == ':' || first == '=' ? nil :
+      [text substringFromIndex:command.length];
+}
+
+static NSString *SpecificIPInput(void) {
+  NSString *payload = UtilityPayload(query_text, @"ip");
+  return payload.length ? payload : nil;
 }
 
 static BOOL IsColorQuery(void) {
@@ -421,17 +424,26 @@ static BOOL IsBareColorQuery(void) {
 static BOOL IsColorConversionQuery(void) {
   NSString *payload = UtilityPayload(query_text, @"color");
   if (!payload) payload = UtilityPayload(query_text, @"yanse");
-  return payload != nil &&
-      (query_text.length > 5 &&
-       ([query_text characterAtIndex:5] == ':' ||
-        [query_text characterAtIndex:5] == '='));
+  return payload.length > 0;
 }
 
 static NSString *ColorConversionInput(void) {
   NSString *payload = UtilityPayload(query_text, @"color");
   if (!payload) payload = UtilityPayload(query_text, @"yanse");
-  NSCharacterSet *separators = [NSCharacterSet characterSetWithCharactersInString:@" :=\t\n"];
+  NSCharacterSet *separators = NSCharacterSet.whitespaceAndNewlineCharacterSet;
   return [payload stringByTrimmingCharactersInSet:separators];
+}
+
+static NSArray<NSString *> *ColorFormatNames(void) {
+  static NSArray<NSString *> *formats;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    formats = @[
+      @"HEX", @"HEX（无 #）", @"HEX + Alpha", @"RGB", @"RGBA",
+      @"HSL", @"HSLA", @"HSV", @"HSVA"
+    ];
+  });
+  return formats;
 }
 
 static NSArray<NSString *> *ColorValuesForColor(NSColor *color) {
@@ -461,6 +473,8 @@ static NSArray<NSString *> *ColorValuesForColor(NSColor *color) {
   CGFloat opacity = alpha;
   return @[
     [NSString stringWithFormat:@"#%02lX%02lX%02lX",
+        (unsigned long)r, (unsigned long)g, (unsigned long)b],
+    [NSString stringWithFormat:@"%02lX%02lX%02lX",
         (unsigned long)r, (unsigned long)g, (unsigned long)b],
     [NSString stringWithFormat:@"#%02lX%02lX%02lX%02lX",
         (unsigned long)r, (unsigned long)g, (unsigned long)b, (unsigned long)a],
@@ -560,9 +574,7 @@ static NSArray<NSArray<NSString *> *> *RowsForColorConversion(void) {
     @[@"HEX", @"输入 #RGB、#RGBA、#RRGGBB、#RRGGBBAA"],
     @[@"RGB", @"或输入 rgb(r, g, b) / rgba(r, g, b, a)"],
   ];
-  NSArray<NSString *> *formats = @[
-    @"HEX", @"HEX + Alpha", @"RGB", @"RGBA", @"HSL", @"HSLA", @"HSV", @"HSVA"
-  ];
+  NSArray<NSString *> *formats = ColorFormatNames();
   NSMutableArray<NSArray<NSString *> *> *rows = [NSMutableArray array];
   for (NSUInteger index = 0; index < formats.count; ++index)
     [rows addObject:@[formats[index], values[index]]];
@@ -579,6 +591,13 @@ static BOOL IsDateQuery(void) {
 
 static BOOL IsUnitQuery(void) {
   return UtilityPayload(query_text, @"conv") != nil;
+}
+
+static BOOL IsKeywordInputMode(void) {
+  return IsColorQuery() || IsTimeQuery() || IsDateQuery() || IsUnitQuery() ||
+      UtilityPayload(query_text, @"ip") != nil ||
+      UtilityPayload(query_text, @"phone") != nil ||
+      QuerySearchEngineURL(query_text) != nil;
 }
 
 static NSString *FormatDateForZone(NSDate *date, NSTimeZone *zone) {
@@ -611,7 +630,8 @@ static NSArray<NSArray<NSString *> *> *RowsForTimeQuery(void) {
   NSString *payload = UtilityPayload(query_text, @"time");
   NSString *value = [payload stringByTrimmingCharactersInSet:
       NSCharacterSet.whitespaceAndNewlineCharacterSet];
-  NSDate *date = [NSDate date];
+  if (!query_time_snapshot) query_time_snapshot = [NSDate date];
+  NSDate *date = query_time_snapshot;
   NSTimeZone *displayZone = NSTimeZone.localTimeZone;
   if (value.length && ![value isEqualToString:@"now"]) {
     NSScanner *scanner = [NSScanner scannerWithString:value];
@@ -653,7 +673,7 @@ static NSArray<NSArray<NSString *> *> *RowsForDateQuery(void) {
     dates = @[value, [todayFormatter stringFromDate:[NSDate date]]];
   }
   if (dates.count != 2) return @[
-    @[@"日期间隔", @"格式：udate:YYYY-MM-DD..YYYY-MM-DD"]
+    @[@"日期间隔", @"格式：udateYYYY-MM-DD..YYYY-MM-DD"]
   ];
   NSDate *start = DateFromISO8601Day(dates[0]);
   NSDate *end = DateFromISO8601Day(dates[1]);
@@ -679,13 +699,12 @@ typedef struct {
   double factor;
 } STUnitDefinition;
 
-static NSArray<NSArray<NSString *> *> *RowsForUnitQuery(void) {
-  NSString *payload = UtilityPayload(query_text, @"conv");
+static NSArray<NSArray<NSString *> *> *RowsForUnitInput(NSString *payload) {
   NSScanner *scanner = [NSScanner scannerWithString:payload ?: @""];
   scanner.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
   double inputValue = 0;
   if (![scanner scanDouble:&inputValue] || !isfinite(inputValue)) return @[
-    @[@"单位换算", @"格式：uconv:数值单位，例如 uconv:5mi 或 uconv:72°F"]
+    @[@"单位换算", @"格式：uconv数值单位，例如 uconv5mi 或 uconv72°F"]
   ];
   NSString *inputUnit = [[payload substringFromIndex:scanner.scanLocation]
       stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
@@ -789,6 +808,41 @@ static NSArray<NSArray<NSString *> *> *RowsForUnitQuery(void) {
   return rows;
 }
 
+static NSArray<NSArray<NSString *> *> *RowsForQuickConversions(double value);
+
+static NSArray<NSArray<NSString *> *> *RowsForUnitQuery(void) {
+  NSString *payload = UtilityPayload(query_text, @"conv");
+  NSScanner *scanner = [NSScanner scannerWithString:payload ?: @""];
+  scanner.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+  double value = 0;
+  if ([scanner scanDouble:&value] && isfinite(value) && scanner.isAtEnd)
+    return RowsForQuickConversions(value);
+  return RowsForUnitInput(payload);
+}
+
+// A number following conv has no implied unit; each row names both sides.
+static NSArray<NSArray<NSString *> *> *RowsForQuickConversions(double value) {
+  if (fabs(value) > 1e100) return @[@[@"数值超出范围", @"请缩小输入数值"]];
+  return @[
+    @[@"km → mi",
+      [NSString stringWithFormat:@"%@ mi", UtilityNumber(value / 1.609344)]],
+    @[@"mi → km",
+      [NSString stringWithFormat:@"%@ km", UtilityNumber(value * 1.609344)]],
+    @[@"kg → lb",
+      [NSString stringWithFormat:@"%@ lb", UtilityNumber(value / 0.45359237)]],
+    @[@"lb → kg",
+      [NSString stringWithFormat:@"%@ kg", UtilityNumber(value * 0.45359237)]],
+    @[@"°C → °F",
+      [NSString stringWithFormat:@"%@ °F", UtilityNumber(value * 9.0 / 5.0 + 32.0)]],
+    @[@"°F → °C",
+      [NSString stringWithFormat:@"%@ °C", UtilityNumber((value - 32.0) * 5.0 / 9.0)]],
+    @[@"L → gal",
+      [NSString stringWithFormat:@"%@ gal", UtilityNumber(value / 3.785411784)]],
+    @[@"gal → L",
+      [NSString stringWithFormat:@"%@ L", UtilityNumber(value * 3.785411784)]]
+  ];
+}
+
 static BOOL MoveColorSampleCursor(CGKeyCode keycode, CGPoint eventPosition) {
   if (!query_color_cursor_position_valid) {
     query_color_cursor_position = eventPosition;
@@ -801,17 +855,17 @@ static BOOL MoveColorSampleCursor(CGKeyCode keycode, CGPoint eventPosition) {
       displayCount == 0) return NO;
 
   CGRect bounds = CGDisplayBounds(display);
-  size_t pixelWidth = CGDisplayPixelsWide(display);
-  size_t pixelHeight = CGDisplayPixelsHigh(display);
+  CGDisplayModeRef mode = CGDisplayCopyDisplayMode(display);
+  size_t pixelWidth = mode ? CGDisplayModeGetPixelWidth(mode) :
+      CGDisplayPixelsWide(display);
+  size_t pixelHeight = mode ? CGDisplayModeGetPixelHeight(mode) :
+      CGDisplayPixelsHigh(display);
+  if (mode) CGDisplayModeRelease(mode);
   CGFloat stepX = pixelWidth ? bounds.size.width / pixelWidth : 1.0;
   CGFloat stepY = pixelHeight ? bounds.size.height / pixelHeight : 1.0;
-  // Quartz cursor coordinates can quantize fractional Retina points; guarantee
-  // a real cursor change instead of rounding a sub-point step back in place.
-  stepX = MAX(1.0, stepX);
-  stepY = MAX(1.0, stepY);
-  if (fabs(eventPosition.x - query_color_cursor_position.x) > stepX * 1.5 ||
-      fabs(eventPosition.y - query_color_cursor_position.y) > stepY * 1.5)
-    query_color_cursor_position = eventPosition;
+  // CGDisplayPixelsWide can report logical points, not the mode's pixel grid.
+  // Mouse-moved events keep this cached position current; do not resync from
+  // the key event, whose pointer location can lag behind queued arrow events.
   CGPoint next = query_color_cursor_position;
   if (keycode == kVK_LeftArrow) next.x -= stepX;
   else if (keycode == kVK_RightArrow) next.x += stepX;
@@ -826,48 +880,116 @@ static BOOL MoveColorSampleCursor(CGKeyCode keycode, CGPoint eventPosition) {
   CGError warpResult = CGWarpMouseCursorPosition(next);
   query_color_cursor_position = next;
 
-  // NSColorSampler tracks mouse-moved events to refresh its magnified pixel.
-  CGEventRef moved = CGEventCreateMouseEvent(NULL, kCGEventMouseMoved, next,
-                                             kCGMouseButtonLeft);
+  // Do not attach a mouse button to a move event. NSColorSampler interprets
+  // left-button state as a drag, which can draw a selection rectangle.
+  CGEventRef moved = CGEventCreate(NULL);
   if (moved) {
+    CGEventSetType(moved, kCGEventMouseMoved);
+    CGEventSetLocation(moved, next);
     CGEventPost(kCGHIDEventTap, moved);
     CFRelease(moved);
   }
   return warpResult == kCGErrorSuccess || moved != NULL;
 }
 
+static void ConfirmColorSampleAtPoint(CGPoint position) {
+  if (!query_color_sampling_active || !query_color_sampler ||
+      !query_color_confirmation_pending) return;
+  NSUInteger session = query_color_session_generation;
+  NSUInteger confirmation = ++query_color_confirmation_generation;
+  CGEventRef down = CGEventCreateMouseEvent(NULL, kCGEventLeftMouseDown,
+                                            position, kCGMouseButtonLeft);
+  CGEventRef up = CGEventCreateMouseEvent(NULL, kCGEventLeftMouseUp,
+                                          position, kCGMouseButtonLeft);
+  if (down && up) {
+    CGEventSetIntegerValueField(down, kCGEventSourceUserData,
+                                kQueryColorSyntheticClickMarker);
+    CGEventSetIntegerValueField(up, kCGEventSourceUserData,
+                                kQueryColorSyntheticClickMarker);
+    CGEventPost(kCGHIDEventTap, down);
+    CGEventPost(kCGHIDEventTap, up);
+    // A rejected synthetic click must not block a later physical Space/Escape.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 700 * NSEC_PER_MSEC),
+                   dispatch_get_main_queue(), ^{
+      if (session != query_color_session_generation ||
+          confirmation != query_color_confirmation_generation ||
+          !query_color_sampling_active || !query_color_confirmation_pending)
+        return;
+      query_color_confirmation_pending = NO;
+      SetQueryBridgeStatus(@"color: simulated confirmation timed out");
+    });
+  } else {
+    query_color_confirmation_pending = NO;
+    SetQueryBridgeStatus(@"color: simulated confirmation unavailable");
+  }
+  if (down) CFRelease(down);
+  if (up) CFRelease(up);
+}
+
+static void ConfirmColorSampleAtCursor(void) {
+  CGEventRef cursor = CGEventCreate(NULL);
+  if (!cursor) {
+    query_color_confirmation_pending = NO;
+    return;
+  }
+  CGPoint position = query_color_cursor_position_valid ?
+      query_color_cursor_position : CGEventGetLocation(cursor);
+  CFRelease(cursor);
+  ConfirmColorSampleAtPoint(position);
+}
+
 static void StartQueryColorSampling(void) {
   if (!query_active || !IsBareColorQuery() || query_color_sampling_active ||
       query_color_sampler_started) return;
   query_color_sampler_started = YES;
+  NSUInteger session = ++query_color_session_generation;
   query_color_sampling_active = YES;
+  query_color_confirmation_pending = NO;
+  query_color_cancel_pending = NO;
   query_color_cursor_position_valid = NO;
-  [query_panel orderOut:nil];
+  // Keep the result panel visible below the system magnifier.
+  query_panel.level = NSStatusWindowLevel;
   CGEventRef cursorEvent = CGEventCreate(NULL);
   if (cursorEvent) {
     query_color_cursor_position = CGEventGetLocation(cursorEvent);
+    query_color_cursor_position_valid = YES;
     CFRelease(cursorEvent);
   }
   query_color_sampler = [[NSColorSampler alloc] init];
   [query_color_sampler showSamplerWithSelectionHandler:^(NSColor *selectedColor) {
+    if (session != query_color_session_generation) return;
+    BOOL wasCancelled = query_color_cancel_pending;
+    SetQueryBridgeStatus(wasCancelled ? @"color: magnifier cancelled" :
+        (selectedColor ? @"color: selected" : @"color: sampler dismissed"));
     query_color_sampling_active = NO;
+    // This flag means the bare-color query already opened a sampler. Keep it
+    // set after dismissal so ShowQueryContext does not open another one.
+    // Only a new query or manual Space clears it.
+    query_color_sampler_started = YES;
+    query_color_confirmation_pending = NO;
+    query_color_cancel_pending = NO;
     query_color_sampler = nil;
+    query_panel.level = CGShieldingWindowLevel();
     if (!query_active || !IsColorQuery()) return;
-    query_color_sample = selectedColor ?
-        [selectedColor colorUsingColorSpace:NSColorSpace.sRGBColorSpace] : nil;
+    if (!wasCancelled) {
+      query_color_sample = selectedColor ?
+          [selectedColor colorUsingColorSpace:NSColorSpace.sRGBColorSpace] : nil;
+    }
     ShowQueryContext();
   }];
 }
 
 static NSInteger QueryUtilityCandidateCount(void) {
   if (IsColorQuery())
-    return IsColorConversionQuery() ? (NSInteger)RowsForColorConversion().count : 8;
+    return IsColorConversionQuery() ? (NSInteger)RowsForColorConversion().count :
+        (NSInteger)ColorFormatNames().count;
   if (IsTimeQuery()) return (NSInteger)RowsForTimeQuery().count;
   if (IsDateQuery()) return (NSInteger)RowsForDateQuery().count;
   if (IsUnitQuery()) return (NSInteger)RowsForUnitQuery().count;
   if ([query_text isEqualToString:@"ip"]) return 2;
-  if (IPv4QueryStatus(query_text, NULL)) return 1;
-  return IsPhoneQuery() ? 1 : 0;
+  if (IPv4QueryStatus(SpecificIPInput(), NULL)) return 1;
+  if (UtilityPayload(query_text, @"ip") != nil) return 1;
+  return UtilityPayload(query_text, @"phone") != nil ? 1 : 0;
 }
 
 static NSString *LocalIPAddress(void) {
@@ -955,8 +1077,9 @@ static void ScheduleIPLookup(NSString *targetIP) {
   BOOL isSpecificIPLookup = NO;
   if (!isPublicIPLookup) {
     BOOL complete = NO;
-    isSpecificIPLookup = IPv4QueryStatus(query_text, &complete) && complete &&
-        [query_text isEqualToString:targetIP];
+    NSString *ipInput = SpecificIPInput();
+    isSpecificIPLookup = IPv4QueryStatus(ipInput, &complete) && complete &&
+        [ipInput isEqualToString:targetIP];
   }
   if (!isPublicIPLookup && !isSpecificIPLookup) return;
   AdvanceQueryGeneration();
@@ -1042,9 +1165,7 @@ static BOOL QueryUtilityMode(NSMutableArray<NSString *> *candidates,
     if (IsColorConversionQuery()) {
       rows = RowsForColorConversion();
     } else {
-      NSArray<NSString *> *formats = @[
-        @"HEX", @"HEX + Alpha", @"RGB", @"RGBA", @"HSL", @"HSLA", @"HSV", @"HSVA"
-      ];
+      NSArray<NSString *> *formats = ColorFormatNames();
       NSArray<NSString *> *values = ColorValuesForColor(query_color_sample);
       NSString *placeholder = query_color_sampler_started ?
           @"未选择颜色；按空格重新取色" : @"点击屏幕选择颜色";
@@ -1085,19 +1206,21 @@ static BOOL QueryUtilityMode(NSMutableArray<NSString *> *candidates,
     return YES;
   }
   BOOL isCompleteIP = NO;
-  if (IPv4QueryStatus(query_text, &isCompleteIP)) {
+  NSString *ipInput = SpecificIPInput();
+  if (UtilityPayload(query_text, @"ip") != nil) {
     [candidates removeAllObjects];
     [comments removeAllObjects];
     *input = [@"u" stringByAppendingString:query_text];
-    [candidates addObject:isCompleteIP ? @"IP 地址查询" : @"输入 IPv4 地址"];
-    NSString *detail = isCompleteIP ?
+    BOOL validIP = IPv4QueryStatus(ipInput, &isCompleteIP);
+    [candidates addObject:validIP && isCompleteIP ? @"IP 地址查询" : @"输入 IPv4 地址"];
+    NSString *detail = validIP && isCompleteIP ?
         (query_ip_details ?: @"输入停顿后自动查询") :
-        @"继续输入完整地址 · 例如 8.8.8.8";
+        @"输入完整地址 · 例如 uip8.8.8.8";
     [comments addObject:detail];
     return YES;
   }
   NSString *digits = PhoneDigits();
-  if (!IsPhoneQuery()) return NO;
+  if (UtilityPayload(query_text, @"phone") == nil) return NO;
   [candidates removeAllObjects];
   [comments removeAllObjects];
   *input = [@"u" stringByAppendingString:query_text];
@@ -1196,6 +1319,7 @@ static STFocusedElementState FocusedElementState(void) {
 @property(nonatomic, copy) NSString *input;
 @property(nonatomic) NSInteger highlighted;
 @property(nonatomic) CGFloat commentColumnX;
+@property(nonatomic, copy) NSArray<NSNumber *> *rowHeights;
 @property(nonatomic) NSRect helpIconRect;
 @property(nonatomic, copy) NSString *helpPageIndicator;
 @property(nonatomic, strong) NSFont *candidateFont;
@@ -1310,6 +1434,88 @@ static void DrawQueryTextTruncated(NSString *text, NSFont *font, NSColor *color,
   CFRelease(ctFont);
 }
 
+static CFIndex QueryNextLineLength(CTTypesetterRef typesetter, NSString *text,
+                                   CFIndex start, CGFloat width) {
+  CFIndex length = CTTypesetterSuggestLineBreak(typesetter, start, width);
+  if (length > 0) return length;
+  return (CFIndex)[text rangeOfComposedCharacterSequenceAtIndex:
+      (NSUInteger)start].length;
+}
+
+static NSUInteger QueryWrappedLineCount(NSString *text, NSFont *font,
+                                        CGFloat width) {
+  if (!text.length || width <= 0) return 1;
+  CTFontRef ctFont = CTFontCreateWithName((__bridge CFStringRef)font.fontName,
+                                         font.pointSize, NULL);
+  NSAttributedString *attributed = [[NSAttributedString alloc]
+      initWithString:text attributes:@{
+        (__bridge id)kCTFontAttributeName: (__bridge id)ctFont
+      }];
+  CTTypesetterRef typesetter = CTTypesetterCreateWithAttributedString(
+      (__bridge CFAttributedStringRef)attributed);
+  CFIndex start = 0;
+  NSUInteger count = 0;
+  while (start < (CFIndex)text.length && count < 100) {
+    start += QueryNextLineLength(typesetter, text, start, width);
+    ++count;
+  }
+  CFRelease(typesetter);
+  CFRelease(ctFont);
+  return MAX(1, count);
+}
+
+static void DrawQueryTextWrapped(NSString *text, NSFont *font, NSColor *color,
+                                 NSRect row, CGFloat x, CGFloat width,
+                                 NSUInteger maxLines) {
+  if (!text.length || width <= 0) return;
+  CTFontRef ctFont = CTFontCreateWithName((__bridge CFStringRef)font.fontName,
+                                         font.pointSize, NULL);
+  NSDictionary *attributes = @{
+    (__bridge id)kCTFontAttributeName: (__bridge id)ctFont,
+    (__bridge id)kCTForegroundColorAttributeName: (__bridge id)color.CGColor
+  };
+  NSAttributedString *attributed = [[NSAttributedString alloc]
+      initWithString:text attributes:attributes];
+  CTTypesetterRef typesetter = CTTypesetterCreateWithAttributedString(
+      (__bridge CFAttributedStringRef)attributed);
+  CGContextRef context = NSGraphicsContext.currentContext.CGContext;
+  CGContextSaveGState(context);
+  CGContextClipToRect(context, CGRectMake(x, NSMinY(row) + 2,
+                                          width, NSHeight(row) - 4));
+  CGContextSetTextMatrix(context, CGAffineTransformIdentity);
+  CGFloat lineHeight = FontLineHeight(font);
+  CGFloat baseline = NSMidY(row) + (maxLines - 1) * lineHeight / 2 -
+      (font.ascender + font.descender) / 2;
+  CFIndex start = 0;
+  for (NSUInteger index = 0; index < maxLines && start < (CFIndex)text.length;
+       ++index) {
+    CFIndex length = QueryNextLineLength(typesetter, text, start, width);
+    BOOL overflow = index + 1 == maxLines && start + length < (CFIndex)text.length;
+    CTLineRef line = CTTypesetterCreateLine(typesetter,
+        CFRangeMake(start, overflow ? (CFIndex)text.length - start : length));
+    if (overflow) {
+      NSAttributedString *ellipsis = [[NSAttributedString alloc]
+          initWithString:@"…" attributes:attributes];
+      CTLineRef token = CTLineCreateWithAttributedString(
+          (__bridge CFAttributedStringRef)ellipsis);
+      CTLineRef truncated = CTLineCreateTruncatedLine(line, width,
+          kCTLineTruncationEnd, token);
+      if (truncated) {
+        CFRelease(line);
+        line = truncated;
+      }
+      CFRelease(token);
+    }
+    CGContextSetTextPosition(context, x, baseline - index * lineHeight);
+    CTLineDraw(line, context);
+    CFRelease(line);
+    start += length;
+  }
+  CGContextRestoreGState(context);
+  CFRelease(typesetter);
+  CFRelease(ctFont);
+}
+
 @implementation STQueryBridgeViewV4
 - (void)drawRect:(NSRect)dirtyRect {
   (void)dirtyRect;
@@ -1334,8 +1540,8 @@ static void DrawQueryTextTruncated(NSString *text, NSFont *font, NSColor *color,
     NSForegroundColorAttributeName: NSColor.secondaryLabelColor
   };
 
-  CGFloat rowHeight = MAX(FontLineHeight(self.candidateFont),
-                         FontLineHeight(self.commentFont)) +
+  CGFloat baseRowHeight = MAX(FontLineHeight(self.candidateFont),
+                             FontLineHeight(self.commentFont)) +
       QueryCandidateRowPadding();
   CGFloat inputPadding = QueryPreeditPadding();
   CGFloat inputHeight = ceil(self.preeditFont.ascender -
@@ -1348,13 +1554,16 @@ static void DrawQueryTextTruncated(NSString *text, NSFont *font, NSColor *color,
                                inputHeight);
   DrawQueryTextCentered(preedit, preeditFont, NSColor.secondaryLabelColor,
       inputRow, QueryPanelHorizontalPadding() + 8, YES);
+  CGFloat rowTop = inputAreaBottom;
   for (NSUInteger index = 0; index < self.candidates.count; ++index) {
+    CGFloat rowHeight = index < self.rowHeights.count ?
+        self.rowHeights[index].doubleValue : baseRowHeight;
     CGFloat horizontalPadding = QueryPanelHorizontalPadding();
     NSRect row = NSMakeRect(horizontalPadding,
-                            self.bounds.size.height - QueryPanelVerticalPadding() - inputHeight -
-                            (index + 1) * rowHeight,
+                            rowTop - rowHeight,
                             self.bounds.size.width - horizontalPadding * 2,
                             rowHeight);
+    rowTop -= rowHeight;
     BOOL highlighted = (NSInteger)index == self.highlighted;
     if (highlighted) {
       NSRect selectionRect = NSInsetRect(row, 2, 2);
@@ -1385,8 +1594,10 @@ static void DrawQueryTextTruncated(NSString *text, NSFont *font, NSColor *color,
           [self.helpPageIndicator sizeWithAttributes:commentAttributes].width + 8 : 0;
       CGFloat trailingSpace = lastCandidate ? 40 + indicatorWidth : 8;
       CGFloat commentWidth = self.bounds.size.width - commentX - trailingSpace;
-      DrawQueryTextTruncated(self.comments[index], commentFont,
-          NSColor.secondaryLabelColor, row, commentX, commentWidth);
+      NSUInteger maxLines = MAX(1, 1 + (NSUInteger)lround(
+          (rowHeight - baseRowHeight) / FontLineHeight(commentFont)));
+      DrawQueryTextWrapped(self.comments[index], commentFont,
+          NSColor.secondaryLabelColor, row, commentX, commentWidth, maxLines);
       if (lastCandidate && self.helpPageIndicator.length) {
         CGFloat pageX = self.bounds.size.width - QueryPanelHorizontalPadding() -
             28 - indicatorWidth + 8;
@@ -1467,13 +1678,13 @@ static NSArray<NSArray<NSString *> *> *QueryHelpEntries(void) {
     @[@"⌃B", [NSString stringWithFormat:@"%@ 搜索当前候选", secondaryEngine]],
     @[@"⌃N", @"打开新闻扩展并搜索当前候选"],
     @[@"⌘C", @"复制当前结果信息"],
-    @[@"空格", @"复制当前候选词；取色模式重新取色"],
-    @[@"ucolor:RRGGBB / rgb(...) ", @"支持省略 #；方向键选格式，⌘C复制颜色值"],
-    @[@"utime:时间戳／时区", @"查看本地、目标时区、UTC 与 Unix 秒／毫秒"],
-    @[@"udate:日期..日期", @"计算两个日期相差天数；只给一个日期则与今天比较"],
-    @[@"uconv:数值单位", @"常见长度、质量、体积和温度换算，例如 uconv:5mi"],
-    @[@"颜色取色时 ←↑↓→", @"将采样点移动一个物理像素；点击鼠标确认"],
-    @[@"1–9", @"选择对应序号的候选词"],
+    @[@"空格", @"复制当前候选词；取色时选定颜色或重新取色"],
+    @[@"ucolorRRGGBB / rgb(...) ", @"支持省略 #；方向键选格式，⌘C复制颜色值"],
+    @[@"utime时间戳／时区", @"查看本地、目标时区、UTC 与 Unix 秒／毫秒"],
+    @[@"udate日期..日期", @"计算两个日期相差天数；只给一个日期则与今天比较"],
+    @[@"uconv5 / uconv5mi", @"进入 conv 后输入数字看常用换算；加单位看完整换算"],
+    @[@"颜色取色时 ←↑↓→", @"将采样点移动一个物理像素；按空格选色"],
+    @[@"数字 1–9", @"默认选候选；进入工具关键字后输入数值"],
     @[@"↑ / ↓", @"在帮助视图中翻阅条目页"],
     @[@"PageUp / PageDown", @"翻阅快捷键帮助"],
     @[@"⌘,", @"关闭快捷键帮助"],
@@ -1550,6 +1761,7 @@ static void HideQueryPanel(void) {
   query_help_page = 0;
   query_help_page_count = 1;
   query_panel_position_pinned = NO;
+  query_time_snapshot = nil;
   AdvanceQueryGeneration();
   [query_ip_task cancel];
   query_ip_task = nil;
@@ -1557,10 +1769,14 @@ static void HideQueryPanel(void) {
   query_ip_public_ip = nil;
   query_utility_highlighted = 0;
   query_search_feedback = nil;
+  ++query_color_session_generation;
   query_color_sampler = nil;
   query_color_sample = nil;
   query_color_sampling_active = NO;
   query_color_sampler_started = NO;
+  query_color_confirmation_pending = NO;
+  query_color_cancel_pending = NO;
+  query_panel.level = CGShieldingWindowLevel();
   query_copy_keyup_pending = NO;
   if (query_refresh_source) {
     dispatch_source_cancel(query_refresh_source);
@@ -1623,7 +1839,9 @@ static void StartQueryPermissionWatchdog(void) {
 }
 
 static void ShowQueryContext(void) {
-  if (!query_api || !query_session || !query_panel) return;
+  if (!query_api || !query_session || !query_panel ||
+      query_color_sampling_active) return;
+  if (!IsTimeQuery()) query_time_snapshot = nil;
   if (!IsColorQuery() && !query_color_sampling_active) {
     query_color_sample = nil;
     query_color_sampler_started = NO;
@@ -1655,7 +1873,10 @@ static void ShowQueryContext(void) {
     highlighted = MIN(query_utility_highlighted,
                       (NSInteger)candidates.count - 1);
   else if ([query_text rangeOfCharacterFromSet:
-            NSCharacterSet.decimalDigitCharacterSet].location != NSNotFound)
+            NSCharacterSet.decimalDigitCharacterSet].location != NSNotFound ||
+           [query_text rangeOfCharacterFromSet:
+            [NSCharacterSet characterSetWithCharactersInString:@".-+"]].location !=
+               NSNotFound)
     input = [@"u" stringByAppendingString:query_text];
   if (query_search_feedback) {
     candidates = [NSMutableArray arrayWithObject:query_search_feedback];
@@ -1744,7 +1965,6 @@ static void ShowQueryContext(void) {
   }
   CGFloat commentColumnX = horizontalPadding + 27 + widestCandidate +
       QueryCandidateCommentTabWidth(view.candidateFont);
-  view.commentColumnX = commentColumnX;
   CGFloat candidateContentWidth = 27 + widestCandidate +
       (widestComment > 0 ? QueryCandidateCommentTabWidth(view.candidateFont) +
           widestComment : 0);
@@ -1770,11 +1990,55 @@ static void ShowQueryContext(void) {
       NSMaxX(visible) - query_panel_pinned_top_left.x - 12 :
       visible.size.width - 24;
   CGFloat width = MIN(desiredWidth, MAX(1, maxWidth));
+  if (widestComment > 0) {
+    CGFloat minimumCommentWidth = MIN(140, width * 0.35);
+    commentColumnX = MIN(commentColumnX,
+        width - 40 - indicatorWidth - minimumCommentWidth);
+  }
+  view.commentColumnX = MAX(horizontalPadding + 27, commentColumnX);
+  CGFloat commentLineHeight = FontLineHeight(view.commentFont);
+  NSMutableArray<NSNumber *> *naturalLines = [NSMutableArray array];
+  NSMutableArray<NSNumber *> *visibleLines = [NSMutableArray array];
+  for (NSUInteger index = 0; index < candidates.count; ++index) {
+    BOOL lastCandidate = index + 1 == candidates.count;
+    CGFloat trailingSpace = lastCandidate ? 40 + indicatorWidth : 8;
+    CGFloat commentWidth = width - view.commentColumnX - trailingSpace;
+    NSUInteger lines = QueryWrappedLineCount(comments[index],
+        view.commentFont, commentWidth);
+    [naturalLines addObject:@(lines)];
+    [visibleLines addObject:@1];
+  }
+  CGFloat availablePanelHeight = visible.size.height - 24;
+  CGFloat availableRowsHeight = availablePanelHeight -
+      QueryPanelVerticalPadding() * 2 - inputHeight;
+  NSInteger extraLineBudget = MAX(0, (NSInteger)floor(
+      (availableRowsHeight - rowHeight * candidates.count) / commentLineHeight));
+  BOOL allocated = YES;
+  while (extraLineBudget > 0 && allocated) {
+    allocated = NO;
+    for (NSUInteger index = 0; index < candidates.count && extraLineBudget > 0;
+         ++index) {
+      if (visibleLines[index].unsignedIntegerValue >=
+          naturalLines[index].unsignedIntegerValue) continue;
+      visibleLines[index] = @(visibleLines[index].unsignedIntegerValue + 1);
+      --extraLineBudget;
+      allocated = YES;
+    }
+  }
+  NSMutableArray<NSNumber *> *rowHeights = [NSMutableArray array];
+  CGFloat totalRowsHeight = 0;
+  for (NSNumber *lines in visibleLines) {
+    CGFloat measuredHeight = rowHeight +
+        (lines.unsignedIntegerValue - 1) * commentLineHeight;
+    [rowHeights addObject:@(measuredHeight)];
+    totalRowsHeight += measuredHeight;
+  }
+  view.rowHeights = rowHeights;
   CGFloat height = QueryPanelVerticalPadding() * 2 + inputHeight +
-      MAX(rowHeight, rowHeight * candidates.count);
+      MAX(rowHeight, totalRowsHeight);
+  CGFloat lastRowHeight = rowHeights.lastObject.doubleValue;
   view.helpIconRect = NSMakeRect(width - horizontalPadding - 28,
-      height - QueryPanelVerticalPadding() - inputHeight -
-          rowHeight * candidates.count + (rowHeight - 28) / 2,
+      QueryPanelVerticalPadding() + (lastRowHeight - 28) / 2,
       28, 28);
   [view setFrameSize:NSMakeSize(width, height)];
   [query_panel setContentSize:NSMakeSize(width, height)];
@@ -1782,7 +2046,8 @@ static void ShowQueryContext(void) {
   CGFloat originY;
   if (query_panel_position_pinned) {
     originX = query_panel_pinned_top_left.x;
-    originY = query_panel_pinned_top_left.y - height;
+    originY = MAX(query_panel_pinned_top_left.y - height,
+                  NSMinY(visible) + 12);
   } else {
     originX = MIN(MAX(point.x + 12, NSMinX(visible) + 12),
                   NSMaxX(visible) - width - 12);
@@ -1798,7 +2063,8 @@ static void ShowQueryContext(void) {
   [view setNeedsDisplay:YES];
   [query_panel orderFrontRegardless];
   if (IsBareColorQuery() && !query_color_sampler_started) {
-    dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 350 * NSEC_PER_MSEC),
+                   dispatch_get_main_queue(), ^{
       StartQueryColorSampling();
     });
   }
@@ -1908,8 +2174,8 @@ static void RemoveLastQueryCharacter(void) {
   query_utility_highlighted = 0;
   BOOL completeIP = NO;
   if ([query_text isEqualToString:@"ip"]) ScheduleIPLookup(nil);
-  else if (IPv4QueryStatus(query_text, &completeIP) && completeIP)
-    ScheduleIPLookup(query_text);
+  else if (IPv4QueryStatus(SpecificIPInput(), &completeIP) && completeIP)
+    ScheduleIPLookup(SpecificIPInput());
   RebuildQuerySession();
   ShowQueryContext();
 }
@@ -1947,8 +2213,8 @@ static void PasteQueryText(void) {
     } else {
       BOOL completeIP = NO;
       if ([query_text isEqualToString:@"ip"]) ScheduleIPLookup(nil);
-      else if (IPv4QueryStatus(query_text, &completeIP) && completeIP)
-        ScheduleIPLookup(query_text);
+      else if (IPv4QueryStatus(SpecificIPInput(), &completeIP) && completeIP)
+        ScheduleIPLookup(SpecificIPInput());
     }
     ShowQueryContext();
   }
@@ -2041,22 +2307,77 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
     CGKeyCode keycode = (CGKeyCode)CGEventGetIntegerValueField(
         event, kCGKeyboardEventKeycode);
     NSUInteger flags = CGEventGetFlags(event);
+    BOOL commandDown = (flags & kCGEventFlagMaskCommand) != 0;
+    BOOL optionDown = (flags & kCGEventFlagMaskAlternate) != 0;
+    BOOL controlDown = (flags & kCGEventFlagMaskControl) != 0;
+    BOOL systemEscapeShortcut =
+        (commandDown && (keycode == kVK_Tab || keycode == kVK_Space)) ||
+        (commandDown && optionDown && keycode == kVK_Escape) ||
+        (controlDown && (keycode == kVK_LeftArrow ||
+                         keycode == kVK_RightArrow ||
+                         keycode == kVK_UpArrow ||
+                         keycode == kVK_DownArrow));
+    if (systemEscapeShortcut) return event;
     BOOL plainArrow =
         (flags & (kCGEventFlagMaskCommand | kCGEventFlagMaskControl |
                   kCGEventFlagMaskAlternate | kCGEventFlagMaskShift)) == 0;
+    if (type == kCGEventKeyDown &&
+        (keycode == kVK_Escape || keycode == kVK_Space) &&
+        CGEventGetIntegerValueField(event, kCGKeyboardEventAutorepeat))
+      return NULL;
+    if (keycode == kVK_Escape) {
+      if (type == kCGEventKeyUp) {
+        query_escape_keyup_pending = NO;
+        return NULL;
+      }
+      if (type == kCGEventKeyDown && plainArrow) {
+        query_escape_keyup_pending = YES;
+        query_color_cancel_pending = YES;
+        // Escape supersedes a pending Space confirmation if its click stalled.
+        query_color_confirmation_pending = YES;
+        NSUInteger session = query_color_session_generation;
+        dispatch_async(dispatch_get_main_queue(), ^{
+          if (session == query_color_session_generation)
+            ConfirmColorSampleAtCursor();
+        });
+        return NULL;
+      }
+      return event;
+    }
+    if (keycode == kVK_Space) {
+      if (type == kCGEventKeyUp) query_space_keyup_pending = NO;
+      if (type == kCGEventKeyDown && plainArrow) {
+        query_color_cancel_pending = NO;
+        // Arrow keys only position the sampler; physical Space selects once.
+        query_color_confirmation_pending = YES;
+        query_space_keyup_pending = YES;
+        NSUInteger session = query_color_session_generation;
+        dispatch_async(dispatch_get_main_queue(), ^{
+          if (session == query_color_session_generation)
+            ConfirmColorSampleAtCursor();
+        });
+      }
+      return NULL;
+    }
     if (type == kCGEventKeyDown && plainArrow &&
         (keycode == kVK_LeftArrow || keycode == kVK_RightArrow ||
          keycode == kVK_UpArrow || keycode == kVK_DownArrow)) {
       CGPoint eventPosition = CGEventGetLocation(event);
+      NSUInteger session = query_color_session_generation;
       dispatch_async(dispatch_get_main_queue(), ^{
-        if (query_color_sampling_active)
+        if (session == query_color_session_generation &&
+            query_color_sampling_active && !query_color_confirmation_pending)
           MoveColorSampleCursor(keycode, eventPosition);
       });
       return NULL;
     }
-    // Let the system sampler handle Escape to cancel; keep other keystrokes
-    // from leaking into the app underneath while the picker is active.
-    return keycode == kVK_Escape ? event : NULL;
+    // Keep ordinary keystrokes from leaking into the app underneath.
+    return NULL;
+  }
+  if (type == kCGEventMouseMoved && query_color_sampling_active) {
+    query_color_cursor_position = CGEventGetLocation(event);
+    query_color_cursor_position_valid = YES;
+    return event;
   }
   if (type == kCGEventKeyUp) {
     CGKeyCode released = (CGKeyCode)CGEventGetIntegerValueField(
@@ -2085,8 +2406,9 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
       query_help_keyup_pending = NO;
       return NULL;
     }
-    if (query_number_keyup_pending && released == query_number_keyup_code) {
-      query_number_keyup_pending = NO;
+    if (released < 64 &&
+        (query_number_keyup_pending & (UINT64_C(1) << released))) {
+      query_number_keyup_pending &= ~(UINT64_C(1) << released);
       return NULL;
     }
     if (query_active && query_help_visible) return NULL;
@@ -2094,7 +2416,12 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
   }
   if (type == kCGEventLeftMouseDown || type == kCGEventRightMouseDown ||
       type == kCGEventOtherMouseDown) {
-    if (query_color_sampling_active) return event;
+    if (query_color_sampling_active) {
+      if (CGEventGetIntegerValueField(event, kCGEventSourceUserData) !=
+          kQueryColorSyntheticClickMarker)
+        query_color_cancel_pending = NO;
+      return event;
+    }
     if (!query_active) query_prefix_armed = YES;
     if (type == kCGEventLeftMouseDown && query_active && query_panel &&
         query_panel.visible) {
@@ -2118,6 +2445,9 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
   NSUInteger flags = CGEventGetFlags(event);
   CGKeyCode keycode = (CGKeyCode)CGEventGetIntegerValueField(
       event, kCGKeyboardEventKeycode);
+  if (query_active && keycode == kVK_Space && query_space_keyup_pending &&
+      CGEventGetIntegerValueField(event, kCGKeyboardEventAutorepeat))
+    return NULL;
   if (query_active && keycode == kVK_ANSI_Comma &&
       (flags & kCGEventFlagMaskCommand) &&
       !(flags & (kCGEventFlagMaskControl | kCGEventFlagMaskAlternate |
@@ -2141,7 +2471,6 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
                 kCGEventFlagMaskAlternate | kCGEventFlagMaskShift)) == 0) {
     query_space_keyup_pending = YES;
     dispatch_async(dispatch_get_main_queue(), ^{
-      query_color_sample = nil;
       query_color_sampler_started = NO;
       StartQueryColorSampling();
     });
@@ -2211,8 +2540,14 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
     HideQueryPanel();
     return NULL;
   }
-  if ((flags & (kCGEventFlagMaskCommand | kCGEventFlagMaskControl |
-                kCGEventFlagMaskAlternate)) != 0) return event;
+  if (flags & (kCGEventFlagMaskCommand | kCGEventFlagMaskControl)) return event;
+  if (flags & kCGEventFlagMaskAlternate) {
+    UniChar optionCharacters[4] = {0};
+    UniCharCount optionLength = 0;
+    CGEventKeyboardGetUnicodeString(event, 4, &optionLength, optionCharacters);
+    if (!query_active || !IsKeywordInputMode() || optionLength != 1 ||
+        optionCharacters[0] != 0x00b0) return event;
+  }
   if (query_active && keycode == kVK_Delete) {
     dispatch_async(dispatch_get_main_queue(), ^{
       RemoveLastQueryCharacter();
@@ -2263,25 +2598,20 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
   if (!length) return event;
 
   unichar character = characters[0];
-  BOOL plainNumber = character >= '1' && character <= '9' &&
-      (flags & (kCGEventFlagMaskCommand | kCGEventFlagMaskControl |
-                kCGEventFlagMaskAlternate | kCGEventFlagMaskShift)) == 0;
-  if (query_active && plainNumber && !query_text.length) {
+  BOOL plainDigit = character >= '0' && character <= '9' &&
+      !(flags & (kCGEventFlagMaskCommand | kCGEventFlagMaskControl |
+                 kCGEventFlagMaskAlternate | kCGEventFlagMaskShift));
+  if (query_active && plainDigit && !IsKeywordInputMode()) {
+    if (keycode < 64)
+      query_number_keyup_pending |= UINT64_C(1) << keycode;
     NSInteger rowIndex = (NSInteger)(character - '1');
-    NSInteger utilityCount = QueryUtilityCandidateCount();
-    RimeContext_stdbool context = {0};
-    RIME_STRUCT_INIT(RimeContext_stdbool, context);
-    BOOL hasContext = query_api->get_context(query_session, &context);
-    NSInteger rowCount = utilityCount > 0 ? utilityCount :
-        (hasContext ? MIN(context.menu.num_candidates, 9) : 0);
-    if (rowIndex < rowCount) {
-      query_number_keyup_pending = YES;
-      query_number_keyup_code = keycode;
-      if (hasContext) query_api->free_context(&context);
-      dispatch_async(dispatch_get_main_queue(), ^{
-        if (QueryUtilityCandidateCount() > 0) {
-          query_utility_highlighted = rowIndex;
-        } else {
+    if (character != '0') {
+      RimeContext_stdbool context = {0};
+      RIME_STRUCT_INIT(RimeContext_stdbool, context);
+      BOOL hasContext = query_api->get_context(query_session, &context);
+      NSInteger rowCount = hasContext ? MIN(context.menu.num_candidates, 9) : 0;
+      if (rowIndex < rowCount) {
+        dispatch_async(dispatch_get_main_queue(), ^{
           RimeContext_stdbool current = {0};
           RIME_STRUCT_INIT(RimeContext_stdbool, current);
           if (query_api->get_context(query_session, &current)) {
@@ -2293,12 +2623,12 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
                                               (size_t)selectedIndex);
             query_api->free_context(&current);
           }
-        }
-        ShowQueryContext();
-      });
-      return NULL;
+          ShowQueryContext();
+        });
+      }
+      if (hasContext) query_api->free_context(&context);
     }
-    if (hasContext) query_api->free_context(&context);
+    return NULL;
   }
   if (!query_active && character >= 0x20 && character != 0x7f) {
     if (character == 'u' && !query_prefix_armed) return event;
@@ -2328,9 +2658,14 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
     return StartQuery() ? NULL : event;
   }
   if (!query_active) return event;
-  if ((character >= 'a' && character <= 'z') || character == ' ' ||
-      (character >= '0' && character <= '9') || character == '.' ||
-      character == '+' || character == '-') {
+  BOOL keywordInput = IsKeywordInputMode();
+  if ((character >= 'a' && character <= 'z') ||
+      (keywordInput && ((character >= 0x21 && character <= 0x7e) ||
+                        character == 0x00b0))) {
+    if (character >= '0' && character <= '9') {
+      if (keycode < 64)
+        query_number_keyup_pending |= UINT64_C(1) << keycode;
+    }
     dispatch_async(dispatch_get_main_queue(), ^{
       query_search_feedback = nil;
       [query_text appendFormat:@"%C", character];
@@ -2356,8 +2691,8 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
       }
       BOOL completeIP = NO;
       if ([query_text isEqualToString:@"ip"]) ScheduleIPLookup(nil);
-      else if (IPv4QueryStatus(query_text, &completeIP) && completeIP)
-        ScheduleIPLookup(query_text);
+      else if (IPv4QueryStatus(SpecificIPInput(), &completeIP) && completeIP)
+        ScheduleIPLookup(SpecificIPInput());
       else {
         [query_ip_task cancel];
         query_ip_task = nil;
@@ -2414,6 +2749,7 @@ static void InstallQueryBridge(void) {
 
   CGEventMask mask = CGEventMaskBit(kCGEventKeyDown) |
       CGEventMaskBit(kCGEventKeyUp) |
+      CGEventMaskBit(kCGEventMouseMoved) |
       CGEventMaskBit(kCGEventLeftMouseDown) |
       CGEventMaskBit(kCGEventRightMouseDown) |
       CGEventMaskBit(kCGEventOtherMouseDown);
