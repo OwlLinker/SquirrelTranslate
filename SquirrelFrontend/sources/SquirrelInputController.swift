@@ -27,7 +27,6 @@ final class SquirrelInputController: IMKInputController {
   private var chordTimer: Timer?
   private var chordDuration: TimeInterval = 0
   private var currentApp: String = ""
-  private var consumedNewsKeyUp: (keyCode: UInt16, at: TimeInterval)?
   private var consumedHelpKeyUp: (keyCode: UInt16, at: TimeInterval)?
 
   // swiftlint:disable:next cyclomatic_complexity
@@ -119,11 +118,6 @@ final class SquirrelInputController: IMKInputController {
         if rimeKeycode != 0 {
           let rimeModifiers = SquirrelKeycode.osxModifiersToRime(modifiers: modifiers)
           handled = processKey(rimeKeycode, modifiers: rimeModifiers)
-          if handled, modifiers.contains(.control),
-             modifiers.intersection([.command, .option, .shift]).isEmpty,
-             keyChars?.lowercased() == "n" {
-            consumedNewsKeyUp = (keyCode, ProcessInfo.processInfo.systemUptime)
-          }
           if handled, isHelpShortcut {
             consumedHelpKeyUp = (keyCode, ProcessInfo.processInfo.systemUptime)
           }
@@ -141,16 +135,6 @@ final class SquirrelInputController: IMKInputController {
           consumedHelpKeyUp = nil
         }
       }
-      if let pending = consumedNewsKeyUp {
-        let elapsed = ProcessInfo.processInfo.systemUptime - pending.at
-        if event.keyCode == pending.keyCode {
-          consumedNewsKeyUp = nil
-          handled = elapsed <= 1.0
-        } else if elapsed > 1.0 {
-          consumedNewsKeyUp = nil
-        }
-      }
-
     default:
       break
     }

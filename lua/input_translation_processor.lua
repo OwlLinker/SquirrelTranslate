@@ -133,7 +133,6 @@ local function settings(env)
         search_url = "https://www.google.com/search?q={query}",
         secondary_search_key = "Control+b",
         secondary_search_url = "https://www.bing.com/search?q={query}",
-        news_key = "Control+n",
         show_all_hints_key = "Super+comma",
         target_language = "en",
     }
@@ -164,7 +163,6 @@ local function settings(env)
         if valid_search_url(secondary_search_url) then
             result.secondary_search_url = secondary_search_url
         end
-        result.news_key = config:get_string("translation/news_key") or result.news_key
         result.show_all_hints_key = config:get_string("translation/show_all_hints_key") or result.show_all_hints_key
         result.target_language = config:get_string("translation/target_language") or result.target_language
     end
@@ -182,7 +180,6 @@ local function processor(key, env)
     local commit_translation_key = configured.commit_translation_key
     local phonetic_toggle_key = configured.phonetic_toggle_key
     local search_key = configured.search_key
-    local news_key = configured.news_key
     local show_all_hints_key = configured.show_all_hints_key
     local target_language = configured.target_language
 
@@ -321,16 +318,6 @@ local function processor(key, env)
         local template = search_engine_override("secondary") or
             configured.secondary_search_url
         local url = template:gsub("{query}", function() return query end)
-        open_url(url)
-        return kAccepted
-    end
-
-    if key_matches(key, news_key) then
-        -- Consume both key-down and key-up so the foreground app cannot also
-        -- act on the same shortcut. Trigger the URL only once, on key-down.
-        if key:release() then return kAccepted end
-        local url = "chrome-extension://ggdjphniobpobmofgoimigpdcefmljed/news/news.html?q=" ..
-            url_encode(candidate.text)
         open_url(url)
         return kAccepted
     end

@@ -374,7 +374,7 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"开启或关闭候选翻译": @"Toggle candidate translations", @"朗读当前候选的译文": @"Speak the selected translation",
         @"上屏当前候选的译文": @"Commit the selected translation", @"展开或收起当前候选的完整翻译": @"Expand or collapse the full translation",
         @"开启或关闭音标显示": @"Toggle phonetic display", @"用默认搜索引擎搜索当前候选": @"Search with the default engine",
-        @"用第二搜索引擎搜索当前候选": @"Search with the second engine", @"打开新闻扩展并搜索当前候选": @"Search with the news extension",
+        @"用第二搜索引擎搜索当前候选": @"Search with the second engine",
         @"复制当前结果信息": @"Copy the selected result", @"复制当前候选词；取色时选定颜色或重新取色": @"Copy candidate; confirm or resume color sampling",
         @"关闭快捷键帮助": @"Close shortcut help", @"打开或关闭本帮助": @"Toggle this help",
         @"上一页／下一页；每页最多 9 条": @"Previous/next page; up to 9 rows per page",
@@ -434,7 +434,7 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"开启或关闭候选翻译": @"후보 번역 켜기/끄기", @"朗读当前候选的译文": @"선택한 번역 읽기", @"上屏当前候选的译文": @"선택한 번역 입력",
         @"展开或收起当前候选的完整翻译": @"전체 번역 펼치기/접기", @"开启或关闭音标显示": @"발음기호 표시 켜기/끄기",
         @"用默认搜索引擎搜索当前候选": @"기본 검색 엔진으로 검색", @"用第二搜索引擎搜索当前候选": @"두 번째 검색 엔진으로 검색",
-        @"打开新闻扩展并搜索当前候选": @"뉴스 확장 프로그램에서 검색", @"复制当前结果信息": @"현재 결과 정보 복사",
+        @"复制当前结果信息": @"현재 결과 정보 복사",
         @"复制当前候选词；取色时选定颜色或重新取色": @"후보 복사; 색상 선택 또는 다시 샘플링", @"关闭快捷键帮助": @"단축키 도움말 닫기",
         @"打开或关闭本帮助": @"도움말 열기/닫기", @"上一页／下一页；每页最多 9 条": @"이전/다음 페이지 (최대 9개)",
         @"移动选择候选词或帮助条目；到页边缘自动跨页": @"후보/도움말 이동; 가장자리에서 페이지 전환", @"数字和标点": @"숫자와 문장 부호",
@@ -490,7 +490,7 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"开启或关闭候选翻译": @"候補翻訳の切り替え", @"朗读当前候选的译文": @"選択した訳を読み上げる", @"上屏当前候选的译文": @"選択した訳を入力",
         @"展开或收起当前候选的完整翻译": @"訳文全体の表示／折りたたみ", @"开启或关闭音标显示": @"発音記号表示の切り替え",
         @"用默认搜索引擎搜索当前候选": @"既定の検索エンジンで検索", @"用第二搜索引擎搜索当前候选": @"第2検索エンジンで検索",
-        @"打开新闻扩展并搜索当前候选": @"ニュース拡張機能で検索", @"复制当前结果信息": @"現在の結果をコピー",
+        @"复制当前结果信息": @"現在の結果をコピー",
         @"复制当前候选词；取色时选定颜色或重新取色": @"候補をコピー；色を確定／再サンプリング", @"关闭快捷键帮助": @"ショートカットヘルプを閉じる",
         @"打开或关闭本帮助": @"ヘルプの表示切り替え", @"上一页／下一页；每页最多 9 条": @"前／次のページ（最大9件）",
         @"移动选择候选词或帮助条目；到页边缘自动跨页": @"候補やヘルプ項目を移動；端でページ切り替え", @"数字和标点": @"数字と句読点",
@@ -532,7 +532,7 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"开启或关闭候选翻译": @"開啟或關閉候選翻譯", @"朗读当前候选的译文": @"朗讀目前候選詞的譯文", @"上屏当前候选的译文": @"輸入目前候選詞的譯文",
         @"展开或收起当前候选的完整翻译": @"展開或收合目前候選詞的完整翻譯", @"开启或关闭音标显示": @"開啟或關閉音標顯示",
         @"用默认搜索引擎搜索当前候选": @"使用預設搜尋引擎搜尋目前候選詞", @"用第二搜索引擎搜索当前候选": @"使用第二搜尋引擎搜尋目前候選詞",
-        @"打开新闻扩展并搜索当前候选": @"開啟新聞擴充功能並搜尋目前候選詞", @"复制当前结果信息": @"複製目前結果資訊",
+        @"复制当前结果信息": @"複製目前結果資訊",
         @"复制当前候选词；取色时选定颜色或重新取色": @"複製目前候選詞；取色時確認或重新取色", @"关闭快捷键帮助": @"關閉快速鍵說明", @"打开或关闭本帮助": @"開啟或關閉本說明",
         @"umaxwidth数字": @"umaxwidth數字", @"ufloorheight数字": @"ufloorheight數字",
         @"设置楼层估算使用的层高（2–12 m，默认 3.0 m）": @"設定樓層估算層高（2–12 m，預設 3.0 m）",
@@ -1169,25 +1169,6 @@ static void OpenQuerySearch(CGKeyCode keycode) {
                                                               withString:QueryURLEncode(candidate)];
   NSURL *url = [NSURL URLWithString:urlString];
   if (url) [[NSWorkspace sharedWorkspace] openURL:url];
-}
-
-static void OpenQueryNews(void) {
-  NSString *candidate = SelectedQueryCandidate();
-  if (!candidate.length) return;
-
-  NSString *url = [NSString stringWithFormat:
-      @"chrome-extension://ggdjphniobpobmofgoimigpdcefmljed/news/news.html?q=%@",
-      QueryURLEncode(candidate)];
-  NSString *helper = [[NSHomeDirectory()
-      stringByAppendingPathComponent:@"Library/Rime/bin"]
-      stringByAppendingPathComponent:@"squirrel-open-url"];
-  if (![[NSFileManager defaultManager] isExecutableFileAtPath:helper]) return;
-  NSTask *task = [[NSTask alloc] init];
-  task.executableURL = [NSURL fileURLWithPath:helper];
-  task.arguments = @[url];
-  task.standardOutput = [NSFileHandle fileHandleWithNullDevice];
-  task.standardError = [NSFileHandle fileHandleWithNullDevice];
-  [task launchAndReturnError:nil];
 }
 
 static NSString *QueryMarkerPath(void) {
@@ -3817,7 +3798,7 @@ static NSInteger QueryPagingDirectionForEvent(CGEventRef event, CGKeyCode keycod
   if (!(flags & (kCGEventFlagMaskShift | kCGEventFlagMaskControl |
                  kCGEventFlagMaskAlternate | kCGEventFlagMaskCommand)) &&
       (QueryPageDirection(keycode) || QueryRowDirection(keycode))) return 0;
-  // Dedicated U shortcuts retain priority over schema-configured bindings.
+  // Search shortcuts and the unassigned Ctrl+N key pass through schema paging.
   if ((flags & kCGEventFlagMaskControl) &&
       (keycode == kVK_ANSI_G || keycode == kVK_ANSI_B || keycode == kVK_ANSI_N)) return 0;
   if ((flags & kCGEventFlagMaskCommand) && keycode == kVK_ANSI_V) return 0;
@@ -3876,7 +3857,6 @@ static NSArray<NSArray<NSString *> *> *QueryHelpEntries(void) {
     @[@"⇧P", @"开启或关闭音标显示"],
     @[@"⌃G", [NSString stringWithFormat:@"%@ 搜索当前候选", defaultEngine]],
     @[@"⌃B", [NSString stringWithFormat:@"%@ 搜索当前候选", secondaryEngine]],
-    @[@"⌃N", @"打开新闻扩展并搜索当前候选"],
     @[@"⌘C", @"复制当前结果信息"],
     @[@"空格", @"复制当前候选词；取色时选定颜色或重新取色"],
     @[@"ucolorRRGGBB / rgb(...) ", @"支持省略 #；方向键选格式，⌘C复制颜色值"],
@@ -4834,14 +4814,6 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
                  kCGEventFlagMaskShift))) {
     query_search_keyup_pending = keycode;
     dispatch_async(dispatch_get_main_queue(), ^{ OpenQuerySearch(keycode); });
-    return NULL;
-  }
-  if (query_active && keycode == kVK_ANSI_N &&
-      (flags & kCGEventFlagMaskControl) &&
-      !(flags & (kCGEventFlagMaskCommand | kCGEventFlagMaskAlternate |
-                 kCGEventFlagMaskShift))) {
-    query_search_keyup_pending = keycode;
-    dispatch_async(dispatch_get_main_queue(), ^{ OpenQueryNews(); });
     return NULL;
   }
   if (query_active && keycode == kVK_Escape &&

@@ -8,7 +8,7 @@
 - 额外工具：`ucolorRRGGBB`／`ucolorrgb(...)` 格式转换，`utime<时间戳或时区>`、`udate<YYYYMMDD>` 或 `udate<日期>..<日期>`、`uconv<数值和单位>`。常见长度／质量／体积／温度／压力，以及电压／电流／功率／电阻／电能／频率／电容／电感／电荷均在本地换算；例如 `uconv220v`、`uconv2a`、`uconv500w`、`uconv10kohm`、`uconv1kwh`。单位别名通常大小写不敏感；`mW`/`MW`、`mWh`/`MWh` 等有大小写含义的符号遵从 SI 写法，英文全称不区分大小写。货币换算需要网络参考汇率，单日期显示过去／剩余天数，两个紧凑日期可用点、连字符或空格分隔。
 - 查询专用异步调度、去重、取消和有界缓存：`src/query_translation_service.cc`、`src/query_translation_service.h`。
 - macOS 系统词典、Google、Bing、DeepL 官方 API：`src/public_translation_providers.cc`、`src/public_translation_providers.h`、`src/json_string.h`。
-- 新闻扩展 URL 启动辅助程序：`src/squirrel_open_url.m`。
+- 默认浏览器搜索 URL 启动辅助程序：`src/squirrel_open_url.m`。
 - 号段数据及其许可：`resources/phone-region-phone.dat`、`resources/phone-region-LICENSE.txt`。
 - 构建与安装：`CMakeLists.txt`、`scripts/build.sh`、`scripts/install_query_bridge.sh`、`scripts/sign_squirrel.sh`。
 

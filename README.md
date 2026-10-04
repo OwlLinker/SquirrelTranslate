@@ -34,7 +34,6 @@
 | `⇧^` | 展开／收起当前候选的完整释义和对应音标 |
 | `⇧P` | 开启／关闭音标显示 |
 | `⌃G` / `⌃B` | 用当前默认／第二搜索引擎搜索高亮候选 |
-| `⌃N` | 在系统默认浏览器中打开新闻扩展并搜索高亮候选 |
 | `⌘,` | 打开／关闭快捷键帮助 |
 
 中文候选默认翻译为英文，英文候选翻译为中文；英文结果有音标时一并显示。Emoji 名称使用本机数据，不发送给在线翻译服务。候选编号和翻页按键由鼠须管当前输入方案决定。默认搜索引擎为 Google，第二搜索引擎为 Bing。搜索 URL 可通过 Rime 方案配置；也可在 U 面板输入 `u<引擎>1` 设置 `⌃G`，输入 `u<引擎>2` 设置 `⌃B`，例如 `ubing1`、`ugoogle2`、`ubaidu2`。支持 Google、Bing、百度、DuckDuckGo、Yahoo、Brave、搜狗和 Yandex；更改会保存在用户配置中。
@@ -185,7 +184,7 @@ security find-identity -v -p codesigning
 ./native/scripts/build.sh
 ```
 
-脚本构建进程内查询桥、公开翻译提供者和新闻 URL 辅助程序，产物位于 `native/build/out/`。如果鼠须管不在默认位置，构建时也指定其完整路径：
+脚本构建进程内查询桥、公开翻译提供者和默认浏览器搜索 URL 辅助程序，产物位于 `native/build/out/`。如果鼠须管不在默认位置，构建时也指定其完整路径：
 
 ```bash
 SQUIRREL_APP="/完整路径/Squirrel.app" ./native/scripts/build.sh

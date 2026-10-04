@@ -34,7 +34,6 @@ These shortcuts work while the Squirrel candidate panel is visible. Normal text 
 | `⇧^` | Expand or collapse the full definition and phonetics |
 | `⇧P` | Toggle phonetic display |
 | `⌃G` / `⌃B` | Search the selected candidate with the default / secondary engine |
-| `⌃N` | Search the selected candidate in the news extension via the default browser |
 | `⌘,` | Toggle shortcut help |
 
 Chinese candidates translate to English and English candidates to Chinese; phonetics appear when available. Emoji names come from local data and are not sent to online translation services. Candidate numbering and paging follow the active Squirrel schema. Google and Bing are the default and secondary search engines. Configure engines with `u<engine>1` for `⌃G` and `u<engine>2` for `⌃B` (for example, `ubing1`, `ugoogle2`, `ubaidu2`). Supported engines: Google, Bing, Baidu, DuckDuckGo, Yahoo, Brave, Sogou, and Yandex. Settings are saved locally.

@@ -148,9 +148,9 @@ opened = nil
 assert(processor(key("Control+g"), environment(nil, "你好", false)) == kNoop)
 assert(processor(key("a"), environment(nil)) == kNoop)
 assert(opened == nil, "search must only run with candidates and its configured shortcut")
-assert(processor(key("Control+Shift+G"), environment("https://www.bing.com/?q={query}")) == kAccepted)
-assert(opened:find("chrome-extension://ggdjphniobpobmofgoimigpdcefmljed/news/news.html?q=" .. encoded, 1, true),
-    "search engine settings must not change the news extension")
+assert(processor(key("Control+n"), environment(nil, "你好")) == kNoop,
+    "the public processor must not consume the unpublished news shortcut")
+assert(opened == nil, "the public processor must not open an unpublished extension")
 local phonetic_env = environment(nil)
 assert(processor(key("Shift+p"), phonetic_env) == kAccepted,
     "Shift+P should toggle phonetic display")
@@ -219,4 +219,4 @@ type_letters("unihao")
 assert(query_context.input == "unihao", "ordinary input fields must not consume a prefix")
 assert(_G.kAccepted == nil and _G.kNoop == nil, "constants must stay module-local")
 os.execute = original_execute
-print("PASS: explicit processor results, retained lone-u candidates, helper-only prefix, intact nihao/shuru/uU, Escape/repeat/English/native-editor guards, ordered engines, query encoding, config cache, candidate gate, unchanged news URL")
+print("PASS: explicit processor results, retained lone-u candidates, helper-only prefix, intact nihao/shuru/uU, Escape/repeat/English/native-editor guards, ordered engines, query encoding, config cache, candidate gate, unpublished news shortcut omitted")
