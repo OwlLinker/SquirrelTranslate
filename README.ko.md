@@ -4,16 +4,6 @@ macOS의 Squirrel(Rime)을 위한 번역 및 빠른 검색 패널입니다. 후�
 
 언어: [简体中文](./README.md) · [繁體中文](./README.zh-Hant.md) · [English](./README.en.md) · [한국어](./README.ko.md) · [日本語](./README.ja.md)
 
-## 사전 빌드 미리보기 v0.1.0-preview.1
-
-[macOS Universal 패키지 다운로드](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.1/SquirrelTranslate-v0.1.0-preview.1-macos-universal-preview.zip) (arm64 / x86_64, 3.06 MB). 공개 쿼리 브리지, URL 도우미, 설치 스크립트, 문서 및 사전 빌드 결과물이 포함되며 비공개 번역 통합은 포함되지 않습니다.
-
-이 패키지는 Apple Developer ID 서명 및 공증을 받지 않았으며 설치 시 macOS 보안 경고가 표시될 수 있습니다. 설치하려면 유효하고 안정적인 로컬 코드 서명 ID가 필요합니다. 관련 기능 사용 시 Squirrel의 손쉬운 사용 권한을 요청할 수 있습니다. 아카이브에 포함된 README의 설치 안내를 따르세요.
-
-빌드 환경: macOS 26.6.2 (Apple Silicon). 검증한 입력기: Squirrel 1.1.2. 패키지에는 arm64 및 x86_64 바이너리가 포함되어 있지만 다른 macOS, Squirrel, Rime 스키마 조합의 종단 간 호환성은 검증되지 않았습니다. 공개 빌드, 단위 변환 테스트, 공개 제공자 파서 테스트를 통과했습니다.
-
-SHA-256: `3639568e53f809a933b8c48068639ae6470bc7652d71e3fa61b48c260d3cd733`
-
 ## 핵심 기능 데모
 
 아래 애니메이션은 U 패널 디자인을 바탕으로 한 사용 예시이며 실제 화면 녹화가 아닙니다. 전화번호와 로컬/공인 IP는 가렸고, 지정 IP 예시는 `8.8.8.8` 조회 결과를 보여줍니다.
@@ -112,6 +102,12 @@ Squirrel 간체 중국어 입력 소스가 활성화되어 있고 편집 가능�
 
 ## 설치
 
-필수 도구, 로컬 코드 서명, 설치, 손쉬운 사용 권한, 번역 제공자 설정 및 문제 해결은 중국어 [상세 설치 안내](./README.md#安装-u-面板)를 참고하세요.
+### 사전 빌드 미리보기 v0.1.0-preview.1
 
-위 v0.1.0-preview.1 패키지를 사용하면 빌드 도구 준비와 4단계를 건너뛰고 설치 명령부터 진행할 수 있습니다. 원클릭 설치 프로그램은 아니므로 설치 전에 위의 서명, 공증 및 호환성 안내를 확인하세요.
+[macOS Universal 패키지 다운로드](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.1/SquirrelTranslate-v0.1.0-preview.1-macos-universal-preview.zip) (arm64 / x86_64, 3.06 MB). 공개 쿼리 브리지, URL 도우미, 설치 스크립트, 문서 및 사전 빌드 결과물이 포함되며 비공개 번역 통합은 포함되지 않습니다.
+
+Apple Developer ID 서명과 공증은 없습니다. macOS 보안 경고가 표시될 수 있습니다. 설치하려면 유효하고 안정적인 로컬 코드 서명 ID가 필요하며 Squirrel 손쉬운 사용 권한을 요청할 수 있습니다. macOS 26.6.2 (Apple Silicon)에서 빌드하고 Squirrel 1.1.2에서 검증했습니다. arm64 및 x86_64 바이너리를 포함하지만 다른 macOS, Squirrel, Rime 스키마 조합은 검증되지 않았습니다. 공개 빌드, 단위 변환 및 공개 제공자 파서 테스트를 통과했습니다.
+
+SHA-256: `3639568e53f809a933b8c48068639ae6470bc7652d71e3fa61b48c260d3cd733`
+
+**설치 순서:** ZIP을 다운로드해 압축을 푼 다음 중국어 [상세 설치 안내](./README.md#安装-u-面板)를 따르세요. 환경 확인, 서명 ID 준비, 기존 독립 입력 바 종료(사용 중인 경우) 후 빌드 도구 준비와 4단계(빌드)만 건너뛰고 5단계(설치), 권한 설정 및 확인을 진행합니다. 압축을 푼 프로젝트 폴더에서 명령을 실행하세요. 원클릭 설치 프로그램이 아닙니다.
