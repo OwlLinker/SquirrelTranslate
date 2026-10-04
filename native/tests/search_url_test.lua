@@ -1,6 +1,12 @@
 -- No browser, network, user configuration, clipboard or request-file access.
+local phonetic_state
 package.preload.input_translation_state = function()
-    return { set_composition_visible = function() end }
+    phonetic_state = { phonetic_toggles = 0 }
+    function phonetic_state.set_composition_visible() end
+    function phonetic_state.toggle_phonetic()
+        phonetic_state.phonetic_toggles = phonetic_state.phonetic_toggles + 1
+    end
+    return phonetic_state
 end
 -- Real librime-lua does not define these globals. Do not mask a processor
 -- returning nil instead of its explicit consume/pass-through result.
@@ -145,6 +151,13 @@ assert(opened == nil, "search must only run with candidates and its configured s
 assert(processor(key("Control+Shift+G"), environment("https://www.bing.com/?q={query}")) == kAccepted)
 assert(opened:find("chrome-extension://ggdjphniobpobmofgoimigpdcefmljed/news/news.html?q=" .. encoded, 1, true),
     "search engine settings must not change the news extension")
+local phonetic_env = environment(nil)
+assert(processor(key("Shift+p"), phonetic_env) == kAccepted,
+    "Shift+P should toggle phonetic display")
+assert(phonetic_state.phonetic_toggles == 1)
+assert(processor(key("Control+Shift+p"), phonetic_env) == kNoop,
+    "the old Control+Shift+P shortcut should no longer be active")
+assert(phonetic_state.phonetic_toggles == 1)
 local help = require("input_translation_help")
 assert(help.page_count(9) == 2, "the help list should paginate with the standard page size")
 local help_env = environment(nil)

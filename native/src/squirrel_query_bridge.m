@@ -2759,7 +2759,7 @@ static NSArray<NSArray<NSString *> *> *QueryHelpEntries(void) {
     @[@"⌃P", @"朗读当前候选的译文"],
     @[@"⌃Y", @"上屏当前候选的译文"],
     @[@"⇧^", @"展开或收起当前候选的完整翻译"],
-    @[@"⌃⇧P", @"开启或关闭音标显示"],
+    @[@"⇧P", @"开启或关闭音标显示"],
     @[@"⌃G", [NSString stringWithFormat:@"%@ 搜索当前候选", defaultEngine]],
     @[@"⌃B", [NSString stringWithFormat:@"%@ 搜索当前候选", secondaryEngine]],
     @[@"⌃N", @"打开新闻扩展并搜索当前候选"],

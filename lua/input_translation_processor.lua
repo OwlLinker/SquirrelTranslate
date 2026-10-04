@@ -128,7 +128,7 @@ local function settings(env)
         toggle_key = "Control+t",
         speak_key = "Control+p",
         commit_translation_key = "Control+y",
-        phonetic_toggle_key = "Control+Shift+p",
+        phonetic_toggle_key = "Shift+p",
         search_key = "Control+g",
         search_url = "https://www.google.com/search?q={query}",
         secondary_search_key = "Control+b",
