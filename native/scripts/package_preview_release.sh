@@ -46,7 +46,8 @@ for artifact in \
     echo "Missing release artifact: $artifact" >&2
     exit 1
   fi
-  lipo "$artifact" -verify_arch arm64 x86_64
+  lipo -verify_arch arm64 "$artifact"
+  lipo -verify_arch x86_64 "$artifact"
 done
 
 mkdir -p "$output_dir"
