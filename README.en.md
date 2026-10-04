@@ -4,6 +4,16 @@ A translation and quick-lookup panel for Squirrel (Rime) on macOS. It provides c
 
 Languages: [简体中文](./README.md) · [繁體中文](./README.zh-Hant.md) · [English](./README.en.md) · [한국어](./README.ko.md) · [日本語](./README.ja.md)
 
+## Prebuilt preview: v0.1.0-preview.1
+
+[Download the macOS Universal package](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.1/SquirrelTranslate-v0.1.0-preview.1-macos-universal-preview.zip) (arm64 / x86_64, 3.06 MB). It includes the public query bridge, URL helper, installation scripts, documentation, and prebuilt outputs. Private translation integration is excluded.
+
+The package is not signed with an Apple Developer ID and is not notarized; macOS may show security warnings during installation. Installation requires a valid, stable local code-signing identity. macOS may request Accessibility permission for related Squirrel features. Follow the README included in the archive.
+
+Build environment: macOS 26.6.2 (Apple Silicon). Verified input method: Squirrel 1.1.2. The package contains arm64 and x86_64 binaries; end-to-end compatibility has not been verified across other macOS, Squirrel, or Rime schema versions. The public build, unit conversion tests, and public provider parser tests passed.
+
+SHA-256: `3639568e53f809a933b8c48068639ae6470bc7652d71e3fa61b48c260d3cd733`
+
 ## Core feature demos
 
 These illustrative animations follow the U panel design and are not live recordings. Phone numbers and local/public IP addresses are masked; the specified-IP example shows the lookup for `8.8.8.8`.
@@ -104,4 +114,4 @@ Passing a build or unit test does not establish end-to-end compatibility on an u
 
 See the detailed [installation instructions](./README.md#安装-u-面板) in Chinese. They cover prerequisites, local code signing, installation, Accessibility permission, provider setup, and troubleshooting.
 
-If a prebuilt preview ZIP is available from GitHub Releases, you can skip build-tool setup and the build step. The archive contains public artifacts only and excludes private translation source. It is not Developer ID-signed or notarized; installation still requires a valid stable local signing identity and may show macOS security prompts. It reduces build steps but is not a one-click, notarized installer.
+With the v0.1.0-preview.1 package above, skip build-tool setup and step 4, then continue with the installation command. This preview is not a one-click installer; review the signing, notarization, and compatibility notes above before installing.

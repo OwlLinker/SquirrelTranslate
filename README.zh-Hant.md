@@ -4,7 +4,15 @@ macOS 上 Squirrel（Rime）的候選翻譯與快速查詢面板，提供候選�
 
 語言版本：[简体中文](./README.md) · [繁體中文](./README.zh-Hant.md) · [English](./README.en.md) · [한국어](./README.ko.md) · [日本語](./README.ja.md)
 
-若 GitHub Releases 提供預先建置的預覽 ZIP，可略過建置工具準備與建置步驟。套件僅含公開產物，不含私有翻譯原始碼；未使用 Developer ID 簽署或 Apple 公證，安裝仍需要有效且穩定的本機簽署身分，也可能出現 macOS 安全性提示。這只是省去建置步驟的預覽套件，並非免設定的一鍵正式安裝程式。
+## 預先建置預覽版 v0.1.0-preview.1
+
+[下載 macOS Universal 套件](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.1/SquirrelTranslate-v0.1.0-preview.1-macos-universal-preview.zip)（arm64 / x86_64，3.06 MB）。套件包含公開版查詢橋接元件、URL 工具、安裝腳本、文件及預先建置產物，不包含私有翻譯整合。
+
+本套件未使用 Apple Developer ID 簽署，也未經公證；安裝時 macOS 可能顯示安全性提示。安裝需要有效且穩定的本機程式碼簽署身分；使用相關功能時，macOS 可能要求授予 Squirrel 輔助使用權限。請依照壓縮檔內 README 的步驟安裝。
+
+建置環境：macOS 26.6.2（Apple Silicon）。驗證輸入法：Squirrel 1.1.2。套件包含 arm64 與 x86_64 架構；其他 macOS、Squirrel 版本及 Rime 輸入方案尚未完成端對端驗證。公開版建置、單位換算測試及公開服務解析測試均已通過。
+
+SHA-256：`3639568e53f809a933b8c48068639ae6470bc7652d71e3fa61b48c260d3cd733`
 
 ## 核心功能示範
 
