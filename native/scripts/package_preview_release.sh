@@ -27,7 +27,7 @@ if [ ! -x "$squirrel_app/Contents/MacOS/Squirrel" ]; then
   echo "Squirrel.app not found: $squirrel_app" >&2
   exit 1
 fi
-squirrel_version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' \
+squirrel_version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' \
   "$squirrel_app/Contents/Info.plist")
 if [ "$squirrel_version" != "1.1.2" ]; then
   echo "Preview package requires the verified Squirrel 1.1.2 build; found $squirrel_version." >&2
