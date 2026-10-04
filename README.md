@@ -96,21 +96,95 @@ U 面板中数字和标点直接作为查询内容输入，不会选择候选；
 
 当前公开版已验证干净构建和解析单元测试；这不等于新公开翻译服务已在鼠须管进程内完成键盘端到端验收。发布前请用上表精确版本及明确记录的默认方案完成实际安装测试；未记录的组合均视为未验证。
 
-## 构建与安装 `u` 面板
+## 安装 `u` 面板
 
-需要 macOS 13+、Xcode Command Line Tools、CMake、Homebrew Boost，以及与目标版本匹配的 Squirrel。公开构建命令如下：
+按下面顺序安装公开版进程内面板。安装会重新签名并重启鼠须管；先保存其他应用中的工作。不要用项目中其他安装脚本替代这里的 `install_query_bridge.sh`。
+
+### 1. 确认环境符合支持条件
+
+- 已安装与本项目验证版本相符的鼠须管，默认路径为 `/Library/Input Methods/Squirrel.app`。只有在应用装于其他位置时才需要设置 `SQUIRREL_APP`。
+- 构建目标为 macOS 13.0 及以上、arm64／x86_64 Universal；当前记录的端到端验证环境仅限前文兼容性表所列组合。部署目标不等于所有系统版本均已验证。
+- 已安装 Xcode Command Line Tools、CMake、Homebrew Boost。构建脚本会在首次构建时下载并固定使用 librime 1.17.0 源码。
+- 仓库已检出到本机，以下命令均从项目根目录运行。
+
+可先检查构建工具是否就绪：
+
+```bash
+xcode-select -p
+brew --version
+cmake --version
+brew list --versions boost
+```
+
+缺少 Xcode Command Line Tools 时运行 `xcode-select --install`；缺少 CMake 或 Boost 时运行 `brew install cmake boost`。
+
+### 2. 准备稳定的本地代码签名身份
+
+Squirrel 必须用稳定身份签名，才能避免每次重装都因签名变化而破坏辅助功能授权。本项目不会替你创建证书，也不会使用临时 ad-hoc 签名。检查 Keychain 中的身份：
+
+```bash
+security find-identity -v -p codesigning
+```
+
+继续前，确认目标身份列在 `Valid identities` 下。只有 `Matching identities`、带 `CSSMERR_TP_NOT_TRUSTED`，或显示 `0 valid identities found` 都不够。安装时使用证书的完整名称；系统若询问是否允许 `codesign` 使用登录钥匙串中的密钥，请在本机完成验证并选择允许。不要把钥匙串密码或私钥发给任何人。
+
+### 3. 停止旧的独立输入栏（如果曾安装）
+
+进程内面板与旧独立输入栏不要同时运行：
+
+```bash
+./native/scripts/input_bar.sh stop
+```
+
+没有安装过独立输入栏时，这一步可以跳过。
+
+### 4. 构建公开面板
 
 ```bash
 ./native/scripts/build.sh
 ```
 
-该命令会获取 librime 1.17.0 头文件并构建公开查询桥、翻译提供者及 URL 辅助程序。安装需要一个有效且稳定的本地代码签名身份；它不会创建证书，也不会 ad-hoc 重签：
+脚本构建进程内查询桥、公开翻译提供者和新闻 URL 辅助程序，产物位于 `native/build/out/`。如果鼠须管不在默认位置，构建时也指定其完整路径：
 
 ```bash
-SQUIRREL_SIGN_IDENTITY="你的代码签名身份名称" ./native/scripts/install_query_bridge.sh
+SQUIRREL_APP="/完整路径/Squirrel.app" ./native/scripts/build.sh
 ```
 
-安装脚本会停止旧的独立输入栏（如果存在）、安装公开面板及号段数据、只在本机配置不存在时复制公开提供者配置、重新签名并重启 Squirrel。重启时会确认旧进程退出后再启动；如退出超时，安装会停止并提示，不会把复用旧进程当作成功。设置 `RESTART_SQUIRREL=0` 可跳过自动重启。之后在“系统设置 > 隐私与安全性 > 辅助功能”允许 Squirrel。不要关闭 Squirrel 的辅助功能授权来测试；授权撤销会让全局按键监听停止。
+### 5. 安装、签名并重启鼠须管
+
+将下方名称替换为第 2 步显示的有效身份名称：
+
+```bash
+SQUIRREL_SIGN_IDENTITY="SquirrelTranslate Local Code Signing" \
+  ./native/scripts/install_query_bridge.sh
+```
+
+如果鼠须管使用非默认路径，安装时传入相同路径：
+
+```bash
+SQUIRREL_APP="/完整路径/Squirrel.app" \
+SQUIRREL_SIGN_IDENTITY="SquirrelTranslate Local Code Signing" \
+  ./native/scripts/install_query_bridge.sh
+```
+
+安装器会先检查应用、构建产物、数据文件和签名身份；然后安装查询桥、手机号／座机归属地数据及浏览器 URL 辅助程序，启用查询桥标记；仅当 `~/Library/Rime/translation.providers.yaml` 尚不存在时才复制默认配置，不覆盖已有设置。写入鼠须管应用目录时，终端可能请求管理员密码；签名时 macOS 也可能要求解锁登录钥匙串。之后为 Squirrel 重新签名并自动重启，等待旧进程退出并确认新进程启动。安装完成会报告 `Installed and enabled the in-process query bridge.`。若退出超时，脚本会报错停止，不会假称安装成功。默认会自动重启；仅在你明确要手动重启时才设置 `RESTART_SQUIRREL=0`。
+
+### 6. 授予辅助功能权限
+
+首次安装或 macOS 要求时，打开“系统设置 → 隐私与安全性 → 辅助功能”，允许 **Squirrel**。权限属于鼠须管，而不是终端、Finder 或单独的翻译应用。保持该授权开启；撤销后全局按键监听会停止。不要为取色功能授予“屏幕录制”权限，本项目不需要该权限。
+
+### 7. 选择输入源并验证
+
+1. 从 macOS 输入法菜单切换到 **Squirrel - Simplified**（输入源 ID：`im.rime.inputmethod.Squirrel.Hans`）。
+2. 确认使用中文 Rime 默认方案；本查询会话读取 `~/Library/Rime/default.yaml`，不保证继承临时切换的其他方案。
+3. 在 Finder 等非可编辑区域输入小写 `u`。面板出现后试用 `unihao` 或 `uconv5`；普通编辑框中输入 `u` 仍按原方式传递，不会强行弹出查询面板。
+4. 面板没有出现时，确认 Squirrel 正在运行、辅助功能授权仍开启，并且安装输出包含成功提示。不要反复撤销／重新授予权限；先再次运行第 5 步的安装命令，让脚本检查组件并受控重启 Squirrel。
+
+### 8. 配置翻译服务
+
+编辑 `~/Library/Rime/translation.providers.yaml` 可调整在线提供者开关及顺序、配置 DeepL 官方 API Key。配置在查询桥启动时读取，修改后需重新启动 Squirrel 才生效。具体字段及网络数据流见下一节和 [`native/README.md`](./native/README.md)。
+
+如需安装到非默认位置，`SQUIRREL_APP` 必须同时传给构建和安装脚本。若只想构建、不安装，可运行第 4 步并跳过后续步骤；若安装时报告签名无效，请先修复 Keychain 中的身份，不能通过 ad-hoc 签名绕过检查。
 
 ## 翻译服务配置
 
