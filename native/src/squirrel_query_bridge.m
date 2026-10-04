@@ -2630,12 +2630,21 @@ static void DrawQueryTextWrapped(NSString *text, NSFont *font, NSColor *color,
   [NSColor.secondaryLabelColor setStroke];
   helpCircle.lineWidth = 1.2;
   [helpCircle stroke];
-  NSFont *helpFont = self.labelFont ?: [NSFont systemFontOfSize:12];
-  CGFloat infoGlyphWidth = [@"i" sizeWithAttributes:
-      @{NSFontAttributeName: helpFont}].width;
-  CGFloat infoGlyphX = NSMidX(helpCircleRect) - infoGlyphWidth / 2;
-  DrawQueryTextCentered(@"i", helpFont, NSColor.secondaryLabelColor,
-      helpCircleRect, infoGlyphX, NO);
+  CGFloat iconDiameter = MIN(NSWidth(helpCircleRect), NSHeight(helpCircleRect));
+  CGFloat glyphHeight = iconDiameter * 0.54;
+  CGFloat dotDiameter = iconDiameter * 0.12;
+  CGFloat gap = iconDiameter * 0.08;
+  CGFloat stemWidth = dotDiameter * 0.88;
+  CGFloat stemHeight = glyphHeight - dotDiameter - gap;
+  CGFloat glyphBottom = NSMidY(helpCircleRect) - glyphHeight / 2;
+  NSRect stemRect = NSMakeRect(NSMidX(helpCircleRect) - stemWidth / 2,
+      glyphBottom, stemWidth, stemHeight);
+  NSRect dotRect = NSMakeRect(NSMidX(helpCircleRect) - dotDiameter / 2,
+      NSMaxY(stemRect) + gap, dotDiameter, dotDiameter);
+  [NSColor.secondaryLabelColor setFill];
+  [[NSBezierPath bezierPathWithRoundedRect:stemRect
+      xRadius:stemWidth / 2 yRadius:stemWidth / 2] fill];
+  [[NSBezierPath bezierPathWithOvalInRect:dotRect] fill];
 }
 @end
 

@@ -103,3 +103,6 @@ native/scripts/*injector*.sh
 
 # Local installation metadata
 installation.yaml
+
+# Local-only Codex / Hammerspoon chat bridge tooling
+/tools/
