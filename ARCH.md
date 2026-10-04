@@ -19,6 +19,7 @@
 
 - 仓库根目录 `tools/` 是本地 Codex／Hammerspoon 聊天桥接工具，不属于 SquirrelTranslate 产品功能或发行包；不得纳入公开 Git 跟踪或 GitHub Release。开发机上的副本可以保留在工作区。
 - `SquirrelFrontend/.github/` 是嵌套导入源码中的 CI 与 issue 模板，不是本仓库根级 GitHub 配置，也不是产品运行依赖；默认不纳入 SquirrelTranslate 公开仓库或发行包。只有在明确维护并独立发布 SquirrelFrontend fork 时，才单独评估这些元数据。
+- 无 Apple Developer Program 发布身份时，只生成明确标注的未签名、未公证预览 ZIP。`native/scripts/package_preview_release.sh` 必须显式以 `BUILD_PRIVATE_TRANSLATION_INTEGRATION=OFF` 构建、运行 CTest，并从 `git archive HEAD` 组包，不能读取或包含开发机上的忽略文件（尤其私有 `translation_refresh.cc`）；预览包复用现有安装脚本，因此仍要求用户本机有效稳定的代码签名身份，不可称作一键安装。仅在取得 Developer ID Application／Installer 与公证凭据后，才可评估正式受信任安装包。
 
 ## 鼠须管进程内查询桥
 

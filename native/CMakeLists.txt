@@ -278,6 +278,10 @@ if(BUILD_TESTING)
     add_executable(public_provider_test tests/public_provider_test.cc)
     target_compile_features(public_provider_test PRIVATE cxx_std_17)
     target_compile_options(public_provider_test PRIVATE -UNDEBUG)
+    target_link_libraries(public_provider_test PRIVATE
+      squirrel_public_translation_providers
+      "-framework CoreServices"
+    )
     add_test(NAME public_provider_parser COMMAND public_provider_test)
   endif()
 endif()

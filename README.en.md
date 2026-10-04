@@ -103,3 +103,5 @@ Passing a build or unit test does not establish end-to-end compatibility on an u
 ## Install
 
 See the detailed [installation instructions](./README.md#安装-u-面板) in Chinese. They cover prerequisites, local code signing, installation, Accessibility permission, provider setup, and troubleshooting.
+
+If a prebuilt preview ZIP is available from GitHub Releases, you can skip build-tool setup and the build step. The archive contains public artifacts only and excludes private translation source. It is not Developer ID-signed or notarized; installation still requires a valid stable local signing identity and may show macOS security prompts. It reduces build steps but is not a one-click, notarized installer.
