@@ -4,41 +4,102 @@ A translation and quick-lookup panel for Squirrel (Rime) on macOS. It provides c
 
 Languages: [简体中文](./README.md) · [繁體中文](./README.zh-Hant.md) · [English](./README.en.md) · [한국어](./README.ko.md) · [日本語](./README.ja.md)
 
-## Highlights
+## Core feature demos
 
-- Translate Rime candidates and show available phonetics.
-- Open the `u` panel outside editable fields for translations and quick tools.
-- Look up IP geolocation and local phone-number regions; convert dates, times, units, and colors.
-- Use Google, Bing, DeepL API, and the macOS Dictionary for translations.
+These illustrative animations follow the U panel design and are not live recordings. Phone numbers and local/public IP addresses are masked; the specified-IP example shows the lookup for `8.8.8.8`.
 
-## Panel language
+**Candidate translation:** Enter `u` followed by Pinyin to see candidates, translations, and available phonetics.
 
-Type one of these commands in the `u` panel. The panel switches immediately, displays a confirmation, and remembers the choice:
+![Candidate translation demo](./docs/assets/translation.gif)
 
-| Command | Language |
+**IP lookup:** Enter `uip` and a complete IPv4 address to look up its region and network provider.
+
+![IP lookup demo](./docs/assets/ip-lookup.gif)
+
+**Phone region:** Enter a phone number to show local prefix-region and carrier data; the demo number is masked.
+
+![Phone region demo](./docs/assets/phone-region.gif)
+
+## Squirrel candidate panel
+
+These shortcuts work while the Squirrel candidate panel is visible. Normal text input remains controlled by Squirrel and the active Rime schema.
+
+| Shortcut | Action |
 | --- | --- |
-| `ulangzh` | Simplified Chinese |
-| `ulangtw` | Traditional Chinese |
-| `ulangen` | English |
-| `ulangko` | Korean |
-| `ulangja` | Japanese |
+| `⌃T` | Toggle candidate translation |
+| `⌃P` | Speak the selected translation; does nothing if it is not ready |
+| `⌃Y` | Commit the selected candidate's translation |
+| `⇧^` | Expand or collapse the full definition and phonetics |
+| `⇧P` | Toggle phonetic display |
+| `⌃G` / `⌃B` | Search the selected candidate with the default / secondary engine |
+| `⌃N` | Search the selected candidate in the news extension via the default browser |
+| `⌘,` | Toggle shortcut help |
 
-Type `ulang` to see the available options. This changes interface labels and help text, not candidate translations or returned lookup data.
+Chinese candidates translate to English and English candidates to Chinese; phonetics appear when available. Emoji names come from local data and are not sent to online translation services. Candidate numbering and paging follow the active Squirrel schema. Google and Bing are the default and secondary search engines. Configure engines with `u<engine>1` for `⌃G` and `u<engine>2` for `⌃B` (for example, `ubing1`, `ugoogle2`, `ubaidu2`). Supported engines: Google, Bing, Baidu, DuckDuckGo, Yahoo, Brave, Sogou, and Yandex. Settings are saved locally.
 
-## Quick examples
+## `u` lookup panel
 
-| Input | Result |
+With the Squirrel Simplified Chinese input source active and focus outside an editable field, type lowercase `u` to open the panel, then enter Pinyin or a tool command. Keys pass through unchanged inside editable fields. The input line shows the complete prefix (`uni hao`, `uconv5`); the prefix marks the mode and is excluded from Pinyin, searches, and copied content. Results use a Rime session. About 300 ms after typing stops, candidate translation and phonetics are queried. Translation priority is the macOS Dictionary first, followed by enabled online providers in configured order; the first successful result is used.
+
+### Panel controls
+
+| Shortcut | Action |
 | --- | --- |
-| `uip8.8.8.8` | IP region and network provider |
-| `u132...` or `uphone...` | Mainland China phone-number region lookup |
-| `udate20261002` | Date difference from today |
-| `utime1727683200` | Convert a Unix timestamp |
-| `uconv1000pa` | Unit conversion, including pressure |
-| `ucolorRRGGBB` | Convert HEX/RGB/HSL/HSV color formats |
-| `umaxwidth600` | Set the panel maximum width |
+| `↑` / `↓` | Move selection; cross pages at the edge |
+| `←` / `→`, `PageUp` / `PageDown` | Change page |
+| Active schema paging keys | Recognized `key_binder/bindings` are honored; `-` and `=` are not used for panel paging |
+| `⌘C` | Copy result information for the selected row |
+| Space | Copy the selected candidate; in color mode, confirm or resume sampling |
+| `⌘V` | Append clipboard text to the query |
+| `⌘,` or lower-right `ⓘ` | Toggle help; use arrows to page/select within help |
+| `Esc` | Close help; in color mode close the magnifier first, then the panel |
+| Backspace | Delete the last query character |
 
-## Install and compatibility
+Digits and punctuation are query input, not candidate-selection keys. A valid 8-digit date starts date conversion automatically. Tool results show up to 9 rows per page. Candidate labels stay on one line while result text wraps; the panel sizes itself and has a default maximum width of 400 pt. Set it with `umaxwidth<number>` (200–2000 pt); it saves after about one second of inactivity.
 
-See the detailed [installation instructions](./README.md#安装-u-面板), compatibility matrix, permissions, provider configuration, and troubleshooting in the Chinese README. The project currently documents a specific tested macOS, Squirrel, and Rime configuration; do not assume other combinations are supported.
+### Commands
 
-The current public edition requires Squirrel on macOS and Accessibility permission for the Squirrel app. Color sampling does not require Screen Recording permission. Online features require network access.
+All commands begin with `u`. Type parameters directly after the keyword, without `:` or `=`. Use Backspace to edit or `⌘V` to paste longer input.
+
+| Example | Function and result |
+| --- | --- |
+| `unihao` | Show Chinese candidates, translations, and phonetics using the query session's default Rime schema |
+| `ucolor`, `uyanse` | Open the system color magnifier and results panel. Arrow keys move the sample point by one physical pixel; Space or click confirms the color and closes the magnifier. Space can resume sampling. No Screen Recording permission is used; macOS controls magnifier zoom. |
+| `ucolorRRGGBB`, `ucolor#RRGGBB` | Convert to HEX (with/without `#`), HEX with alpha, RGB(A), HSL(A), HSV(A); also accepts `rgb(255,0,0)` and `rgba(255,0,0,0.5)`. Arrows select a format; `⌘C` copies its value. |
+| `utime` | Show local time, UTC, and Unix timestamps, fixed to the instant the query was entered |
+| `utime1727683200`, `utime1727683200000` | Convert Unix seconds or milliseconds to date and time |
+| `utimeAsia/Tokyo` | Show the current time in a valid time zone |
+| `udate20261002`, `udate2026-10-02` | Show days ago, days remaining, or today, plus start and end dates |
+| `udate20261001.20261002` | Show the day difference and start/end dates; separate dates with one `.`, `-`, or space |
+| `uconv5`, `uconv5.5` | Show common length, mass, temperature, volume, pressure, and electrical conversions; no source unit is guessed |
+| `uconv5mi`, `uconv72f`, `uconv5kg` | Convert within the specified unit category, such as length, mass, volume, or temperature |
+| `uconv1000pa`, `uconv1kpa`, `uconv1mpa`, `uconv760mmhg`, `uconv1kgf/cm2` | Convert pressure units and estimate equivalent static-water floors; this does not mean fire-water supply can reach those floors. Append category `1`/`2`/`3` to `mp` or `mpa` to apply the fire static-pressure reference and estimate theoretical remaining head. Category 1 defaults to 0.10 MPa (0.15 MPa above 100 m); category 2 to 0.07 MPa; category 3 uses a custom 0.01 MPa reference. |
+| `uconv3mH2O`, `uconv3floor` | Convert water-column height or floor count to theoretical pressure; default floor height is 3.0 m. This is not a prediction of a building's actual water supply. |
+| `uconv220v`, `uconv2a`, `uconv500w`, `uconv10kohm`, `uconv1kwh`, `uconv60hz`, `uconv100uf` | Convert voltage, current, power, resistance, energy, frequency, capacitance, inductance, and charge within each same-dimension category. No circuit formulas are inferred. SI symbols such as `mW`/`MW` and `mWh`/`MWh` remain case-sensitive. |
+| `uconv100rmb`, `uconv100usa`, `uconv100jp`, `uconv100uk` | Convert common currencies. Daily reference rates include dates and are not live trading quotes. Network requests send currency codes, not the entered amount. Aliases include `rmb/cn`, `usa/us`, `jp`, and `uk`. |
+| `uip` | Show local IP and look up public IP, region, and ISP. Requires network access and sends the public IP to the lookup service. |
+| `uip8.8.8.8` | After a short pause, look up approximate region and provider for the IPv4 address; the target IP is sent to the lookup service. |
+| `u132...`, `uphone132...` | Identify mainland China phone-number prefixes; a full 11-digit number shows local prefix region and carrier. Prefix data does not identify a person's live location or current carrier. |
+| `u+86 171 6772 6019`, `u+86 (21) 6349 3582` | Look up iPhone-copied international mobile/landline formats, including spaces, hyphens, and Chinese/English parentheses. Also supports `u021-20422661`, `u02120422661`, `u（021）20422661`, and `u(021)20422661`. Uses local numbering data only; numbers are not uploaded. Invalid or overlong input is rejected. |
+| `umaxwidth600` | Set maximum panel width to 600 pt (range 200–2000; default 400), subject to screen space |
+| `ufloorheight3.2` | Floor height setting: `ufloorheight3.2 (3.2: floor height; configurable range 2–12 m; default 3 m)` |
+| `ufiredefault1-0.15` | Set category 1's fire static-pressure reference to 0.15 MPa. Categories are 1–3; values must be >0 and ≤2.4 MPa. Category 3's 0.01 MPa is a user reference, not a universal code value. |
+| `ulangzh`, `ulangtw`, `ulangen`, `ulangko`, `ulangja` | Set the panel interface language; `ulang` lists options. Choice is saved immediately. |
+
+### Compatibility and boundaries
+
+This is an in-process Squirrel plugin, not a general-purpose text-entry replacement. The documented target is macOS 26.6.2, Squirrel 1.1.2 with bundled librime 1.17.0, and the Simplified Chinese input source `im.rime.inputmethod.Squirrel.Hans`. The build target is macOS 13+ and Universal arm64/x86_64, but other macOS versions have not passed end-to-end verification. Candidate lookup uses the default schema in `~/Library/Rime/default.yaml`; no named third-party schema has been independently verified. Do not assume support for other Squirrel/Rime versions, input sources, or schemas.
+
+| Feature | Compatibility conditions |
+| --- | --- |
+| Open the `u` panel | Requires the specified Simplified Chinese Squirrel input source, lowercase `u` outside editable fields, and Accessibility permission for Squirrel. |
+| Pinyin candidates and translations | Uses a separate Rime session and the default schema in `default.yaml`. The active temporary schema is not guaranteed to carry over; no named third-party schema has been verified. |
+| Arrow and schema paging keys | Panel arrows and PageUp/PageDown navigate the panel. Custom schema paging keys work only when the query session can read those bindings; non-default schema bindings are not guaranteed. |
+| Date/time, unit, color-format, width, and phone/landline tools | Handled by the query bridge after the panel opens; still subject to the Squirrel/macOS/input-source requirements above. Color picking uses the system color picker and needs no Screen Recording permission. |
+| IP, exchange rates, online translation, and web search | Depend on network availability and the corresponding service; online translations also require provider configuration. |
+
+Passing a build or unit test does not establish end-to-end compatibility on an unlisted environment.
+
+## Install
+
+See the detailed [installation instructions](./README.md#安装-u-面板) in Chinese. They cover prerequisites, local code signing, installation, Accessibility permission, provider setup, and troubleshooting.

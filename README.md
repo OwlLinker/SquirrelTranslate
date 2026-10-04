@@ -2,8 +2,6 @@
 
 面向 macOS 上鼠须管（Squirrel）的候选翻译与跨应用 `u` 查询面板。公开版包含进程内查询面板，以及四种翻译提供者：macOS 系统词典、Google、Bing、DeepL 官方 API。
 
-**English:** A translation and quick-lookup panel for Squirrel (Rime) on macOS, with candidate translations, IP and phone-region lookup, date/time and unit conversion, and color tools.
-
 语言版本： [简体中文](./README.md) · [繁體中文](./README.zh-Hant.md) · [English](./README.en.md) · [한국어](./README.ko.md) · [日本語](./README.ja.md)
 
 ## 核心功能演示
@@ -75,7 +73,8 @@ U 面板中数字和标点直接作为查询内容输入，不会选择候选；
 | `udate20261001.20261002` | 显示两个日期相差天数及开始、结束日期；日期间可用一个点、连字符或空格。 |
 | `uconv5`、`uconv5.5` | 显示常用长度、质量、温度、体积、压力和电气量换算快捷列表；没有指定单位时不会猜测输入单位。 |
 | `uconv5mi`、`uconv72f`、`uconv5kg` | 按指定单位显示所属类别换算。支持长度、质量、体积、温度；例如 `mi` 英里、`f` 华氏度、`kg` 千克。 |
-| `uconv1000pa`、`uconv1kpa`、`uconv1mpa`、`uconv760mmhg`、`uconv1kgf/cm2` | 压力换算，列出 Pa、kPa、MPa、毫米汞柱和公斤力／平方厘米。裸 `kg` 是质量单位，不是压力单位。 |
+| `uconv1000pa`、`uconv1kpa`、`uconv1mpa`、`uconv760mmhg`、`uconv1kgf/cm2` | 压力换算并估算静水等效楼层数，不代表消防供水可达楼层。末尾加类别码可查询消防静压参考并扣除后估算理论剩余水头：`...mp1`／`...mpa1` 为一类高层公共建筑，`2` 为二类高层公共建筑／多层公共建筑，`3` 为其他（用户参考值 0.01 MPa）。类别 1 默认 0.10 MPa，超过 100 m 应用 0.15 MPa；类别 2 默认 0.07 MPa。输入单位不区分大小写，输出使用标准符号。 |
+| `uconv3mH2O`、`uconv3floor` | 按静水压力关系从水柱高度或楼层数反算压力；默认每层 3.0 m。结果为理论估算，不代表建筑实际供水能力。 |
 | `uconv220v`、`uconv2a`、`uconv500w`、`uconv10kohm`、`uconv1kwh`、`uconv60hz`、`uconv100uf` | 电压、电流、功率、电阻、电能、频率、电容、电感、电荷的同量纲换算；不根据电路公式推算其他量。单位别名通常不区分大小写；`mW`/`MW`、`mWh`/`MWh` 等 SI 符号按大小写区分。 |
 | `uconv100rmb`、`uconv100usa`、`uconv100jp`、`uconv100uk` | 以人民币、美元、日元、英镑等常见币种换算。显示带日期的每日参考汇率，不是实时交易报价；网络请求只发送币种代码，不发送输入金额。支持 `rmb/cn`、`usa/us`、`jp`、`uk` 等别名。 |
 | `uip` | 显示本机局域网地址，并查询公网 IP、地区和 ISP；需要网络，会向 IP 查询服务发送本机公网 IP。 |
@@ -83,6 +82,8 @@ U 面板中数字和标点直接作为查询内容输入，不会选择候选；
 | `u132...`、`uphone132...` | 输入手机号前三位后自动识别号段；完整 11 位大陆手机号显示本地号段归属地和运营商。号段不能表示号码持有人的实时位置或当前运营商。 |
 | `u+86 171 6772 6019`、`u+86 (21) 6349 3582` | 查询从 iPhone 电话中复制的国际格式手机号／座机号；支持空格、连字符及中英文括号。也支持 `u021-20422661`、`u02120422661`、`u（021）20422661`、`u(021)20422661`。查询仅使用本地号段／区号数据，不上传号码；格式错误或超长会提示“号码格式不正确”。 |
 | `umaxwidth600` | 将面板最大宽度设为 600 pt。范围 200–2000 pt，默认 400 pt；实际宽度仍受显示器可用空间限制。 |
+| `ufloorheight3.2` | 层高设置：`ufloorheight3.2（3.2:层高；可设置范围2-12米；默认3米）`。 |
+| `ufiredefault1-0.15` | 将类别 1 的消防静压参考值改为 0.15 MPa；类别码为 1–3，压力范围大于 0 且不超过 2.4 MPa。类别 3 默认 0.01 MPa 是用户参考值，不是规范统一值。 |
 | `ulangzh`、`ulangtw`、`ulangen`、`ulangko`、`ulangja` | 将 U 面板界面切换为简体中文、繁体中文、英文、韩文或日文；切换后立即显示确认提示并保存设置。输入 `ulang` 查看选项。 |
 | `ugoogle1`、`ubing1`、`ubaidu2` | 设置 `⌃G` 使用的默认搜索引擎或 `⌃B` 使用的第二搜索引擎；支持 Google、Bing、百度、DuckDuckGo、Yahoo、Brave、搜狗、Yandex。设置保存在用户配置中。 |
 

@@ -56,6 +56,12 @@ static CGFloat query_panel_max_width = 400;
 static BOOL query_panel_max_width_loaded;
 static NSString *query_ui_language;
 static NSUInteger query_panel_width_command_generation;
+static NSUInteger query_floor_height_command_generation;
+static double query_floor_height = 3.0;
+static BOOL query_floor_height_loaded;
+static NSUInteger query_fire_pressure_command_generation;
+static double query_fire_static_pressure_mpa[3] = {0.10, 0.07, 0.01};
+static BOOL query_fire_static_pressure_loaded;
 static NSString *query_ip_details;
 static NSString *query_ip_public_ip;
 static NSURLSessionDataTask *query_ip_task;
@@ -177,6 +183,82 @@ static NSString *QueryPanelWidthProfilePath(void) {
       stringByExpandingTildeInPath];
 }
 
+static NSString *QueryFloorHeightProfilePath(void) {
+  return [@"~/Library/Rime/input_translation.floor_height"
+      stringByExpandingTildeInPath];
+}
+
+static NSString *QueryFireStaticPressureProfilePath(void) {
+  return [@"~/Library/Rime/input_translation.fire_static_pressure"
+      stringByExpandingTildeInPath];
+}
+
+static void LoadFireStaticPressureDefaults(void) {
+  if (query_fire_static_pressure_loaded) return;
+  query_fire_static_pressure_loaded = YES;
+  NSString *stored = [NSString stringWithContentsOfFile:
+      QueryFireStaticPressureProfilePath() encoding:NSUTF8StringEncoding error:nil];
+  NSScanner *scanner = [NSScanner scannerWithString:
+      [stored stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] ?: @""];
+  double values[3];
+  for (NSUInteger index = 0; index < 3; ++index) {
+    if (![scanner scanDouble:&values[index]] || !isfinite(values[index]) ||
+        values[index] <= 0 || values[index] > 2.4) return;
+  }
+  if (!scanner.isAtEnd) return;
+  for (NSUInteger index = 0; index < 3; ++index)
+    query_fire_static_pressure_mpa[index] = values[index];
+}
+
+static double QueryFireStaticPressureMPa(NSInteger category) {
+  LoadFireStaticPressureDefaults();
+  if (category < 1 || category > 3) return 0;
+  return query_fire_static_pressure_mpa[category - 1];
+}
+
+static NSString *SaveFireStaticPressureDefault(NSInteger category,
+                                                double pressureMPa) {
+  if (category < 1 || category > 3 || !isfinite(pressureMPa) ||
+      pressureMPa <= 0 || pressureMPa > 2.4)
+    return @"请输入类别 1–3 和 0–2.4 MPa 内的正数";
+  LoadFireStaticPressureDefaults();
+  double updated[3];
+  for (NSUInteger index = 0; index < 3; ++index)
+    updated[index] = query_fire_static_pressure_mpa[index];
+  updated[category - 1] = pressureMPa;
+  NSString *contents = [NSString stringWithFormat:@"%.6g %.6g %.6g\n",
+      updated[0], updated[1], updated[2]];
+  NSString *path = QueryFireStaticPressureProfilePath();
+  if (![[NSFileManager defaultManager] createDirectoryAtPath:
+      path.stringByDeletingLastPathComponent withIntermediateDirectories:YES
+      attributes:nil error:nil] ||
+      ![contents writeToFile:path atomically:YES encoding:NSUTF8StringEncoding
+                       error:nil])
+    return @"无法保存消防静压默认值";
+  [[NSFileManager defaultManager] setAttributes:
+      @{NSFilePosixPermissions: @0600} ofItemAtPath:path error:nil];
+  for (NSUInteger index = 0; index < 3; ++index)
+    query_fire_static_pressure_mpa[index] = updated[index];
+  query_fire_static_pressure_loaded = YES;
+  return [NSString stringWithFormat:@"类别 %ld 消防静压参考值已设为 %@ MPa",
+      (long)category, [NSString stringWithFormat:@"%.3g", pressureMPa]];
+}
+
+static double QueryConfiguredFloorHeight(void) {
+  if (!query_floor_height_loaded) {
+    query_floor_height_loaded = YES;
+    NSString *stored = [NSString stringWithContentsOfFile:QueryFloorHeightProfilePath()
+        encoding:NSUTF8StringEncoding error:nil];
+    NSScanner *scanner = [NSScanner scannerWithString:
+        [stored stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] ?: @""];
+    double value = 0;
+    if ([scanner scanDouble:&value] && scanner.isAtEnd && isfinite(value) &&
+        value >= 2.0 && value <= 12.0)
+      query_floor_height = value;
+  }
+  return query_floor_height;
+}
+
 static NSString *QueryLanguageProfilePath(void) {
   return [@"~/Library/Rime/input_translation.ui_language"
       stringByExpandingTildeInPath];
@@ -251,6 +333,15 @@ static NSString *LocalizedQueryText(NSString *text) {
     tables = @{
       @"en": @{
         @"最大面板宽度": @"Maximum panel width", @"宽度格式不正确": @"Invalid width",
+        @"楼层估算": @"Floor estimate", @"大约几层": @"Approx. floors",
+        @"水柱高度": @"Water head", @"层高设置": @"Floor height setting", @"设置": @"Settings",
+        @"最不利点最低静压": @"Minimum static pressure at the most unfavorable point",
+        @"扣除静压后理论楼层": @"Theoretical floors after static-pressure reserve",
+        @"消防静压设置": @"Fire static-pressure settings",
+        @"消防静压默认设置": @"Fire static-pressure defaults",
+        @"ufloorheight3.2（3.2:层高；可设置范围2-12米；默认3米）": @"ufloorheight3.2 (3.2: floor height; range 2–12 m; default 3 m)",
+        @"层高请输入 2–12 米，例如 ufloorheight3.2": @"Enter 2–12 m, e.g. ufloorheight3.2",
+        @"输入 2–12 米，例如 ufloorheight3.2": @"Enter 2–12 m, e.g. ufloorheight3.2",
         @"本地 IP": @"Local IP", @"公网 IP": @"Public IP", @"IP 地址查询": @"IP lookup",
         @"输入 IPv4 地址": @"Enter an IPv4 address", @"号码归属地": @"Phone region",
         @"座机归属地": @"Landline region", @"号码格式不正确": @"Invalid phone number",
@@ -288,6 +379,10 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"数字和标点": @"Digits and punctuation", @"直接输入并显示；8 位日期自动进入日期换算": @"Type to enter; valid 8-digit dates open date conversion",
         @"按 u<语言> 设置界面语言，例如 ulangen / ulangko / ulangja / ulangtw": @"Set the UI with u<language>: ulangen, ulangko, ulangja or ulangtw",
         @"umaxwidth数字": @"umaxwidth<number>", @"设置 U 面板最大宽度（200–2000 pt，默认 400）": @"Set U panel width (200–2000 pt; default 400)",
+        @"ufloorheight数字": @"ufloorheight<number>", @"设置楼层估算使用的层高（2–12 m，默认 3.0 m）": @"Set floor height (2–12 m; default 3.0 m)",
+        @"uconv2.6mp1 / uconv2.6mpa1": @"uconv2.6mp1 / uconv2.6mpa1",
+        @"末尾类别码：1一类高层公共建筑；2二类高层公共建筑／多层公共建筑；3其他": @"Suffix category: 1 class I high-rise public; 2 class II high-rise public/multistory public; 3 other",
+        @"ufiredefault1-0.15 设置类别1静压MPa；类别2默认0.07；类别3默认0.01（用户参考值）": @"Set category 1 static pressure in MPa; category 2 defaults to 0.07; category 3 defaults to custom 0.01",
         @"u<引擎>1": @"u<engine>1", @"设置 ⌃G 搜索引擎，例如 ugoogle1": @"Set the ⌃G search engine, e.g. ugoogle1",
         @"设置 ⌃B 搜索引擎，例如 ubing2": @"Set the ⌃B search engine, e.g. ubing2",
         @"utime时间戳／时区": @"utime timestamp/time zone", @"查看本地、目标时区、UTC 与 Unix 秒／毫秒": @"Show local/target time, UTC and Unix seconds/milliseconds",
@@ -303,6 +398,12 @@ static NSString *LocalizedQueryText(NSString *text) {
       },
       @"ko": @{
         @"最大面板宽度": @"패널 최대 너비", @"宽度格式不正确": @"너비 형식이 올바르지 않습니다",
+        @"楼层估算": @"층수 추정", @"大约几层": @"대략 몇 층",
+        @"水柱高度": @"수주 높이", @"层高设置": @"층고 설정", @"设置": @"설정",
+        @"最不利点最低静压": @"최불리점 최소 정압",
+        @"扣除静压后理论楼层": @"정압을 제외한 이론 층수",
+        @"消防静压设置": @"소방 정압 설정", @"消防静压默认设置": @"소방 정압 기본값",
+        @"ufloorheight3.2（3.2:层高；可设置范围2-12米；默认3米）": @"ufloorheight3.2 (3.2: 층고; 범위 2–12m; 기본 3m)",
         @"本地 IP": @"로컬 IP", @"公网 IP": @"공인 IP", @"IP 地址查询": @"IP 조회",
         @"输入 IPv4 地址": @"IPv4 주소 입력", @"号码归属地": @"전화번호 지역", @"座机归属地": @"유선전화 지역",
         @"号码格式不正确": @"전화번호 형식이 올바르지 않습니다", @"未找到该号段": @"번호 대역을 찾을 수 없습니다",
@@ -334,6 +435,10 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"直接输入并显示；8 位日期自动进入日期换算": @"직접 입력; 8자리 날짜 자동 변환",
         @"按 u<语言> 设置界面语言，例如 ulangen / ulangko / ulangja / ulangtw": @"u<언어>로 설정: ulangen, ulangko, ulangja 또는 ulangtw",
         @"umaxwidth数字": @"umaxwidth<숫자>", @"设置 U 面板最大宽度（200–2000 pt，默认 400）": @"U 패널 너비 설정 (200–2000pt, 기본 400)",
+        @"ufloorheight数字": @"ufloorheight<숫자>", @"设置楼层估算使用的层高（2–12 m，默认 3.0 m）": @"층고 설정 (2–12m, 기본 3.0m)",
+        @"uconv2.6mp1 / uconv2.6mpa1": @"uconv2.6mp1 / uconv2.6mpa1",
+        @"末尾类别码：1一类高层公共建筑；2二类高层公共建筑／多层公共建筑；3其他": @"끝자리 분류 코드: 1 1급 고층 공공, 2 2급 고층 공공/중층 공공, 3 기타",
+        @"ufiredefault1-0.15 设置类别1静压MPa；类别2默认0.07；类别3默认0.01（用户参考值）": @"ufiredefault1-0.15로 1번 정압(MPa) 설정; 2번 기본 0.07, 3번 사용자 참고값 0.01",
         @"u<引擎>1": @"u<엔진>1", @"设置 ⌃G 搜索引擎，例如 ugoogle1": @"⌃G 검색 엔진 설정 (예: ugoogle1)", @"设置 ⌃B 搜索引擎，例如 ubing2": @"⌃B 검색 엔진 설정 (예: ubing2)",
         @"utime时间戳／时区": @"utime 타임스탬프/시간대", @"查看本地、目标时区、UTC 与 Unix 秒／毫秒": @"현지/지정 시간대, UTC 및 Unix 초/밀리초 표시",
         @"udate日期": @"udate 날짜", @"8 位日期可直接换算；双日期用 .、- 或空格分隔": @"8자리 날짜 변환; 두 날짜는 ., - 또는 공백으로 구분",
@@ -346,7 +451,13 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"设置界面语言，例如 ulangen、ulangko、ulangja、ulangtw": @"인터페이스 언어: ulangen, ulangko, ulangja 또는 ulangtw"
       },
       @"ja": @{
-        @"最大面板宽度": @"パネルの最大幅", @"宽度格式不正确": @"幅の形式が正しくありません", @"本地 IP": @"ローカル IP",
+        @"最大面板宽度": @"パネルの最大幅", @"宽度格式不正确": @"幅の形式が正しくありません",
+        @"楼层估算": @"階数の目安", @"大约几层": @"およその階数",
+        @"水柱高度": @"水柱の高さ", @"层高设置": @"階高設定", @"设置": @"設定", @"本地 IP": @"ローカル IP",
+        @"最不利点最低静压": @"最不利点の最低静水圧",
+        @"扣除静压后理论楼层": @"静水圧控除後の理論階数",
+        @"消防静压设置": @"消防静水圧設定", @"消防静压默认设置": @"消防静水圧の既定値",
+        @"ufloorheight3.2（3.2:层高；可设置范围2-12米；默认3米）": @"ufloorheight3.2（3.2:階高；範囲2～12m；既定3m）",
         @"公网 IP": @"パブリック IP", @"IP 地址查询": @"IP 検索", @"输入 IPv4 地址": @"IPv4 アドレスを入力",
         @"号码归属地": @"電話番号の地域", @"座机归属地": @"固定電話の地域", @"号码格式不正确": @"電話番号の形式が正しくありません",
         @"未找到该号段": @"番号帯が見つかりません", @"地区未收录": @"地域情報なし", @"过去天数": @"経過日数", @"剩余天数": @"残り日数",
@@ -377,6 +488,10 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"直接输入并显示；8 位日期自动进入日期换算": @"そのまま入力；8桁の日付は自動変換",
         @"按 u<语言> 设置界面语言，例如 ulangen / ulangko / ulangja / ulangtw": @"u<言語> で設定: ulangen、ulangko、ulangja、ulangtw",
         @"umaxwidth数字": @"umaxwidth<数値>", @"设置 U 面板最大宽度（200–2000 pt，默认 400）": @"U パネル幅を設定（200～2000 pt、既定400）",
+        @"ufloorheight数字": @"ufloorheight<数値>", @"设置楼层估算使用的层高（2–12 m，默认 3.0 m）": @"階高を設定（2～12m、既定3.0m）",
+        @"uconv2.6mp1 / uconv2.6mpa1": @"uconv2.6mp1 / uconv2.6mpa1",
+        @"末尾类别码：1一类高层公共建筑；2二类高层公共建筑／多层公共建筑；3其他": @"末尾の分類コード: 1 一類高層公共、2 二類高層公共／多層公共、3 その他",
+        @"ufiredefault1-0.15 设置类别1静压MPa；类别2默认0.07；类别3默认0.01（用户参考值）": @"ufiredefault1-0.15 で分類1の静圧(MPa)を設定。分類2は0.07、分類3は独自参考値0.01",
         @"u<引擎>1": @"u<エンジン>1", @"设置 ⌃G 搜索引擎，例如 ugoogle1": @"⌃G 検索エンジンを設定（例: ugoogle1）", @"设置 ⌃B 搜索引擎，例如 ubing2": @"⌃B 検索エンジンを設定（例: ubing2）",
         @"utime时间戳／时区": @"utime タイムスタンプ／タイムゾーン", @"查看本地、目标时区、UTC 与 Unix 秒／毫秒": @"現地・指定時刻、UTC、Unix秒／ミリ秒を表示",
         @"udate日期": @"udate 日付", @"8 位日期可直接换算；双日期用 .、- 或空格分隔": @"8桁の日付を変換；2つの日付は .、- または空白で区切る",
@@ -389,6 +504,12 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"设置界面语言，例如 ulangen、ulangko、ulangja、ulangtw": @"表示言語: ulangen、ulangko、ulangja、ulangtw"
       },
       @"zh-Hant": @{
+        @"楼层估算": @"樓層估算", @"大约几层": @"大約幾層",
+        @"水柱高度": @"水柱高度", @"层高设置": @"層高設定", @"设置": @"設定",
+        @"最不利点最低静压": @"最不利點最低靜壓",
+        @"扣除静压后理论楼层": @"扣除靜壓後理論樓層",
+        @"消防静压设置": @"消防靜壓設定", @"消防静压默认设置": @"消防靜壓預設設定",
+        @"ufloorheight3.2（3.2:层高；可设置范围2-12米；默认3米）": @"ufloorheight3.2（3.2:層高；可設定範圍2-12米；預設3米）",
         @"最大面板宽度": @"最大面板寬度", @"宽度格式不正确": @"寬度格式不正確", @"本地 IP": @"本機 IP", @"公网 IP": @"公網 IP",
         @"IP 地址查询": @"IP 位址查詢", @"输入 IPv4 地址": @"輸入 IPv4 位址", @"号码归属地": @"電話號碼歸屬地", @"座机归属地": @"市話歸屬地",
         @"号码格式不正确": @"號碼格式不正確", @"未找到该号段": @"找不到此號段", @"地区未收录": @"未收錄此地區",
@@ -404,7 +525,12 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"用默认搜索引擎搜索当前候选": @"使用預設搜尋引擎搜尋目前候選詞", @"用第二搜索引擎搜索当前候选": @"使用第二搜尋引擎搜尋目前候選詞",
         @"打开新闻扩展并搜索当前候选": @"開啟新聞擴充功能並搜尋目前候選詞", @"复制当前结果信息": @"複製目前結果資訊",
         @"复制当前候选词；取色时选定颜色或重新取色": @"複製目前候選詞；取色時確認或重新取色", @"关闭快捷键帮助": @"關閉快速鍵說明", @"打开或关闭本帮助": @"開啟或關閉本說明",
-        @"umaxwidth数字": @"umaxwidth數字", @"u<语言> 设置界面语言": @"使用 u<語言> 設定介面語言", @"语言": @"語言",
+        @"umaxwidth数字": @"umaxwidth數字", @"ufloorheight数字": @"ufloorheight數字",
+        @"设置楼层估算使用的层高（2–12 m，默认 3.0 m）": @"設定樓層估算層高（2–12 m，預設 3.0 m）",
+        @"uconv2.6mp1 / uconv2.6mpa1": @"uconv2.6mp1 / uconv2.6mpa1",
+        @"末尾类别码：1一类高层公共建筑；2二类高层公共建筑／多层公共建筑；3其他": @"末尾類別碼：1 一類高層公共建築；2 二類高層公共建築／多層公共建築；3 其他",
+        @"ufiredefault1-0.15 设置类别1静压MPa；类别2默认0.07；类别3默认0.01（用户参考值）": @"ufiredefault1-0.15 設定類別1靜壓MPa；類別2預設0.07；類別3預設0.01（使用者參考值）",
+        @"u<语言> 设置界面语言": @"使用 u<語言> 設定介面語言", @"语言": @"語言",
         @"下一页／上一页，同左右方向键": @"上一頁／下一頁，同左右方向鍵", @"颜色格式": @"顏色格式",
         @"输入完整地址 · 例如 uip8.8.8.8": @"輸入完整位址，例如 uip8.8.8.8", @"输入停顿后自动查询": @"停止輸入後自動查詢",
         @"简体中文": @"簡體中文", @"繁體中文": @"繁體中文", @"English": @"英文", @"한국어": @"韓文", @"日本語": @"日文",
@@ -501,6 +627,34 @@ static NSString *SaveQueryPanelMaxWidth(NSString *payload) {
   query_panel_max_width = value;
   query_panel_max_width_loaded = YES;
   return [NSString stringWithFormat:@"U 面板最大宽度已设为 %ld pt", (long)value];
+}
+
+static BOOL ParseFloorHeight(NSString *payload, double *height) {
+  NSScanner *scanner = [NSScanner scannerWithString:payload ?: @""];
+  scanner.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+  double value = 0;
+  if (![scanner scanDouble:&value] || !scanner.isAtEnd || !isfinite(value) ||
+      value < 2.0 || value > 12.0) return NO;
+  if (height) *height = value;
+  return YES;
+}
+
+static NSString *SaveQueryFloorHeight(NSString *payload) {
+  double value = 0;
+  if (!ParseFloorHeight(payload, &value))
+    return @"层高请输入 2–12 米，例如 ufloorheight3.2";
+  NSString *path = QueryFloorHeightProfilePath();
+  if (![[NSFileManager defaultManager] createDirectoryAtPath:
+      path.stringByDeletingLastPathComponent withIntermediateDirectories:YES
+      attributes:nil error:nil]) return @"无法保存层高设置";
+  NSString *contents = [NSString stringWithFormat:@"%.3g\n", value];
+  if (![contents writeToFile:path atomically:YES encoding:NSUTF8StringEncoding
+                       error:nil]) return @"无法保存层高设置";
+  [[NSFileManager defaultManager] setAttributes:@{NSFilePosixPermissions: @0600}
+      ofItemAtPath:path error:nil];
+  query_floor_height = value;
+  query_floor_height_loaded = YES;
+  return [NSString stringWithFormat:@"楼层估算层高已设为 %.3g 米", value];
 }
 
 static NSString *QuerySearchEngineURL(NSString *name) {
@@ -1118,6 +1272,8 @@ static BOOL IsUnitQuery(void) {
 static BOOL IsKeywordInputMode(void) {
   return IsColorQuery() || IsTimeQuery() || IsDateQuery() || IsUnitQuery() ||
       UtilityPayload(query_text, @"maxwidth") != nil ||
+      UtilityPayload(query_text, @"floorheight") != nil ||
+      UtilityPayload(query_text, @"firedefault") != nil ||
       UtilityPayload(query_text, @"lang") != nil ||
       UtilityPayload(query_text, @"ip") != nil ||
       UtilityPayload(query_text, @"phone") != nil || query_phone_prefix_active ||
@@ -1130,7 +1286,7 @@ static NSString *ActiveUtilityKeyword(void) {
   if (UtilityPayload(query_text, @"yanse") != nil) return @"color";
   if (query_phone_prefix_active) return @"phone";
   for (NSString *keyword in @[@"color", @"time", @"date", @"conv", @"lang",
-                             @"ip", @"phone"]) {
+                             @"ip", @"phone", @"firedefault"]) {
     if (UtilityPayload(query_text, keyword) != nil) return keyword;
   }
   return nil;
@@ -1215,6 +1371,52 @@ static NSString *UtilityNumber(double value) {
   char buffer[64];
   snprintf(buffer, sizeof(buffer), "%.7g", value);
   return [NSString stringWithUTF8String:buffer];
+}
+
+static NSString *FloorEstimateResult(double floors, double floorHeight) {
+  NSString *count = [NSString stringWithFormat:@"%.1f", floors];
+  NSString *height = UtilityNumber(floorHeight);
+  NSString *language = QueryUILanguage();
+  if ([language isEqualToString:@"en"])
+    return [NSString stringWithFormat:@"%@ floors (%@ m/floor; theoretical)", count, height];
+  if ([language isEqualToString:@"ko"])
+    return [NSString stringWithFormat:@"%@층 (층고 %@ m 기준, 이론값)", count, height];
+  if ([language isEqualToString:@"ja"])
+    return [NSString stringWithFormat:@"%@階（階高 %@ m の理論値）", count, height];
+  if ([language isEqualToString:@"zh-Hant"])
+    return [NSString stringWithFormat:@"%@ 層（按層高%@米估算約在%@層）", count, height, count];
+  return [NSString stringWithFormat:@"%@层（按层高%@米估算约在%@层）", count, height, count];
+}
+
+static NSString *FloorHeightSettingHint(void) {
+  NSString *language = QueryUILanguage();
+  if ([language isEqualToString:@"en"])
+    return @"ufloorheight3.2 (3.2: floor height; range 2–12 m; default 3 m)";
+  if ([language isEqualToString:@"ko"])
+    return @"ufloorheight3.2 (3.2: 층고; 범위 2–12m; 기본 3m)";
+  if ([language isEqualToString:@"ja"])
+    return @"ufloorheight3.2（3.2:階高；範囲2～12m；既定3m）";
+  if ([language isEqualToString:@"zh-Hant"])
+    return @"ufloorheight3.2（3.2:層高；可設定範圍2-12米；預設3米）";
+  return @"ufloorheight3.2（3.2:层高；可设置范围2-12米；默认3米）";
+}
+
+static BOOL ParseFireStaticPressureDefault(NSString *payload,
+                                           NSInteger *category,
+                                           double *pressureMPa) {
+  if (payload.length < 3) return NO;
+  unichar categoryCharacter = [payload characterAtIndex:0];
+  if (categoryCharacter < '1' || categoryCharacter > '3' ||
+      [payload characterAtIndex:1] != '-') return NO;
+  NSString *valueString = [payload substringFromIndex:2];
+  NSScanner *scanner = [NSScanner scannerWithString:valueString];
+  scanner.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+  double value = 0;
+  if (![scanner scanDouble:&value] || !scanner.isAtEnd || !isfinite(value) ||
+      value <= 0 || value > 2.4) return NO;
+  if (category) *category = categoryCharacter - '0';
+  if (pressureMPa) *pressureMPa = value;
+  return YES;
 }
 
 static NSArray<NSArray<NSString *> *> *RowsForTimeQuery(void) {
@@ -1322,7 +1524,8 @@ static const STUnitDefinition pressure[] = {
   {@"mpa", @"MPa", @"兆帕", 1000000.0},
   // NIST SP 811: conventional mmHg, not mass or an assumed piston area.
   {@"kgf/cm²", @"kgf/cm²", @"公斤压力", 98066.5},
-  {@"mmhg", @"mmHg", @"毫米汞柱", 133.3224}
+  {@"mmhg", @"mmHg", @"毫米汞柱", 133.3224},
+  {@"mh2o", @"mH₂O", @"水柱高度", 9806.65}
 };
 
 typedef struct {
@@ -1520,11 +1723,15 @@ static NSArray<NSArray<NSString *> *> *RowsForUnitInput(NSString *payload) {
     @"celsius": @"c", @"fahrenheit": @"f", @"kelvin": @"k",
     @"pascal": @"pa", @"pascals": @"pa", @"帕": @"pa",
     @"kilopascal": @"kpa", @"kilopascals": @"kpa", @"千帕": @"kpa",
-    @"megapascal": @"mpa", @"megapascals": @"mpa", @"兆帕": @"mpa",
+    @"kp": @"kpa", @"megapascal": @"mpa", @"megapascals": @"mpa", @"兆帕": @"mpa",
+    @"mp": @"mpa",
     @"kgf/cm2": @"kgf/cm²", @"kgf/cm^2": @"kgf/cm²",
     @"kg/cm2": @"kgf/cm²", @"kg/cm^2": @"kgf/cm²", @"kg/cm²": @"kgf/cm²",
     @"公斤压力": @"kgf/cm²", @"千克力每平方厘米": @"kgf/cm²",
-    @"毫米汞柱": @"mmhg",
+    @"毫米汞柱": @"mmhg", @"mwc": @"mh2o", @"mwater": @"mh2o",
+    @"米水柱": @"mh2o", @"米水头": @"mh2o",
+    @"层": @"floor", @"层高": @"floor", @"floor": @"floor",
+    @"floors": @"floor", @"storeys": @"floor", @"stories": @"floor",
     @"millivolt": @"mv", @"millivolts": @"mv", @"毫伏": @"mv",
     @"volt": @"v", @"volts": @"v", @"伏": @"v", @"伏特": @"v",
     @"kilovolt": @"kv", @"kilovolts": @"kv", @"千伏": @"kv",
@@ -1556,11 +1763,44 @@ static NSArray<NSArray<NSString *> *> *RowsForUnitInput(NSString *payload) {
     @"millicoulomb": @"mc", @"毫库仑": @"mc",
     @"microcoulomb": @"μc", @"微库仑": @"μc", @"uc": @"μc", @"µc": @"μc"
   };
+  NSInteger fireCategory = 0;
+  if (inputUnit.length > 1) {
+    unichar finalCharacter = [inputUnit characterAtIndex:inputUnit.length - 1];
+    if (finalCharacter >= '1' && finalCharacter <= '3') {
+      NSString *unitWithoutCategory =
+          [inputUnit substringToIndex:inputUnit.length - 1];
+      NSString *normalizedUnit = aliases[unitWithoutCategory] ?: unitWithoutCategory;
+      if ([@[@"pa", @"kpa", @"mpa", @"kgf/cm²", @"mmhg", @"mh2o"]
+          containsObject:normalizedUnit]) {
+        fireCategory = finalCharacter - '0';
+        inputUnit = unitWithoutCategory;
+      }
+    }
+  }
   inputUnit = exactElectricalUnit ?: (aliases[inputUnit] ?: inputUnit);
   NSString *currencyCode = CurrencyCodeForUnit(inputUnit);
   if (currencyCode) {
     ScheduleCurrencyLookup(payload, inputValue, currencyCode);
     return query_currency_rows ?: @[@[@"货币换算", @"正在获取每日参考汇率…"]];
+  }
+
+  double configuredFloorHeight = QueryConfiguredFloorHeight();
+  if ([inputUnit isEqualToString:@"floor"]) {
+    double pressurePa = inputValue * configuredFloorHeight * 9806.65;
+    if (!isfinite(pressurePa))
+      return @[@[@"数值超出范围", @"请缩小输入数值"]];
+    NSMutableArray *floorRows = [NSMutableArray array];
+    for (size_t index = 0; index < sizeof(pressure) / sizeof(pressure[0]); ++index) {
+      NSString *label = [NSString stringWithFormat:@"%@ (%@)",
+          pressure[index].name, pressure[index].symbol];
+      NSString *result = [NSString stringWithFormat:@"%@ %@",
+          UtilityNumber(pressurePa / pressure[index].factor), pressure[index].symbol];
+      [floorRows addObject:@[label, result]];
+    }
+    [floorRows addObject:@[@"大约几层",
+        FloorEstimateResult(inputValue, configuredFloorHeight)]];
+    [floorRows addObject:@[@"层高设置", FloorHeightSettingHint()]];
+    return floorRows;
   }
 
   static const STUnitDefinition length[] = {
@@ -1637,7 +1877,8 @@ static NSArray<NSArray<NSString *> *> *RowsForUnitInput(NSString *payload) {
              [inputUnit isEqualToString:@"kpa"] ||
              [inputUnit isEqualToString:@"mpa"] ||
              [inputUnit isEqualToString:@"kgf/cm²"] ||
-             [inputUnit isEqualToString:@"mmhg"]) {
+             [inputUnit isEqualToString:@"mmhg"] ||
+             [inputUnit isEqualToString:@"mh2o"]) {
     definitions = pressure; definitionCount = sizeof(pressure) / sizeof(pressure[0]);
     dimension = STUnitPressure;
   } else if ([inputUnit isEqualToString:@"c"] || [inputUnit isEqualToString:@"f"] ||
@@ -1720,6 +1961,33 @@ static NSArray<NSArray<NSString *> *> *RowsForUnitInput(NSString *payload) {
         UtilityNumber(converted), definitions[index].symbol];
     [rows addObject:@[label, result]];
   }
+  if (dimension == STUnitPressure) {
+    if (fireCategory > 0) {
+      double minimumMPa = QueryFireStaticPressureMPa(fireCategory);
+      double minimumPa = minimumMPa * 1000000.0;
+      NSString *categoryName = fireCategory == 1 ? @"一类高层公共建筑" :
+          fireCategory == 2 ? @"二类高层公共建筑／多层公共建筑" : @"其他（用户参考值）";
+      NSString *reference = [NSString stringWithFormat:@"%@ · %@ MPa%@",
+          categoryName, UtilityNumber(minimumMPa),
+          fireCategory == 1 ? @"（建筑高度超过100米应按0.15 MPa）" : @""];
+      [rows addObject:@[@"最不利点最低静压", reference]];
+      double availablePa = baseValue - minimumPa;
+      NSString *fireEstimate = availablePa > 0 ?
+          [NSString stringWithFormat:@"%@层（扣除%@ MPa静压；按层高%@米；未计管网损失）",
+              UtilityNumber(availablePa / (9806.65 * configuredFloorHeight)),
+              UtilityNumber(minimumMPa), UtilityNumber(configuredFloorHeight)] :
+          [NSString stringWithFormat:@"低于 %@ MPa 静压参考值",
+              UtilityNumber(minimumMPa)];
+      [rows addObject:@[@"扣除静压后理论楼层", fireEstimate]];
+      [rows addObject:@[@"消防静压设置",
+          @"ufiredefault1-0.15（类别1-压力MPa；类别2默认0.07；类别3默认0.01）"]];
+    } else {
+      double floors = baseValue / (9806.65 * configuredFloorHeight);
+      [rows addObject:@[@"大约几层",
+          FloorEstimateResult(floors, configuredFloorHeight)]];
+      [rows addObject:@[@"层高设置", FloorHeightSettingHint()]];
+    }
+  }
   return rows;
 }
 
@@ -1784,7 +2052,11 @@ static NSArray<NSArray<NSString *> *> *RowsForQuickConversions(double value) {
     @[@"Hz → kHz",
       [NSString stringWithFormat:@"%@ kHz", UtilityNumber(value / 1000.0)]]
   ] mutableCopy];
-  // Include conventional mmHg and kgf/cm² even when no input unit is given.
+  [rows addObject:@[@"Pa → 大约几层", FloorEstimateResult(
+      value / (9806.65 * QueryConfiguredFloorHeight()),
+      QueryConfiguredFloorHeight())]];
+  [rows addObject:@[@"层高设置", FloorHeightSettingHint()]];
+  // Include conventional pressure units even when no input unit is given.
   // Reuse the exact same pressure definitions as explicit-unit conversion.
   for (NSUInteger index = 3; index < sizeof(pressure) / sizeof(pressure[0]); ++index) {
     STUnitDefinition unit = pressure[index];
@@ -2124,7 +2396,9 @@ static NSString *PaginateQueryRows(NSMutableArray<NSString *> *candidates,
 
 static NSInteger QueryUtilityCandidateCount(void) {
   NSInteger count = 0;
-  if (UtilityPayload(query_text, @"maxwidth") != nil) count = 1;
+  if (UtilityPayload(query_text, @"maxwidth") != nil ||
+      UtilityPayload(query_text, @"floorheight") != nil ||
+      UtilityPayload(query_text, @"firedefault") != nil) count = 1;
   else if (UtilityPayload(query_text, @"lang") != nil) count = 5;
   else if (IsColorQuery())
     count = IsColorConversionQuery() ? (NSInteger)RowsForColorConversion().count :
@@ -2312,6 +2586,46 @@ static BOOL QueryUtilityMode(NSMutableArray<NSString *> *candidates,
       [comments replaceObjectAtIndex:0 withObject:
           @"设置界面语言，例如 ulangen、ulangko、ulangja、ulangtw"];
     }
+    return YES;
+  }
+  NSString *floorHeightPayload = UtilityPayload(query_text, @"floorheight");
+  if (floorHeightPayload != nil) {
+    [candidates removeAllObjects];
+    [comments removeAllObjects];
+    *input = [@"u" stringByAppendingString:query_text];
+    double requestedHeight = 0;
+    BOOL valid = floorHeightPayload.length == 0 ||
+        ParseFloorHeight(floorHeightPayload, &requestedHeight);
+    [candidates addObject:valid ? @"层高设置" : @"层高格式不正确"];
+    [comments addObject:floorHeightPayload.length == 0 ?
+        [NSString stringWithFormat:@"当前 %@ m；%@",
+            UtilityNumber(QueryConfiguredFloorHeight()), FloorHeightSettingHint()] :
+        (valid ? [NSString stringWithFormat:
+            @"%@ m · 停止输入约 1 秒后保存", UtilityNumber(requestedHeight)] :
+            @"输入 2–12 米，例如 ufloorheight3.2")];
+    return YES;
+  }
+  NSString *fireDefaultPayload = UtilityPayload(query_text, @"firedefault");
+  if (fireDefaultPayload != nil) {
+    [candidates removeAllObjects];
+    [comments removeAllObjects];
+    *input = [@"u" stringByAppendingString:query_text];
+    NSInteger category = 0;
+    double pressureMPa = 0;
+    BOOL valid = ParseFireStaticPressureDefault(fireDefaultPayload,
+        &category, &pressureMPa);
+    [candidates addObject:valid ? @"消防静压默认设置" : @"消防静压格式不正确"];
+    NSString *hint = fireDefaultPayload.length == 0 ?
+        [NSString stringWithFormat:
+          @"类别1：%@ MPa（>100米按0.15）；类别2：%@ MPa；类别3：%@ MPa（自定义）",
+          UtilityNumber(QueryFireStaticPressureMPa(1)),
+          UtilityNumber(QueryFireStaticPressureMPa(2)),
+          UtilityNumber(QueryFireStaticPressureMPa(3))] :
+        (valid ? [NSString stringWithFormat:
+          @"类别 %ld 参考静压 %@ MPa · 停顿约 1 秒保存",
+          (long)category, UtilityNumber(pressureMPa)] :
+          @"格式：ufiredefault1-0.15（类别1-静压MPa，范围大于0至2.4）");
+    [comments addObject:hint];
     return YES;
   }
   NSString *maxWidthPayload = UtilityPayload(query_text, @"maxwidth");
@@ -3072,6 +3386,9 @@ static NSArray<NSArray<NSString *> *> *QueryHelpEntries(void) {
     @[@"utime时间戳／时区", @"查看本地、目标时区、UTC 与 Unix 秒／毫秒"],
     @[@"udate日期", @"8 位日期可直接换算；双日期用 .、- 或空格分隔"],
     @[@"umaxwidth数字", @"设置 U 面板最大宽度（200–2000 pt，默认 400）"],
+    @[@"层高设置", @"ufloorheight3.2（3.2:层高；可设置范围2-12米；默认3米）"],
+    @[@"uconv2.6mp1 / uconv2.6mpa1", @"末尾类别码：1一类高层公共建筑；2二类高层公共建筑／多层公共建筑；3其他"],
+    @[@"消防静压默认设置", @"ufiredefault1-0.15 设置类别1静压MPa；类别2默认0.07；类别3默认0.01（用户参考值）"],
     @[@"u<语言>", @"按 u<语言> 设置界面语言，例如 ulangen / ulangko / ulangja / ulangtw"],
     @[@"uconv5 / uconv5mi / uconv100rmb", @"支持压力、质量、电气及货币换算"],
     @[@"颜色取色时 ←↑↓→", @"将采样点移动一个物理像素；按空格选色"],
@@ -3557,6 +3874,47 @@ static void ScheduleQueryPanelWidthCommand(void) {
   });
 }
 
+static void ScheduleQueryFloorHeightCommand(void) {
+  NSUInteger generation = ++query_floor_height_command_generation;
+  NSString *payload = [UtilityPayload(query_text, @"floorheight") copy];
+  if (!payload.length) return;
+  NSString *command = [query_text copy];
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC),
+                 dispatch_get_main_queue(), ^{
+    if (!query_active || generation != query_floor_height_command_generation ||
+        ![query_text isEqualToString:command])
+      return;
+    NSString *feedback = SaveQueryFloorHeight(payload);
+    query_text = [NSMutableString string];
+    query_search_feedback = feedback;
+    query_search_feedback_title = @"层高设置";
+    RebuildQuerySession();
+    ShowQueryContext();
+  });
+}
+
+static void ScheduleFireStaticPressureDefaultCommand(void) {
+  NSUInteger generation = ++query_fire_pressure_command_generation;
+  NSString *payload = [UtilityPayload(query_text, @"firedefault") copy];
+  if (!payload.length) return;
+  NSInteger category = 0;
+  double pressureMPa = 0;
+  if (!ParseFireStaticPressureDefault(payload, &category, &pressureMPa)) return;
+  NSString *command = [query_text copy];
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC),
+                 dispatch_get_main_queue(), ^{
+    if (!query_active || generation != query_fire_pressure_command_generation ||
+        ![query_text isEqualToString:command])
+      return;
+    NSString *feedback = SaveFireStaticPressureDefault(category, pressureMPa);
+    query_text = [NSMutableString string];
+    query_search_feedback = feedback;
+    query_search_feedback_title = @"消防静压默认设置";
+    RebuildQuerySession();
+    ShowQueryContext();
+  });
+}
+
 static void RemoveLastQueryCharacter(void) {
   if (query_text.length) {
     NSRange lastCharacter = [query_text
@@ -3568,6 +3926,8 @@ static void RemoveLastQueryCharacter(void) {
     // final typed letter; Rime rebuild resets both its composition and Lua env.
   }
   ScheduleQueryPanelWidthCommand();
+  ScheduleQueryFloorHeightCommand();
+  ScheduleFireStaticPressureDefaultCommand();
   query_phone_prefix_active = IsDirectPhoneQueryText(query_text);
   AdvanceQueryGeneration();
   [query_ip_task cancel];
@@ -3631,6 +3991,8 @@ static void PasteQueryText(void) {
       }
     }
     ScheduleQueryPanelWidthCommand();
+    ScheduleQueryFloorHeightCommand();
+    ScheduleFireStaticPressureDefaultCommand();
     ShowQueryContext();
   }
 }
@@ -4147,6 +4509,8 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
         query_ip_details = nil;
       }
       ScheduleQueryPanelWidthCommand();
+      ScheduleQueryFloorHeightCommand();
+      ScheduleFireStaticPressureDefaultCommand();
       ShowQueryContext();
     });
     return NULL;
