@@ -105,12 +105,10 @@ Passing a build or unit test does not establish end-to-end compatibility on an u
 
 ## Install
 
-### Prebuilt preview v0.1.0-preview.2
+### Latest prebuilt preview
 
-[Download the macOS Universal package](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip) (arm64 / x86_64, 3.12 MB). It includes the public query bridge, URL helper, installation scripts, documentation, and prebuilt outputs; private translation integration is excluded.
+[Open the latest Release to download the macOS Universal package](https://github.com/OwlLinker/SquirrelTranslate/releases/latest). It includes the public query bridge, URL helper, installation scripts, documentation, and prebuilt outputs; private translation integration is excluded.
 
 This package is not signed with an Apple Developer ID or notarized. macOS may show security warnings. Installation requires a valid, stable local code-signing identity and may require Accessibility permission for Squirrel. It was built on macOS 26.6.2 (Apple Silicon) and checked with Squirrel 1.1.2. Although the package includes arm64 and x86_64 binaries, other macOS, Squirrel, and Rime schema combinations have not completed end-to-end testing. The public build, unit conversion tests, and public provider parser tests passed.
-
-SHA-256: `3639568e53f809a933b8c48068639ae6470bc7652d71e3fa61b48c260d3cd733`
 
 **Installation flow:** Download and unzip the package, then follow the detailed [Chinese installation guide](./README.md#安装-u-面板): confirm compatibility, prepare your signing identity, and stop the legacy input bar if installed; skip build-tool setup and step 4 (build), then perform step 5 (install) and the permission and verification steps. Run commands from the extracted project folder. The preview package skips building only—it is not a one-click installer.

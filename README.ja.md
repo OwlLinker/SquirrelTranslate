@@ -105,12 +105,10 @@ Squirrel の簡体字中国語入力ソースが有効で、編集可能な入�
 
 ## インストール
 
-### ビルド済みプレビュー版 v0.1.0-preview.2
+### 最新のビルド済みプレビュー版
 
-[macOS Universal パッケージをダウンロード](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip)（arm64 / x86_64、3.12 MB）。公開版クエリブリッジ、URL ヘルパー、インストールスクリプト、ドキュメント、ビルド済み成果物を含みます。非公開の翻訳連携は含まれません。
+[最新 Release から macOS Universal パッケージをダウンロード](https://github.com/OwlLinker/SquirrelTranslate/releases/latest)。公開版クエリブリッジ、URL ヘルパー、インストールスクリプト、ドキュメント、ビルド済み成果物を含みます。非公開の翻訳連携は含まれません。
 
 Apple Developer ID による署名および公証はありません。macOS の警告が表示される場合があります。インストールには有効で安定したローカル署名 ID が必要で、Squirrel のアクセシビリティ権限を求められる場合があります。macOS 26.6.2（Apple Silicon）でビルドし、Squirrel 1.1.2 で検証しました。arm64 / x86_64 を含みますが、他の macOS、Squirrel、Rime スキーマとの互換性は未検証です。公開ビルド、単位変換、公開プロバイダー解析テストは通過しています。
-
-SHA-256：`3639568e53f809a933b8c48068639ae6470bc7652d71e3fa61b48c260d3cd733`
 
 **インストール手順：** ZIP をダウンロードして展開し、中国語の[詳細なインストール手順](./README.md#安装-u-面板)に従ってください。環境確認、署名 ID の準備、旧入力バーの停止（使用している場合）の後、ビルドツール準備と手順 4（ビルド）だけを省略し、手順 5（インストール）と権限設定・確認を行います。展開したプロジェクトフォルダーでコマンドを実行してください。ワンクリックインストーラーではありません。

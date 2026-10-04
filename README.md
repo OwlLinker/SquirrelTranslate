@@ -125,13 +125,11 @@ U 面板中数字和标点直接作为查询内容输入，不会选择候选；
 
 按下面顺序安装公开版进程内面板。安装会重新签名并重启鼠须管；先保存其他应用中的工作。不要用项目中其他安装脚本替代这里的 `install_query_bridge.sh`。
 
-### 使用预构建预览包 v0.1.0-preview.2
+### 使用最新预构建预览包
 
-[下载 macOS Universal 安装包](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip)（arm64 / x86_64，3.12 MB）。包含公开版查询桥、URL 工具、安装脚本、文档和预构建产物，不包含私有翻译集成。
+[前往最新 Release 下载 macOS Universal 安装包](https://github.com/OwlLinker/SquirrelTranslate/releases/latest)。安装包包含公开版查询桥、URL 工具、安装脚本、文档和预构建产物，不包含私有翻译集成。
 
 安装包未使用 Apple Developer ID 签名，且未经公证；首次安装时 macOS 可能显示安全提示。安装需要有效的本地稳定代码签名身份；使用相关功能时，macOS 可能要求为 Squirrel 授予辅助功能权限。构建环境为 macOS 26.6.2（Apple Silicon），验证输入法版本为 Squirrel 1.1.2。安装包包含 arm64 和 x86_64 架构；其他 macOS、Squirrel 版本及 Rime 输入方案尚未完成端到端验证。公开版构建、单位换算测试和公开服务解析测试已通过。
-
-SHA-256：`3639568e53f809a933b8c48068639ae6470bc7652d71e3fa61b48c260d3cd733`
 
 **安装顺序：**下载并解压 ZIP → 完成下方环境确认、签名身份准备，并停止旧输入栏（如曾安装）→ 跳过第 4 步构建，直接执行第 5 步安装 → 完成辅助功能授权和验证。请在解压后的项目文件夹中打开终端运行命令。预览包只免去构建，不会跳过签名、安装或授权步骤；它不是免配置的一键安装器。
 

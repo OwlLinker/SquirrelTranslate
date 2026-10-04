@@ -105,12 +105,10 @@ macOS 上 Squirrel（Rime）的候選翻譯與快速查詢面板，提供候選�
 
 ## 安裝
 
-### 預先建置預覽版 v0.1.0-preview.2
+### 使用最新預先建置預覽版
 
-[下載 macOS Universal 套件](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip)（arm64 / x86_64，3.12 MB）。套件包含公開版查詢橋接元件、URL 工具、安裝腳本、文件及預先建置產物，不包含私有翻譯整合。
+[前往最新 Release 下載 macOS Universal 套件](https://github.com/OwlLinker/SquirrelTranslate/releases/latest)。套件包含公開版查詢橋接元件、URL 工具、安裝腳本、文件及預先建置產物，不包含私有翻譯整合。
 
 本套件未使用 Apple Developer ID 簽署，也未經公證；安裝時 macOS 可能顯示安全性提示。安裝需要有效且穩定的本機程式碼簽署身分，使用相關功能時也可能需要授予 Squirrel 輔助使用權限。套件於 macOS 26.6.2（Apple Silicon）建置，並以 Squirrel 1.1.2 驗證。雖包含 arm64 與 x86_64 架構，其他 macOS、Squirrel 版本及 Rime 輸入方案尚未完成端對端驗證。公開版建置、單位換算及公開服務解析測試均已通過。
-
-SHA-256：`3639568e53f809a933b8c48068639ae6470bc7652d71e3fa61b48c260d3cd733`
 
 **安裝順序：**下載並解壓 ZIP → 依照簡體中文[詳細安裝步驟](./README.md#安装-u-面板)確認環境、準備簽署身分，並停止舊的獨立輸入列（若曾安裝）→ 略過第 4 步建置，執行第 5 步安裝 → 完成輔助使用權限設定及驗證。請在解壓後的專案資料夾中開啟終端機執行命令。預覽套件只免除建置，不會略過簽署、安裝或授權；並非一鍵安裝程式。
