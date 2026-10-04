@@ -38,6 +38,9 @@ struct Settings {
 
   Settings() {
     providers["mac_dictionary"].enabled = true;
+    providers["google"].enabled = true;
+    providers["bing"].enabled = true;
+    providers["deepl"].enabled = true;
     providers["google"].endpoint =
         "https://translate.google.com/translate_a/single";
     providers["bing"].endpoint = "https://cn.bing.com/translator";

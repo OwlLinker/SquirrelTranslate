@@ -15,6 +15,7 @@ phone_license="$project_dir/resources/phone-region-LICENSE.txt"
 provider_config="$project_root/rime/translation.providers.public.yaml.example"
 provider_config_target="$HOME/Library/Rime/translation.providers.yaml"
 marker="$HOME/Library/Rime/input_translation.query_bridge.enabled"
+restart_squirrel=${RESTART_SQUIRREL:-1}
 
 if [ ! -x "$squirrel_app/Contents/MacOS/Squirrel" ]; then
   echo "Squirrel.app not found: $squirrel_app" >&2
@@ -52,12 +53,11 @@ mkdir -p "$(dirname "$url_helper_target")"
 install -m 755 "$url_helper" "$url_helper_target"
 "$script_dir/sign_squirrel.sh" "$squirrel_app"
 
-"$squirrel_app/Contents/MacOS/Squirrel" --quit || true
-for attempt in $(seq 1 40); do
-  if ! pgrep -x Squirrel >/dev/null 2>&1; then break; fi
-  sleep 0.25
-done
-open "$squirrel_app"
+if [ "$restart_squirrel" = "1" ]; then
+  sh "$script_dir/restart_squirrel.sh" "$squirrel_app"
+else
+  echo "Restart Squirrel manually, or rerun with RESTART_SQUIRREL=1."
+fi
 echo "Installed and enabled the in-process query bridge."
 echo "Installed: $url_helper_target"
 echo "Stop the standalone input bar before testing: $project_root/native/scripts/input_bar.sh stop"

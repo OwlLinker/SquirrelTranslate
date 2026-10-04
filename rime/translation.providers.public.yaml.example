@@ -14,14 +14,14 @@ providers:
     enabled: true  # 优先查询 macOS 当前启用的第一个系统词典。
 
   google:
-    enabled: false
+    enabled: true
     endpoint: https://translate.google.com/translate_a/single
 
   bing:
-    enabled: false
+    enabled: true
     endpoint: https://cn.bing.com/translator
 
   deepl:
-    enabled: false
+    enabled: true
     endpoint: https://api-free.deepl.com/v2/translate
     api_key: ""

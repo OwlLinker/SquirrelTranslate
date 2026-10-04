@@ -7,7 +7,7 @@ project_root=$(CDPATH= cd -- "$project_dir/.." && pwd)
 squirrel_app=${SQUIRREL_APP:-/Library/Input Methods/Squirrel.app}
 install_injector=${INSTALL_STATUS_INJECTOR:-0}
 install_query_bridge=${INSTALL_QUERY_BRIDGE:-0}
-restart_squirrel=${RESTART_SQUIRREL:-0}
+restart_squirrel=${RESTART_SQUIRREL:-1}
 plugin="$project_dir/build/out/librime-translation-refresh.dylib"
 query_bridge="$project_dir/build/out/libsquirrel-query-bridge.dylib"
 url_helper="$project_dir/build/out/squirrel-open-url"
@@ -24,8 +24,6 @@ lua_processor_source="$project_root/lua/input_translation_processor.lua"
 lua_processor_target="$HOME/Library/Rime/lua/input_translation_processor.lua"
 lua_help_source="$project_root/lua/input_translation_help.lua"
 lua_help_target="$HOME/Library/Rime/lua/input_translation_help.lua"
-helper="$project_dir/src/deepl_web_session.py"
-target_helper="$squirrel_app/Contents/Frameworks/rime-plugins/deepl_web_session.py"
 injector_dir="$project_dir/build/injector"
 injector_loader="$injector_dir/libsquirrel-status-injector-loader.dylib"
 injector_swift="$injector_dir/libsquirrel-status-injector-arm64.dylib"
@@ -87,11 +85,6 @@ fi
 
 sudo mkdir -p "$(dirname "$target")"
 sudo install -m 755 "$plugin" "$target"
-if [ -f "$helper" ]; then
-  sudo install -m 755 "$helper" "$target_helper"
-else
-  echo "DeepL web helper is not included; deepl_web will be unavailable." >&2
-fi
 if [ "$install_query_bridge" = "1" ]; then
   sudo install -m 755 "$query_bridge" "$target_query_bridge"
   sudo install -m 644 "$phone_data" "$target_phone_data"
@@ -135,12 +128,7 @@ else
   echo "Status injector not installed; normal public-safe mode is active."
 fi
 if [ "$restart_squirrel" = "1" ]; then
-  "$squirrel_app/Contents/MacOS/Squirrel" --quit || true
-  for attempt in $(seq 1 40); do
-    if ! pgrep -x Squirrel >/dev/null 2>&1; then break; fi
-    sleep 0.25
-  done
-  open "$squirrel_app"
+  sh "$script_dir/restart_squirrel.sh" "$squirrel_app"
 else
   echo "Restart Squirrel manually, or rerun with RESTART_SQUIRREL=1."
 fi
