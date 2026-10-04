@@ -127,7 +127,7 @@ U 面板中数字和标点直接作为查询内容输入，不会选择候选；
 
 ### 使用预构建预览包 v0.1.0-preview.2
 
-[下载 macOS Universal 安装包](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip)（arm64 / x86_64，3.06 MB）。包含公开版查询桥、URL 工具、安装脚本、文档和预构建产物，不包含私有翻译集成。
+[下载 macOS Universal 安装包](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip)（arm64 / x86_64，3.12 MB）。包含公开版查询桥、URL 工具、安装脚本、文档和预构建产物，不包含私有翻译集成。
 
 安装包未使用 Apple Developer ID 签名，且未经公证；首次安装时 macOS 可能显示安全提示。安装需要有效的本地稳定代码签名身份；使用相关功能时，macOS 可能要求为 Squirrel 授予辅助功能权限。构建环境为 macOS 26.6.2（Apple Silicon），验证输入法版本为 Squirrel 1.1.2。安装包包含 arm64 和 x86_64 架构；其他 macOS、Squirrel 版本及 Rime 输入方案尚未完成端到端验证。公开版构建、单位换算测试和公开服务解析测试已通过。
 

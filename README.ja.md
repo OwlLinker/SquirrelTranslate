@@ -107,7 +107,7 @@ Squirrel の簡体字中国語入力ソースが有効で、編集可能な入�
 
 ### ビルド済みプレビュー版 v0.1.0-preview.2
 
-[macOS Universal パッケージをダウンロード](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip)（arm64 / x86_64、3.06 MB）。公開版クエリブリッジ、URL ヘルパー、インストールスクリプト、ドキュメント、ビルド済み成果物を含みます。非公開の翻訳連携は含まれません。
+[macOS Universal パッケージをダウンロード](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip)（arm64 / x86_64、3.12 MB）。公開版クエリブリッジ、URL ヘルパー、インストールスクリプト、ドキュメント、ビルド済み成果物を含みます。非公開の翻訳連携は含まれません。
 
 Apple Developer ID による署名および公証はありません。macOS の警告が表示される場合があります。インストールには有効で安定したローカル署名 ID が必要で、Squirrel のアクセシビリティ権限を求められる場合があります。macOS 26.6.2（Apple Silicon）でビルドし、Squirrel 1.1.2 で検証しました。arm64 / x86_64 を含みますが、他の macOS、Squirrel、Rime スキーマとの互換性は未検証です。公開ビルド、単位変換、公開プロバイダー解析テストは通過しています。
 

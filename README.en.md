@@ -107,7 +107,7 @@ Passing a build or unit test does not establish end-to-end compatibility on an u
 
 ### Prebuilt preview v0.1.0-preview.2
 
-[Download the macOS Universal package](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip) (arm64 / x86_64, 3.06 MB). It includes the public query bridge, URL helper, installation scripts, documentation, and prebuilt outputs; private translation integration is excluded.
+[Download the macOS Universal package](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip) (arm64 / x86_64, 3.12 MB). It includes the public query bridge, URL helper, installation scripts, documentation, and prebuilt outputs; private translation integration is excluded.
 
 This package is not signed with an Apple Developer ID or notarized. macOS may show security warnings. Installation requires a valid, stable local code-signing identity and may require Accessibility permission for Squirrel. It was built on macOS 26.6.2 (Apple Silicon) and checked with Squirrel 1.1.2. Although the package includes arm64 and x86_64 binaries, other macOS, Squirrel, and Rime schema combinations have not completed end-to-end testing. The public build, unit conversion tests, and public provider parser tests passed.
 

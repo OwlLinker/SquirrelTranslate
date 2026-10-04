@@ -107,7 +107,7 @@ Squirrel 간체 중국어 입력 소스가 활성화되어 있고 편집 가능�
 
 ### 사전 빌드 미리보기 v0.1.0-preview.2
 
-[macOS Universal 패키지 다운로드](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip) (arm64 / x86_64, 3.06 MB). 공개 쿼리 브리지, URL 도우미, 설치 스크립트, 문서 및 사전 빌드 결과물이 포함되며 비공개 번역 통합은 포함되지 않습니다.
+[macOS Universal 패키지 다운로드](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip) (arm64 / x86_64, 3.12 MB). 공개 쿼리 브리지, URL 도우미, 설치 스크립트, 문서 및 사전 빌드 결과물이 포함되며 비공개 번역 통합은 포함되지 않습니다.
 
 Apple Developer ID 서명과 공증은 없습니다. macOS 보안 경고가 표시될 수 있습니다. 설치하려면 유효하고 안정적인 로컬 코드 서명 ID가 필요하며 Squirrel 손쉬운 사용 권한을 요청할 수 있습니다. macOS 26.6.2 (Apple Silicon)에서 빌드하고 Squirrel 1.1.2에서 검증했습니다. arm64 및 x86_64 바이너리를 포함하지만 다른 macOS, Squirrel, Rime 스키마 조합은 검증되지 않았습니다. 공개 빌드, 단위 변환 및 공개 제공자 파서 테스트를 통과했습니다.
 

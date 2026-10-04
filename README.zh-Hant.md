@@ -107,7 +107,7 @@ macOS 上 Squirrel（Rime）的候選翻譯與快速查詢面板，提供候選�
 
 ### 預先建置預覽版 v0.1.0-preview.2
 
-[下載 macOS Universal 套件](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip)（arm64 / x86_64，3.06 MB）。套件包含公開版查詢橋接元件、URL 工具、安裝腳本、文件及預先建置產物，不包含私有翻譯整合。
+[下載 macOS Universal 套件](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip)（arm64 / x86_64，3.12 MB）。套件包含公開版查詢橋接元件、URL 工具、安裝腳本、文件及預先建置產物，不包含私有翻譯整合。
 
 本套件未使用 Apple Developer ID 簽署，也未經公證；安裝時 macOS 可能顯示安全性提示。安裝需要有效且穩定的本機程式碼簽署身分，使用相關功能時也可能需要授予 Squirrel 輔助使用權限。套件於 macOS 26.6.2（Apple Silicon）建置，並以 Squirrel 1.1.2 驗證。雖包含 arm64 與 x86_64 架構，其他 macOS、Squirrel 版本及 Rime 輸入方案尚未完成端對端驗證。公開版建置、單位換算及公開服務解析測試均已通過。
 
