@@ -54,6 +54,7 @@ static CFAbsoluteTime query_last_key_time;
 static BOOL query_prefix_armed = YES;
 static CGFloat query_panel_max_width = 400;
 static BOOL query_panel_max_width_loaded;
+static NSString *query_ui_language;
 static NSUInteger query_panel_width_command_generation;
 static NSString *query_ip_details;
 static NSString *query_ip_public_ip;
@@ -174,6 +175,290 @@ static NSString *QuerySearchProfilePath(void) {
 static NSString *QueryPanelWidthProfilePath(void) {
   return [@"~/Library/Rime/input_translation.query_panel_max_width"
       stringByExpandingTildeInPath];
+}
+
+static NSString *QueryLanguageProfilePath(void) {
+  return [@"~/Library/Rime/input_translation.ui_language"
+      stringByExpandingTildeInPath];
+}
+
+static NSString *QueryUILanguage(void) {
+  if (!query_ui_language) {
+    NSString *stored = [[NSString stringWithContentsOfFile:QueryLanguageProfilePath()
+        encoding:NSUTF8StringEncoding error:nil]
+        stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+    NSSet<NSString *> *supported = [NSSet setWithArray:
+        @[@"zh-Hans", @"zh-Hant", @"en", @"ko", @"ja"]];
+    query_ui_language = [supported containsObject:stored ?: @""] ? stored : @"zh-Hans";
+  }
+  return query_ui_language;
+}
+
+static NSString *QueryLanguageSettingFeedback(NSString *language) {
+  NSDictionary<NSString *, NSString *> *messages = @{
+    @"zh-Hans": @"界面语言已设为简体中文",
+    @"zh-Hant": @"介面語言已設為繁體中文",
+    @"en": @"Interface language set to English",
+    @"ko": @"인터페이스 언어가 한국어로 설정되었습니다",
+    @"ja": @"表示言語を日本語に設定しました"
+  };
+  return messages[language];
+}
+
+static NSString *ConfigureQueryLanguage(NSString *command) {
+  if (![command hasPrefix:@"lang"]) return nil;
+  NSString *suffix = [command substringFromIndex:4];
+  NSDictionary<NSString *, NSString *> *codes = @{
+    @"zh": @"zh-Hans", @"tw": @"zh-Hant", @"en": @"en",
+    @"ko": @"ko", @"ja": @"ja"
+  };
+  NSString *language = codes[suffix.lowercaseString];
+  if (!language) return nil;
+  NSString *path = QueryLanguageProfilePath();
+  if (![[NSFileManager defaultManager] createDirectoryAtPath:path.stringByDeletingLastPathComponent
+      withIntermediateDirectories:YES attributes:nil error:nil]) return nil;
+  NSString *contents = [language stringByAppendingString:@"\n"];
+  if (![contents writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil])
+    return nil;
+  [[NSFileManager defaultManager] setAttributes:@{NSFilePosixPermissions: @0600}
+      ofItemAtPath:path error:nil];
+  query_ui_language = language;
+  return QueryLanguageSettingFeedback(language);
+}
+
+static NSString *LocalizedQueryText(NSString *text) {
+  if (!text.length) return text;
+  NSString *language = QueryUILanguage();
+  if ([language isEqualToString:@"zh-Hans"]) return text;
+  if ([text isEqualToString:@"u<语言>"]) {
+    NSDictionary<NSString *, NSString *> *labels = @{
+      @"en": @"u<language>", @"ko": @"u<언어>", @"ja": @"u<言語>", @"zh-Hant": @"u<語言>"
+    };
+    return labels[language] ?: text;
+  }
+  if ([text containsString:@"u<语言>"]) {
+    NSDictionary<NSString *, NSString *> *hints = @{
+      @"en": @"Set interface language with u<language>: ulangen, ulangko, ulangja or ulangtw",
+      @"ko": @"u<언어>로 인터페이스 언어 설정: ulangen, ulangko, ulangja 또는 ulangtw",
+      @"ja": @"u<言語> で表示言語を設定: ulangen、ulangko、ulangja、ulangtw",
+      @"zh-Hant": @"使用 u<語言> 設定介面語言：ulangen、ulangko、ulangja 或 ulangtw"
+    };
+    return hints[language] ?: text;
+  }
+  static NSDictionary<NSString *, NSDictionary<NSString *, NSString *> *> *tables;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    tables = @{
+      @"en": @{
+        @"最大面板宽度": @"Maximum panel width", @"宽度格式不正确": @"Invalid width",
+        @"本地 IP": @"Local IP", @"公网 IP": @"Public IP", @"IP 地址查询": @"IP lookup",
+        @"输入 IPv4 地址": @"Enter an IPv4 address", @"号码归属地": @"Phone region",
+        @"座机归属地": @"Landline region", @"号码格式不正确": @"Invalid phone number",
+        @"未找到该号段": @"Prefix not found", @"地区未收录": @"Region unavailable",
+        @"过去天数": @"Days ago", @"剩余天数": @"Days remaining", @"相差天数": @"Days apart",
+        @"开始日期": @"Start date", @"结束日期": @"End date", @"今天": @"Today",
+        @"点击屏幕选择颜色": @"Click to pick a color", @"不可用": @"Unavailable",
+        @"本地时间": @"Local time", @"目标时区": @"Target time zone", @"Unix 秒": @"Unix seconds", @"Unix 毫秒": @"Unix milliseconds",
+        @"日期格式": @"Date format", @"日期间隔": @"Date interval", @"时区或时间戳": @"Time zone or timestamp", @"时间戳超出范围": @"Timestamp out of range",
+        @"单位不支持": @"Unsupported unit", @"温度超出范围": @"Temperature out of range", @"数值超出范围": @"Value out of range",
+        @"货币换算": @"Currency conversion", @"汇率查询失败": @"Exchange-rate lookup failed",
+        @"英里": @"Mile", @"英尺": @"Foot", @"英寸": @"Inch", @"码": @"Yard", @"公里": @"Kilometer", @"米": @"Meter", @"厘米": @"Centimeter", @"毫米": @"Millimeter",
+        @"磅": @"Pound", @"盎司": @"Ounce", @"千克": @"Kilogram", @"克": @"Gram", @"毫克": @"Milligram", @"美制加仑": @"US gallon", @"升": @"Liter", @"毫升": @"Milliliter",
+        @"微伏": @"Microvolt", @"毫伏": @"Millivolt", @"伏特": @"Volt", @"千伏": @"Kilovolt", @"微安": @"Microamp", @"毫安": @"Milliamp", @"安培": @"Amp", @"千安": @"Kiloamp",
+        @"毫瓦": @"Milliwatt", @"瓦特": @"Watt", @"千瓦": @"Kilowatt", @"兆瓦": @"Megawatt", @"毫欧": @"Milliohm", @"欧姆": @"Ohm", @"千欧": @"Kiloohm", @"兆欧": @"Megaohm",
+        @"毫瓦时": @"Milliwatt-hour", @"瓦时": @"Watt-hour", @"千瓦时": @"Kilowatt-hour", @"兆瓦时": @"Megawatt-hour", @"皮法": @"Picofarad", @"纳法": @"Nanofarad", @"微法": @"Microfarad", @"毫法": @"Millifarad",
+        @"微亨": @"Microhenry", @"毫亨": @"Millihenry", @"亨利": @"Henry", @"微库仑": @"Microcoulomb", @"毫库仑": @"Millicoulomb", @"库仑": @"Coulomb", @"赫兹": @"Hertz", @"千赫": @"Kilohertz", @"兆赫": @"Megahertz", @"吉赫": @"Gigahertz",
+        @"公斤力/平方厘米": @"kgf/cm²", @"毫米汞柱": @"Millimeters of mercury", @"帕": @"Pascal", @"千帕": @"Kilopascal", @"兆帕": @"Megapascal",
+        @"人民币": @"Chinese yuan", @"美元": @"US dollar", @"欧元": @"Euro", @"日元": @"Japanese yen", @"英镑": @"British pound", @"港币": @"Hong Kong dollar", @"新台币": @"Taiwan dollar", @"新加坡元": @"Singapore dollar", @"加拿大元": @"Canadian dollar", @"澳大利亚元": @"Australian dollar", @"韩元": @"South Korean won", @"瑞士法郎": @"Swiss franc", @"泰铢": @"Thai baht",
+        @"颜色": @"Color", @"HEX（无 #）": @"HEX (no #)", @"HEX + Alpha": @"HEX + alpha", @"摄氏度": @"Celsius", @"华氏度": @"Fahrenheit", @"开尔文": @"Kelvin",
+        @"输入停顿后自动查询": @"Lookup starts after you pause typing",
+        @"输入完整地址 · 例如 uip8.8.8.8": @"Enter a full address, e.g. uip8.8.8.8",
+        @"输入 200–2000 的整数，例如 umaxwidth600": @"Enter an integer from 200–2000, e.g. umaxwidth600",
+        @"请输入 200–2000 的整数": @"Enter an integer from 200–2000",
+        @"设置已保存": @"Settings saved", @"设置结果": @"Settings",
+        @"搜索引擎设置": @"Search engine", @"面板宽度设置": @"Panel width",
+        @"开启或关闭候选翻译": @"Toggle candidate translations", @"朗读当前候选的译文": @"Speak the selected translation",
+        @"上屏当前候选的译文": @"Commit the selected translation", @"展开或收起当前候选的完整翻译": @"Expand or collapse the full translation",
+        @"开启或关闭音标显示": @"Toggle phonetic display", @"用默认搜索引擎搜索当前候选": @"Search with the default engine",
+        @"用第二搜索引擎搜索当前候选": @"Search with the second engine", @"打开新闻扩展并搜索当前候选": @"Search with the news extension",
+        @"复制当前结果信息": @"Copy the selected result", @"复制当前候选词；取色时选定颜色或重新取色": @"Copy candidate; confirm or resume color sampling",
+        @"关闭快捷键帮助": @"Close shortcut help", @"打开或关闭本帮助": @"Toggle this help",
+        @"上一页／下一页；每页最多 9 条": @"Previous/next page; up to 9 rows per page",
+        @"移动选择候选词或帮助条目；到页边缘自动跨页": @"Move through candidates or help; cross pages at the edges",
+        @"数字和标点": @"Digits and punctuation", @"直接输入并显示；8 位日期自动进入日期换算": @"Type to enter; valid 8-digit dates open date conversion",
+        @"按 u<语言> 设置界面语言，例如 ulangen / ulangko / ulangja / ulangtw": @"Set the UI with u<language>: ulangen, ulangko, ulangja or ulangtw",
+        @"umaxwidth数字": @"umaxwidth<number>", @"设置 U 面板最大宽度（200–2000 pt，默认 400）": @"Set U panel width (200–2000 pt; default 400)",
+        @"u<引擎>1": @"u<engine>1", @"设置 ⌃G 搜索引擎，例如 ugoogle1": @"Set the ⌃G search engine, e.g. ugoogle1",
+        @"设置 ⌃B 搜索引擎，例如 ubing2": @"Set the ⌃B search engine, e.g. ubing2",
+        @"utime时间戳／时区": @"utime timestamp/time zone", @"查看本地、目标时区、UTC 与 Unix 秒／毫秒": @"Show local/target time, UTC and Unix seconds/milliseconds",
+        @"udate日期": @"udate date", @"8 位日期可直接换算；双日期用 .、- 或空格分隔": @"Convert 8-digit dates; separate two dates with ., - or a space",
+        @"uconv5 / uconv5mi / uconv100rmb": @"uconv5 / uconv5mi / uconv100rmb", @"支持压力、质量、电气及货币换算": @"Convert pressure, mass, electrical units and currencies",
+        @"颜色取色时 ←↑↓→": @"Color sampling: ←↑↓→", @"将采样点移动一个物理像素；按空格选色": @"Move one physical pixel; press Space to select",
+        @"方案翻页键": @"Schema paging keys", @"沿用鼠须管当前方案；不使用 -、= 翻页": @"Use Squirrel schema bindings except - and =",
+        @"下一页／上一页，同左右方向键": @"Previous/next page, same as arrow keys",
+        @"PageUp / PageDown": @"PageUp / PageDown", @"⌘C": @"⌘C", @"⌘,": @"⌘,", @"空格": @"Space", @"点击 ⓘ": @"Click ⓘ",
+        @"语言": @"Language", @"简体中文": @"Simplified Chinese", @"繁體中文": @"Traditional Chinese",
+        @"English": @"English", @"한국어": @"Korean", @"日本語": @"Japanese",
+        @"设置界面语言，例如 ulangen、ulangko、ulangja、ulangtw": @"Set interface language: ulangen, ulangko, ulangja or ulangtw"
+      },
+      @"ko": @{
+        @"最大面板宽度": @"패널 최대 너비", @"宽度格式不正确": @"너비 형식이 올바르지 않습니다",
+        @"本地 IP": @"로컬 IP", @"公网 IP": @"공인 IP", @"IP 地址查询": @"IP 조회",
+        @"输入 IPv4 地址": @"IPv4 주소 입력", @"号码归属地": @"전화번호 지역", @"座机归属地": @"유선전화 지역",
+        @"号码格式不正确": @"전화번호 형식이 올바르지 않습니다", @"未找到该号段": @"번호 대역을 찾을 수 없습니다",
+        @"地区未收录": @"지역 정보 없음", @"过去天数": @"지난 일수", @"剩余天数": @"남은 일수", @"相差天数": @"날짜 차이",
+        @"开始日期": @"시작 날짜", @"结束日期": @"종료 날짜", @"今天": @"오늘", @"点击屏幕选择颜色": @"화면을 클릭해 색상 선택",
+        @"不可用": @"사용할 수 없음", @"颜色": @"색상", @"HEX（无 #）": @"HEX (# 없음)", @"HEX + Alpha": @"HEX + 알파", @"摄氏度": @"섭씨", @"华氏度": @"화씨", @"开尔文": @"켈빈",
+        @"本地时间": @"현지 시간", @"目标时区": @"대상 시간대", @"Unix 秒": @"Unix 초", @"Unix 毫秒": @"Unix 밀리초",
+        @"日期格式": @"날짜 형식", @"日期间隔": @"날짜 간격", @"时区或时间戳": @"시간대 또는 타임스탬프", @"时间戳超出范围": @"타임스탬프 범위 초과",
+        @"单位不支持": @"지원하지 않는 단위", @"温度超出范围": @"온도 범위 초과", @"数值超出范围": @"값 범위 초과",
+        @"货币换算": @"통화 변환", @"汇率查询失败": @"환율 조회 실패",
+        @"英里": @"마일", @"英尺": @"피트", @"英寸": @"인치", @"码": @"야드", @"公里": @"킬로미터", @"米": @"미터", @"厘米": @"센티미터", @"毫米": @"밀리미터",
+        @"磅": @"파운드", @"盎司": @"온스", @"千克": @"킬로그램", @"克": @"그램", @"毫克": @"밀리그램", @"美制加仑": @"미국 갤런", @"升": @"리터", @"毫升": @"밀리리터",
+        @"微伏": @"마이크로볼트", @"毫伏": @"밀리볼트", @"伏特": @"볼트", @"千伏": @"킬로볼트", @"微安": @"마이크로암페어", @"毫安": @"밀리암페어", @"安培": @"암페어", @"千安": @"킬로암페어",
+        @"毫瓦": @"밀리와트", @"瓦特": @"와트", @"千瓦": @"킬로와트", @"兆瓦": @"메가와트", @"毫欧": @"밀리옴", @"欧姆": @"옴", @"千欧": @"킬로옴", @"兆欧": @"메가옴",
+        @"毫瓦时": @"밀리와트시", @"瓦时": @"와트시", @"千瓦时": @"킬로와트시", @"兆瓦时": @"메가와트시", @"皮法": @"피코패럿", @"纳法": @"나노패럿", @"微法": @"마이크로패럿", @"毫法": @"밀리패럿",
+        @"微亨": @"마이크로헨리", @"毫亨": @"밀리헨리", @"亨利": @"헨리", @"微库仑": @"마이크로쿨롱", @"毫库仑": @"밀리쿨롱", @"库仑": @"쿨롱", @"赫兹": @"헤르츠", @"千赫": @"킬로헤르츠", @"兆赫": @"메가헤르츠", @"吉赫": @"기가헤르츠",
+        @"公斤力/平方厘米": @"kgf/cm²", @"毫米汞柱": @"수은주 밀리미터", @"帕": @"파스칼", @"千帕": @"킬로파스칼", @"兆帕": @"메가파스칼",
+        @"人民币": @"중국 위안", @"美元": @"미국 달러", @"欧元": @"유로", @"日元": @"일본 엔", @"英镑": @"영국 파운드", @"港币": @"홍콩 달러", @"新台币": @"대만 달러", @"新加坡元": @"싱가포르 달러", @"加拿大元": @"캐나다 달러", @"澳大利亚元": @"호주 달러", @"韩元": @"한국 원", @"瑞士法郎": @"스위스 프랑", @"泰铢": @"태국 바트",
+        @"输入停顿后自动查询": @"입력을 멈추면 자동 조회", @"输入完整地址 · 例如 uip8.8.8.8": @"전체 주소 입력 (예: uip8.8.8.8)",
+        @"输入 200–2000 的整数，例如 umaxwidth600": @"200–2000 사이의 정수 입력 (예: umaxwidth600)", @"请输入 200–2000 的整数": @"200–2000 사이의 정수를 입력하세요",
+        @"设置已保存": @"설정이 저장되었습니다", @"设置结果": @"설정", @"搜索引擎设置": @"검색 엔진", @"面板宽度设置": @"패널 너비",
+        @"开启或关闭候选翻译": @"후보 번역 켜기/끄기", @"朗读当前候选的译文": @"선택한 번역 읽기", @"上屏当前候选的译文": @"선택한 번역 입력",
+        @"展开或收起当前候选的完整翻译": @"전체 번역 펼치기/접기", @"开启或关闭音标显示": @"발음기호 표시 켜기/끄기",
+        @"用默认搜索引擎搜索当前候选": @"기본 검색 엔진으로 검색", @"用第二搜索引擎搜索当前候选": @"두 번째 검색 엔진으로 검색",
+        @"打开新闻扩展并搜索当前候选": @"뉴스 확장 프로그램에서 검색", @"复制当前结果信息": @"현재 결과 정보 복사",
+        @"复制当前候选词；取色时选定颜色或重新取色": @"후보 복사; 색상 선택 또는 다시 샘플링", @"关闭快捷键帮助": @"단축키 도움말 닫기",
+        @"打开或关闭本帮助": @"도움말 열기/닫기", @"上一页／下一页；每页最多 9 条": @"이전/다음 페이지 (최대 9개)",
+        @"移动选择候选词或帮助条目；到页边缘自动跨页": @"후보/도움말 이동; 가장자리에서 페이지 전환", @"数字和标点": @"숫자와 문장 부호",
+        @"直接输入并显示；8 位日期自动进入日期换算": @"직접 입력; 8자리 날짜 자동 변환",
+        @"按 u<语言> 设置界面语言，例如 ulangen / ulangko / ulangja / ulangtw": @"u<언어>로 설정: ulangen, ulangko, ulangja 또는 ulangtw",
+        @"umaxwidth数字": @"umaxwidth<숫자>", @"设置 U 面板最大宽度（200–2000 pt，默认 400）": @"U 패널 너비 설정 (200–2000pt, 기본 400)",
+        @"u<引擎>1": @"u<엔진>1", @"设置 ⌃G 搜索引擎，例如 ugoogle1": @"⌃G 검색 엔진 설정 (예: ugoogle1)", @"设置 ⌃B 搜索引擎，例如 ubing2": @"⌃B 검색 엔진 설정 (예: ubing2)",
+        @"utime时间戳／时区": @"utime 타임스탬프/시간대", @"查看本地、目标时区、UTC 与 Unix 秒／毫秒": @"현지/지정 시간대, UTC 및 Unix 초/밀리초 표시",
+        @"udate日期": @"udate 날짜", @"8 位日期可直接换算；双日期用 .、- 或空格分隔": @"8자리 날짜 변환; 두 날짜는 ., - 또는 공백으로 구분",
+        @"uconv5 / uconv5mi / uconv100rmb": @"uconv5 / uconv5mi / uconv100rmb", @"支持压力、质量、电气及货币换算": @"압력, 질량, 전기 단위 및 통화 변환",
+        @"颜色取色时 ←↑↓→": @"색상 선택 ←↑↓→", @"将采样点移动一个物理像素；按空格选色": @"물리 픽셀 단위 이동; Space로 선택",
+        @"方案翻页键": @"입력 스키마 페이지 키", @"沿用鼠须管当前方案；不使用 -、= 翻页": @"Squirrel 스키마 설정 사용; -와 = 제외",
+        @"下一页／上一页，同左右方向键": @"이전/다음 페이지 (좌우 화살표와 동일)", @"PageUp / PageDown": @"PageUp / PageDown",
+        @"⌘C": @"⌘C", @"⌘,": @"⌘,", @"空格": @"Space", @"点击 ⓘ": @"ⓘ 클릭",
+        @"语言": @"언어", @"简体中文": @"중국어 간체", @"繁體中文": @"중국어 번체", @"English": @"영어", @"한국어": @"한국어", @"日本語": @"일본어",
+        @"设置界面语言，例如 ulangen、ulangko、ulangja、ulangtw": @"인터페이스 언어: ulangen, ulangko, ulangja 또는 ulangtw"
+      },
+      @"ja": @{
+        @"最大面板宽度": @"パネルの最大幅", @"宽度格式不正确": @"幅の形式が正しくありません", @"本地 IP": @"ローカル IP",
+        @"公网 IP": @"パブリック IP", @"IP 地址查询": @"IP 検索", @"输入 IPv4 地址": @"IPv4 アドレスを入力",
+        @"号码归属地": @"電話番号の地域", @"座机归属地": @"固定電話の地域", @"号码格式不正确": @"電話番号の形式が正しくありません",
+        @"未找到该号段": @"番号帯が見つかりません", @"地区未收录": @"地域情報なし", @"过去天数": @"経過日数", @"剩余天数": @"残り日数",
+        @"相差天数": @"日数差", @"开始日期": @"開始日", @"结束日期": @"終了日", @"今天": @"今日", @"点击屏幕选择颜色": @"クリックして色を選択",
+        @"不可用": @"利用できません", @"颜色": @"色", @"HEX（无 #）": @"HEX（#なし）", @"HEX + Alpha": @"HEX + アルファ", @"摄氏度": @"摂氏", @"华氏度": @"華氏", @"开尔文": @"ケルビン",
+        @"本地时间": @"現地時刻", @"目标时区": @"対象タイムゾーン", @"Unix 秒": @"Unix 秒", @"Unix 毫秒": @"Unix ミリ秒",
+        @"日期格式": @"日付形式", @"日期间隔": @"日付の間隔", @"时区或时间戳": @"タイムゾーンまたはタイムスタンプ", @"时间戳超出范围": @"タイムスタンプ範囲外",
+        @"单位不支持": @"未対応の単位", @"温度超出范围": @"温度範囲外", @"数值超出范围": @"数値範囲外",
+        @"货币换算": @"通貨換算", @"汇率查询失败": @"為替レートの取得に失敗",
+        @"英里": @"マイル", @"英尺": @"フィート", @"英寸": @"インチ", @"码": @"ヤード", @"公里": @"キロメートル", @"米": @"メートル", @"厘米": @"センチメートル", @"毫米": @"ミリメートル",
+        @"磅": @"ポンド", @"盎司": @"オンス", @"千克": @"キログラム", @"克": @"グラム", @"毫克": @"ミリグラム", @"美制加仑": @"米ガロン", @"升": @"リットル", @"毫升": @"ミリリットル",
+        @"微伏": @"マイクロボルト", @"毫伏": @"ミリボルト", @"伏特": @"ボルト", @"千伏": @"キロボルト", @"微安": @"マイクロアンペア", @"毫安": @"ミリアンペア", @"安培": @"アンペア", @"千安": @"キロアンペア",
+        @"毫瓦": @"ミリワット", @"瓦特": @"ワット", @"千瓦": @"キロワット", @"兆瓦": @"メガワット", @"毫欧": @"ミリオーム", @"欧姆": @"オーム", @"千欧": @"キロオーム", @"兆欧": @"メガオーム",
+        @"毫瓦时": @"ミリワット時", @"瓦时": @"ワット時", @"千瓦时": @"キロワット時", @"兆瓦时": @"メガワット時", @"皮法": @"ピコファラド", @"纳法": @"ナノファラド", @"微法": @"マイクロファラド", @"毫法": @"ミリファラド",
+        @"微亨": @"マイクロヘンリー", @"毫亨": @"ミリヘンリー", @"亨利": @"ヘンリー", @"微库仑": @"マイクロクーロン", @"毫库仑": @"ミリクーロン", @"库仑": @"クーロン", @"赫兹": @"ヘルツ", @"千赫": @"キロヘルツ", @"兆赫": @"メガヘルツ", @"吉赫": @"ギガヘルツ",
+        @"公斤力/平方厘米": @"kgf/cm²", @"毫米汞柱": @"水銀柱ミリメートル", @"帕": @"パスカル", @"千帕": @"キロパスカル", @"兆帕": @"メガパスカル",
+        @"人民币": @"中国人民元", @"美元": @"米ドル", @"欧元": @"ユーロ", @"日元": @"日本円", @"英镑": @"英ポンド", @"港币": @"香港ドル", @"新台币": @"台湾ドル", @"新加坡元": @"シンガポールドル", @"加拿大元": @"カナダドル", @"澳大利亚元": @"オーストラリアドル", @"韩元": @"韓国ウォン", @"瑞士法郎": @"スイスフラン", @"泰铢": @"タイバーツ",
+        @"输入停顿后自动查询": @"入力停止後に自動検索", @"输入完整地址 · 例如 uip8.8.8.8": @"完全なアドレスを入力（例: uip8.8.8.8）",
+        @"输入 200–2000 的整数，例如 umaxwidth600": @"200～2000 の整数を入力（例: umaxwidth600）", @"请输入 200–2000 的整数": @"200～2000 の整数を入力してください",
+        @"设置已保存": @"設定を保存しました", @"设置结果": @"設定", @"搜索引擎设置": @"検索エンジン", @"面板宽度设置": @"パネル幅",
+        @"开启或关闭候选翻译": @"候補翻訳の切り替え", @"朗读当前候选的译文": @"選択した訳を読み上げる", @"上屏当前候选的译文": @"選択した訳を入力",
+        @"展开或收起当前候选的完整翻译": @"訳文全体の表示／折りたたみ", @"开启或关闭音标显示": @"発音記号表示の切り替え",
+        @"用默认搜索引擎搜索当前候选": @"既定の検索エンジンで検索", @"用第二搜索引擎搜索当前候选": @"第2検索エンジンで検索",
+        @"打开新闻扩展并搜索当前候选": @"ニュース拡張機能で検索", @"复制当前结果信息": @"現在の結果をコピー",
+        @"复制当前候选词；取色时选定颜色或重新取色": @"候補をコピー；色を確定／再サンプリング", @"关闭快捷键帮助": @"ショートカットヘルプを閉じる",
+        @"打开或关闭本帮助": @"ヘルプの表示切り替え", @"上一页／下一页；每页最多 9 条": @"前／次のページ（最大9件）",
+        @"移动选择候选词或帮助条目；到页边缘自动跨页": @"候補やヘルプ項目を移動；端でページ切り替え", @"数字和标点": @"数字と句読点",
+        @"直接输入并显示；8 位日期自动进入日期换算": @"そのまま入力；8桁の日付は自動変換",
+        @"按 u<语言> 设置界面语言，例如 ulangen / ulangko / ulangja / ulangtw": @"u<言語> で設定: ulangen、ulangko、ulangja、ulangtw",
+        @"umaxwidth数字": @"umaxwidth<数値>", @"设置 U 面板最大宽度（200–2000 pt，默认 400）": @"U パネル幅を設定（200～2000 pt、既定400）",
+        @"u<引擎>1": @"u<エンジン>1", @"设置 ⌃G 搜索引擎，例如 ugoogle1": @"⌃G 検索エンジンを設定（例: ugoogle1）", @"设置 ⌃B 搜索引擎，例如 ubing2": @"⌃B 検索エンジンを設定（例: ubing2）",
+        @"utime时间戳／时区": @"utime タイムスタンプ／タイムゾーン", @"查看本地、目标时区、UTC 与 Unix 秒／毫秒": @"現地・指定時刻、UTC、Unix秒／ミリ秒を表示",
+        @"udate日期": @"udate 日付", @"8 位日期可直接换算；双日期用 .、- 或空格分隔": @"8桁の日付を変換；2つの日付は .、- または空白で区切る",
+        @"uconv5 / uconv5mi / uconv100rmb": @"uconv5 / uconv5mi / uconv100rmb", @"支持压力、质量、电气及货币换算": @"圧力・質量・電気単位・通貨を換算",
+        @"颜色取色时 ←↑↓→": @"色選択 ←↑↓→", @"将采样点移动一个物理像素；按空格选色": @"物理ピクセル単位で移動；Space で色を確定",
+        @"方案翻页键": @"スキーマのページキー", @"沿用鼠须管当前方案；不使用 -、= 翻页": @"Squirrel の設定を使用；- と = は除外",
+        @"下一页／上一页，同左右方向键": @"前／次ページ（左右キーと同じ）", @"PageUp / PageDown": @"PageUp / PageDown",
+        @"⌘C": @"⌘C", @"⌘,": @"⌘,", @"空格": @"Space", @"点击 ⓘ": @"ⓘ をクリック",
+        @"语言": @"言語", @"简体中文": @"簡体字中国語", @"繁體中文": @"繁体字中国語", @"English": @"英語", @"한국어": @"韓国語", @"日本語": @"日本語",
+        @"设置界面语言，例如 ulangen、ulangko、ulangja、ulangtw": @"表示言語: ulangen、ulangko、ulangja、ulangtw"
+      },
+      @"zh-Hant": @{
+        @"最大面板宽度": @"最大面板寬度", @"宽度格式不正确": @"寬度格式不正確", @"本地 IP": @"本機 IP", @"公网 IP": @"公網 IP",
+        @"IP 地址查询": @"IP 位址查詢", @"输入 IPv4 地址": @"輸入 IPv4 位址", @"号码归属地": @"電話號碼歸屬地", @"座机归属地": @"市話歸屬地",
+        @"号码格式不正确": @"號碼格式不正確", @"未找到该号段": @"找不到此號段", @"地区未收录": @"未收錄此地區",
+        @"过去天数": @"已過天數", @"剩余天数": @"剩餘天數", @"相差天数": @"相差天數", @"开始日期": @"開始日期", @"结束日期": @"結束日期", @"今天": @"今天",
+        @"点击屏幕选择颜色": @"點擊螢幕選取顏色", @"不可用": @"無法使用", @"颜色": @"顏色", @"HEX（无 #）": @"HEX（無 #）", @"HEX + Alpha": @"HEX + Alpha", @"摄氏度": @"攝氏度", @"华氏度": @"華氏度", @"开尔文": @"克耳文",
+        @"本地时间": @"本機時間", @"目标时区": @"目標時區", @"Unix 秒": @"Unix 秒", @"Unix 毫秒": @"Unix 毫秒",
+        @"日期格式": @"日期格式", @"日期间隔": @"日期間隔", @"时区或时间戳": @"時區或時間戳", @"时间戳超出范围": @"時間戳超出範圍",
+        @"单位不支持": @"不支援的單位", @"温度超出范围": @"溫度超出範圍", @"数值超出范围": @"數值超出範圍",
+        @"货币换算": @"貨幣換算", @"汇率查询失败": @"匯率查詢失敗",
+        @"设置已保存": @"設定已儲存", @"设置结果": @"設定結果", @"搜索引擎设置": @"搜尋引擎設定", @"面板宽度设置": @"面板寬度設定",
+        @"开启或关闭候选翻译": @"開啟或關閉候選翻譯", @"朗读当前候选的译文": @"朗讀目前候選詞的譯文", @"上屏当前候选的译文": @"輸入目前候選詞的譯文",
+        @"展开或收起当前候选的完整翻译": @"展開或收合目前候選詞的完整翻譯", @"开启或关闭音标显示": @"開啟或關閉音標顯示",
+        @"用默认搜索引擎搜索当前候选": @"使用預設搜尋引擎搜尋目前候選詞", @"用第二搜索引擎搜索当前候选": @"使用第二搜尋引擎搜尋目前候選詞",
+        @"打开新闻扩展并搜索当前候选": @"開啟新聞擴充功能並搜尋目前候選詞", @"复制当前结果信息": @"複製目前結果資訊",
+        @"复制当前候选词；取色时选定颜色或重新取色": @"複製目前候選詞；取色時確認或重新取色", @"关闭快捷键帮助": @"關閉快速鍵說明", @"打开或关闭本帮助": @"開啟或關閉本說明",
+        @"umaxwidth数字": @"umaxwidth數字", @"u<语言> 设置界面语言": @"使用 u<語言> 設定介面語言", @"语言": @"語言",
+        @"下一页／上一页，同左右方向键": @"上一頁／下一頁，同左右方向鍵", @"颜色格式": @"顏色格式",
+        @"输入完整地址 · 例如 uip8.8.8.8": @"輸入完整位址，例如 uip8.8.8.8", @"输入停顿后自动查询": @"停止輸入後自動查詢",
+        @"简体中文": @"簡體中文", @"繁體中文": @"繁體中文", @"English": @"英文", @"한국어": @"韓文", @"日本語": @"日文",
+        @"设置界面语言，例如 ulangen、ulangko、ulangja、ulangtw": @"使用 ulangen、ulangko、ulangja、ulangtw 設定介面語言"
+      }
+    };
+  });
+  NSDictionary<NSString *, NSString *> *table = tables[language];
+  NSString *localized = table[text];
+  if (localized) return localized;
+  NSRange unitSuffix = [text rangeOfString:@" ("];
+  if (unitSuffix.location != NSNotFound && [text hasSuffix:@")"]) {
+    NSString *unitName = [text substringToIndex:unitSuffix.location];
+    NSString *symbol = [text substringWithRange:NSMakeRange(
+        unitSuffix.location + 2, text.length - unitSuffix.location - 3)];
+    NSString *translatedUnit = table[unitName];
+    if (translatedUnit)
+      return [NSString stringWithFormat:@"%@ (%@)", translatedUnit, symbol];
+  }
+  if ([text isEqualToString:@"语言设置"]) {
+    NSDictionary<NSString *, NSString *> *titles = @{
+      @"en": @"Language", @"ko": @"언어", @"ja": @"言語"
+    };
+    return titles[language] ?: text;
+  }
+  NSString *widthPrefix = @"U 面板最大宽度已设为 ";
+  if ([text hasPrefix:widthPrefix]) {
+    NSString *width = [text substringFromIndex:widthPrefix.length];
+    NSDictionary<NSString *, NSString *> *prefixes = @{
+      @"en": @"U panel max width set to ", @"ko": @"U 패널 최대 너비: ",
+      @"ja": @"U パネル最大幅: ", @"zh-Hant": @"U 面板最大寬度已設為 "
+    };
+    if (prefixes[language]) return [prefixes[language] stringByAppendingString:width];
+  }
+  NSDictionary<NSString *, NSString *> *widthHints = @{
+    @"en": @" pt · Saved after a 1-second pause (200–2000)",
+    @"ko": @" pt · 입력을 1초 멈추면 저장 (200–2000)",
+    @"ja": @" pt · 1秒停止後に保存（200～2000）",
+    @"zh-Hant": @" pt · 停止輸入約 1 秒後儲存（200–2000）"
+  };
+  NSString *widthHint = @" pt · 停止输入约 1 秒后保存（200–2000）";
+  if ([text containsString:widthHint])
+    text = [text stringByReplacingOccurrencesOfString:widthHint
+        withString:widthHints[language] ?: widthHint];
+  if ([language isEqualToString:@"zh-Hant"]) {
+    NSMutableString *traditional = [text mutableCopy];
+    CFStringTransform((__bridge CFMutableStringRef)traditional, NULL,
+        CFSTR("Hans-Hant"), false);
+    return traditional;
+  }
+  NSString *hint = table[@"输入停顿后自动查询"];
+  if (hint && [text containsString:@"输入停顿后自动查询"])
+    text = [text stringByReplacingOccurrencesOfString:@"输入停顿后自动查询" withString:hint];
+  return text;
 }
 
 static CGFloat QueryConfiguredPanelMaxWidth(void) {
@@ -833,6 +1118,7 @@ static BOOL IsUnitQuery(void) {
 static BOOL IsKeywordInputMode(void) {
   return IsColorQuery() || IsTimeQuery() || IsDateQuery() || IsUnitQuery() ||
       UtilityPayload(query_text, @"maxwidth") != nil ||
+      UtilityPayload(query_text, @"lang") != nil ||
       UtilityPayload(query_text, @"ip") != nil ||
       UtilityPayload(query_text, @"phone") != nil || query_phone_prefix_active ||
       QuerySearchEngineURL(query_text) != nil;
@@ -843,7 +1129,7 @@ static NSString *ActiveUtilityKeyword(void) {
   // pronunciation appears in the result column.
   if (UtilityPayload(query_text, @"yanse") != nil) return @"color";
   if (query_phone_prefix_active) return @"phone";
-  for (NSString *keyword in @[@"color", @"time", @"date", @"conv",
+  for (NSString *keyword in @[@"color", @"time", @"date", @"conv", @"lang",
                              @"ip", @"phone"]) {
     if (UtilityPayload(query_text, keyword) != nil) return keyword;
   }
@@ -1839,6 +2125,7 @@ static NSString *PaginateQueryRows(NSMutableArray<NSString *> *candidates,
 static NSInteger QueryUtilityCandidateCount(void) {
   NSInteger count = 0;
   if (UtilityPayload(query_text, @"maxwidth") != nil) count = 1;
+  else if (UtilityPayload(query_text, @"lang") != nil) count = 5;
   else if (IsColorQuery())
     count = IsColorConversionQuery() ? (NSInteger)RowsForColorConversion().count :
         (NSInteger)ColorFormatNames().count;
@@ -1849,7 +2136,9 @@ static NSInteger QueryUtilityCandidateCount(void) {
   else if (UtilityPayload(query_text, @"ip") != nil) count = 1;
   else if (UtilityPayload(query_text, @"phone") != nil ||
            query_phone_prefix_active) count = 1;
-  return count + (count > 0 && ActiveUtilityKeyword() != nil ? 1 : 0);
+  NSString *keyword = ActiveUtilityKeyword();
+  return count + (count > 0 && keyword != nil &&
+      ![keyword isEqualToString:@"lang"] ? 1 : 0);
 }
 
 static NSString *LocalIPAddress(void) {
@@ -2011,6 +2300,20 @@ static void ScheduleIPLookup(NSString *targetIP) {
 static BOOL QueryUtilityMode(NSMutableArray<NSString *> *candidates,
                              NSMutableArray<NSString *> *comments,
                              NSString **input) {
+  NSString *languagePayload = UtilityPayload(query_text, @"lang");
+  if (languagePayload != nil) {
+    [candidates removeAllObjects];
+    [comments removeAllObjects];
+    *input = [@"u" stringByAppendingString:query_text];
+    [candidates addObjectsFromArray:@[@"简体中文", @"繁體中文", @"English", @"한국어", @"日本語"]];
+    [comments addObjectsFromArray:@[
+      @"ulangzh", @"ulangtw", @"ulangen", @"ulangko", @"ulangja"]];
+    if (languagePayload.length == 0) {
+      [comments replaceObjectAtIndex:0 withObject:
+          @"设置界面语言，例如 ulangen、ulangko、ulangja、ulangtw"];
+    }
+    return YES;
+  }
   NSString *maxWidthPayload = UtilityPayload(query_text, @"maxwidth");
   if (maxWidthPayload != nil) {
     [candidates removeAllObjects];
@@ -2754,7 +3057,7 @@ static NSInteger QueryPagingDirectionForEvent(CGEventRef event, CGKeyCode keycod
 static NSArray<NSArray<NSString *> *> *QueryHelpEntries(void) {
   NSString *defaultEngine = SearchEngineDisplayName(NO);
   NSString *secondaryEngine = SearchEngineDisplayName(YES);
-  return @[
+  NSArray<NSArray<NSString *> *> *entries = @[
     @[@"⌃T", @"开启或关闭候选翻译"],
     @[@"⌃P", @"朗读当前候选的译文"],
     @[@"⌃Y", @"上屏当前候选的译文"],
@@ -2769,6 +3072,7 @@ static NSArray<NSArray<NSString *> *> *QueryHelpEntries(void) {
     @[@"utime时间戳／时区", @"查看本地、目标时区、UTC 与 Unix 秒／毫秒"],
     @[@"udate日期", @"8 位日期可直接换算；双日期用 .、- 或空格分隔"],
     @[@"umaxwidth数字", @"设置 U 面板最大宽度（200–2000 pt，默认 400）"],
+    @[@"u<语言>", @"按 u<语言> 设置界面语言，例如 ulangen / ulangko / ulangja / ulangtw"],
     @[@"uconv5 / uconv5mi / uconv100rmb", @"支持压力、质量、电气及货币换算"],
     @[@"颜色取色时 ←↑↓→", @"将采样点移动一个物理像素；按空格选色"],
     @[@"数字和标点", @"直接输入并显示；8 位日期自动进入日期换算"],
@@ -2782,6 +3086,10 @@ static NSArray<NSArray<NSString *> *> *QueryHelpEntries(void) {
     @[@"Esc", @"返回原候选列表"],
     @[@"点击 ⓘ", @"打开或关闭本帮助"]
   ];
+  NSMutableArray<NSArray<NSString *> *> *localized = [NSMutableArray arrayWithCapacity:entries.count];
+  for (NSArray<NSString *> *entry in entries)
+    [localized addObject:@[LocalizedQueryText(entry[0]), LocalizedQueryText(entry[1])]];
+  return localized;
 }
 
 static CGFloat ConfigSize(RimeConfig *config, const char *key, CGFloat fallback) {
@@ -2974,7 +3282,7 @@ static void ShowQueryContext(void) {
   if (query_search_feedback) {
     candidates = [NSMutableArray arrayWithObject:query_search_feedback];
     comments = [NSMutableArray arrayWithObject:@"设置已保存"];
-    input = query_search_feedback_title ?: @"设置结果";
+    input = LocalizedQueryText(query_search_feedback_title ?: @"设置结果");
     highlighted = 0;
   }
   if (!query_help_visible && !query_search_feedback && query_text.length > 0) {
@@ -3028,6 +3336,10 @@ static void ShowQueryContext(void) {
   if (!candidates.count) {
     [candidates addObject:@"·"];
     [comments addObject:@""];
+  }
+  for (NSUInteger index = 0; index < candidates.count; ++index) {
+    candidates[index] = LocalizedQueryText(candidates[index]);
+    comments[index] = LocalizedQueryText(comments[index]);
   }
   BOOL changed = ![view.input isEqualToString:input] ||
       ![view.candidates isEqualToArray:candidates] ||
@@ -3305,10 +3617,18 @@ static void PasteQueryText(void) {
       query_search_feedback_title = @"搜索引擎设置";
       RebuildQuerySession();
     } else {
-      BOOL completeIP = NO;
-      if ([query_text isEqualToString:@"ip"]) ScheduleIPLookup(nil);
-      else if (IPv4QueryStatus(SpecificIPInput(), &completeIP) && completeIP)
-        ScheduleIPLookup(SpecificIPInput());
+      NSString *languageFeedback = ConfigureQueryLanguage(query_text);
+      if (languageFeedback) {
+        query_text = [NSMutableString string];
+        query_search_feedback = languageFeedback;
+        query_search_feedback_title = @"语言设置";
+        RebuildQuerySession();
+      } else {
+        BOOL completeIP = NO;
+        if ([query_text isEqualToString:@"ip"]) ScheduleIPLookup(nil);
+        else if (IPv4QueryStatus(SpecificIPInput(), &completeIP) && completeIP)
+          ScheduleIPLookup(SpecificIPInput());
+      }
     }
     ScheduleQueryPanelWidthCommand();
     ShowQueryContext();
@@ -3792,6 +4112,15 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
         query_text = [NSMutableString string];
         query_search_feedback = feedback;
         query_search_feedback_title = @"搜索引擎设置";
+        RebuildQuerySession();
+        ShowQueryContext();
+        return;
+      }
+      NSString *languageFeedback = ConfigureQueryLanguage(query_text);
+      if (languageFeedback) {
+        query_text = [NSMutableString string];
+        query_search_feedback = languageFeedback;
+        query_search_feedback_title = @"语言设置";
         RebuildQuerySession();
         ShowQueryContext();
         return;

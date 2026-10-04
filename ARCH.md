@@ -1,5 +1,11 @@
 # 技术设计
 
+## 查询面板界面语言
+
+- 原生查询桥从 `~/Library/Rime/input_translation.ui_language` 读取语言代码，缺省为 `zh-Hans`；支持 `zh-Hans`、`zh-Hant`、`en`、`ko`、`ja`。
+- `ulangzh`、`ulangtw`、`ulangen`、`ulangko`、`ulangja` 修改该用户级设置，文件权限为 `0600`。切换成功立即刷新面板并显示本地化确认提示。
+- 面板展示前只本地化界面标签、帮助说明及固定操作提示；输入串、候选翻译、外部 API 返回内容和业务数据保持原样。未覆盖的文本回退为简体中文。
+
 ## Release 安装器与安全卸载
 
 - Releases 由 CI 构建并附带可验证的版本化发行包；签名与公证只使用项目维护者保管的 Developer ID 凭据及受保护的 CI Secret，绝不把私钥、证书密码或可复用签名凭据放进仓库、发行包或用户设备。用户端不创建代码签名身份。

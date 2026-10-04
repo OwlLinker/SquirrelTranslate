@@ -2,6 +2,10 @@
 
 面向 macOS 上鼠须管（Squirrel）的候选翻译与跨应用 `u` 查询面板。公开版包含进程内查询面板，以及四种翻译提供者：macOS 系统词典、Google、Bing、DeepL 官方 API。
 
+**English:** A translation and quick-lookup panel for Squirrel (Rime) on macOS, with candidate translations, IP and phone-region lookup, date/time and unit conversion, and color tools.
+
+语言版本： [简体中文](./README.md) · [繁體中文](./README.zh-Hant.md) · [English](./README.en.md) · [한국어](./README.ko.md) · [日本語](./README.ja.md)
+
 ## 核心功能演示
 
 以下是根据 U 面板样式制作的操作示意动图，并非当前运行环境的实机录屏。手机号和本机／公网 IP 地址均已遮罩；指定 IP 示例展示 `8.8.8.8` 的查询结果。
@@ -79,6 +83,7 @@ U 面板中数字和标点直接作为查询内容输入，不会选择候选；
 | `u132...`、`uphone132...` | 输入手机号前三位后自动识别号段；完整 11 位大陆手机号显示本地号段归属地和运营商。号段不能表示号码持有人的实时位置或当前运营商。 |
 | `u+86 171 6772 6019`、`u+86 (21) 6349 3582` | 查询从 iPhone 电话中复制的国际格式手机号／座机号；支持空格、连字符及中英文括号。也支持 `u021-20422661`、`u02120422661`、`u（021）20422661`、`u(021)20422661`。查询仅使用本地号段／区号数据，不上传号码；格式错误或超长会提示“号码格式不正确”。 |
 | `umaxwidth600` | 将面板最大宽度设为 600 pt。范围 200–2000 pt，默认 400 pt；实际宽度仍受显示器可用空间限制。 |
+| `ulangzh`、`ulangtw`、`ulangen`、`ulangko`、`ulangja` | 将 U 面板界面切换为简体中文、繁体中文、英文、韩文或日文；切换后立即显示确认提示并保存设置。输入 `ulang` 查看选项。 |
 | `ugoogle1`、`ubing1`、`ubaidu2` | 设置 `⌃G` 使用的默认搜索引擎或 `⌃B` 使用的第二搜索引擎；支持 Google、Bing、百度、DuckDuckGo、Yahoo、Brave、搜狗、Yandex。设置保存在用户配置中。 |
 
 这是 Squirrel 进程内插件，不是完整的文本输入替代器。它依赖辅助功能事件监听和鼠须管 Rime 会话；只在兼容的鼠须管输入源与中文默认方案下声明支持。
