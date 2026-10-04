@@ -337,7 +337,7 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"水柱高度": @"Water head", @"层高设置": @"Floor height setting", @"设置": @"Settings",
         @"最不利点最低静压": @"Minimum static pressure at the most unfavorable point",
         @"扣除静压后理论楼层": @"Theoretical floors after static-pressure reserve",
-        @"消防静压设置": @"Fire static-pressure settings",
+        @"消防静压设置": @"Fire static-pressure settings", @"静压设置": @"Static-pressure settings",
         @"消防静压默认设置": @"Fire static-pressure defaults",
         @"ufloorheight3.2（3.2:层高；可设置范围2-12米；默认3米）": @"ufloorheight3.2 (3.2: floor height; range 2–12 m; default 3 m)",
         @"层高请输入 2–12 米，例如 ufloorheight3.2": @"Enter 2–12 m, e.g. ufloorheight3.2",
@@ -349,8 +349,11 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"过去天数": @"Days ago", @"剩余天数": @"Days remaining", @"相差天数": @"Days apart",
         @"开始日期": @"Start date", @"结束日期": @"End date", @"今天": @"Today",
         @"点击屏幕选择颜色": @"Click to pick a color", @"不可用": @"Unavailable",
-        @"本地时间": @"Local time", @"目标时区": @"Target time zone", @"Unix 秒": @"Unix seconds", @"Unix 毫秒": @"Unix milliseconds",
+        @"当地时区时间": @"Local time zone", @"时区时间": @"Time zone", @"纽约时间": @"New York time", @"洛杉矶时间": @"Los Angeles time", @"旧金山时间": @"San Francisco time", @"芝加哥时间": @"Chicago time", @"伦敦时间": @"London time", @"巴黎时间": @"Paris time", @"东京时间": @"Tokyo time", @"首尔时间": @"Seoul time", @"新加坡时间": @"Singapore time", @"香港时间": @"Hong Kong time", @"台北时间": @"Taipei time", @"悉尼时间": @"Sydney time", @"奥克兰时间": @"Auckland time", @"北京时间": @"Beijing time", @"上海时间": @"Shanghai time", @"迪拜时间": @"Dubai time", @"Unix 秒": @"Unix seconds", @"Unix 毫秒": @"Unix milliseconds",
         @"日期格式": @"Date format", @"日期间隔": @"Date interval", @"时区或时间戳": @"Time zone or timestamp", @"时间戳超出范围": @"Timestamp out of range",
+        @"utime时间戳": @"utime timestamp", @"转换 Unix 秒／毫秒；不带参数时显示输入时刻快照": @"Convert Unix seconds/milliseconds; without an argument, show the time captured when entered",
+        @"utime时区／城市": @"utime time zone/city", @"支持城市拼音，例如：niuyue、dongjing": @"Use city pinyin, e.g. niuyue or dongjing",
+        @"输入 Unix 秒／毫秒、时区名或城市拼音（如 niuyue）": @"Enter Unix seconds/milliseconds, a time-zone ID, or city pinyin (e.g. niuyue)",
         @"单位不支持": @"Unsupported unit", @"温度超出范围": @"Temperature out of range", @"数值超出范围": @"Value out of range",
         @"货币换算": @"Currency conversion", @"汇率查询失败": @"Exchange-rate lookup failed",
         @"英里": @"Mile", @"英尺": @"Foot", @"英寸": @"Inch", @"码": @"Yard", @"公里": @"Kilometer", @"米": @"Meter", @"厘米": @"Centimeter", @"毫米": @"Millimeter",
@@ -402,7 +405,7 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"水柱高度": @"수주 높이", @"层高设置": @"층고 설정", @"设置": @"설정",
         @"最不利点最低静压": @"최불리점 최소 정압",
         @"扣除静压后理论楼层": @"정압을 제외한 이론 층수",
-        @"消防静压设置": @"소방 정압 설정", @"消防静压默认设置": @"소방 정압 기본값",
+        @"消防静压设置": @"소방 정압 설정", @"静压设置": @"정압 설정", @"消防静压默认设置": @"소방 정압 기본값",
         @"ufloorheight3.2（3.2:层高；可设置范围2-12米；默认3米）": @"ufloorheight3.2 (3.2: 층고; 범위 2–12m; 기본 3m)",
         @"本地 IP": @"로컬 IP", @"公网 IP": @"공인 IP", @"IP 地址查询": @"IP 조회",
         @"输入 IPv4 地址": @"IPv4 주소 입력", @"号码归属地": @"전화번호 지역", @"座机归属地": @"유선전화 지역",
@@ -410,8 +413,11 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"地区未收录": @"지역 정보 없음", @"过去天数": @"지난 일수", @"剩余天数": @"남은 일수", @"相差天数": @"날짜 차이",
         @"开始日期": @"시작 날짜", @"结束日期": @"종료 날짜", @"今天": @"오늘", @"点击屏幕选择颜色": @"화면을 클릭해 색상 선택",
         @"不可用": @"사용할 수 없음", @"颜色": @"색상", @"HEX（无 #）": @"HEX (# 없음)", @"HEX + Alpha": @"HEX + 알파", @"摄氏度": @"섭씨", @"华氏度": @"화씨", @"开尔文": @"켈빈",
-        @"本地时间": @"현지 시간", @"目标时区": @"대상 시간대", @"Unix 秒": @"Unix 초", @"Unix 毫秒": @"Unix 밀리초",
+        @"当地时区时间": @"현지 시간대 시간", @"时区时间": @"시간대 시간", @"纽约时间": @"뉴욕 시간", @"洛杉矶时间": @"로스앤젤레스 시간", @"旧金山时间": @"샌프란시스코 시간", @"芝加哥时间": @"시카고 시간", @"伦敦时间": @"런던 시간", @"巴黎时间": @"파리 시간", @"东京时间": @"도쿄 시간", @"首尔时间": @"서울 시간", @"新加坡时间": @"싱가포르 시간", @"香港时间": @"홍콩 시간", @"台北时间": @"타이베이 시간", @"悉尼时间": @"시드니 시간", @"奥克兰时间": @"오클랜드 시간", @"北京时区时间": @"베이징 시간", @"北京时间": @"베이징 시간", @"上海时间": @"상하이 시간", @"迪拜时间": @"두바이 시간", @"Unix 秒": @"Unix 초", @"Unix 毫秒": @"Unix 밀리초",
         @"日期格式": @"날짜 형식", @"日期间隔": @"날짜 간격", @"时区或时间戳": @"시간대 또는 타임스탬프", @"时间戳超出范围": @"타임스탬프 범위 초과",
+        @"utime时间戳": @"utime 타임스탬프", @"转换 Unix 秒／毫秒；不带参数时显示输入时刻快照": @"Unix 초/밀리초 변환; 인수 없이 입력하면 입력 시점의 시간을 표시",
+        @"utime时区／城市": @"utime 시간대/도시", @"支持城市拼音，例如：niuyue、dongjing": @"도시 병음을 입력하세요 (예: niuyue, dongjing)",
+        @"输入 Unix 秒／毫秒、时区名或城市拼音（如 niuyue）": @"Unix 초/밀리초, 시간대 ID 또는 도시 병음을 입력하세요 (예: niuyue)",
         @"单位不支持": @"지원하지 않는 단위", @"温度超出范围": @"온도 범위 초과", @"数值超出范围": @"값 범위 초과",
         @"货币换算": @"통화 변환", @"汇率查询失败": @"환율 조회 실패",
         @"英里": @"마일", @"英尺": @"피트", @"英寸": @"인치", @"码": @"야드", @"公里": @"킬로미터", @"米": @"미터", @"厘米": @"센티미터", @"毫米": @"밀리미터",
@@ -456,15 +462,18 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"水柱高度": @"水柱の高さ", @"层高设置": @"階高設定", @"设置": @"設定", @"本地 IP": @"ローカル IP",
         @"最不利点最低静压": @"最不利点の最低静水圧",
         @"扣除静压后理论楼层": @"静水圧控除後の理論階数",
-        @"消防静压设置": @"消防静水圧設定", @"消防静压默认设置": @"消防静水圧の既定値",
+        @"消防静压设置": @"消防静水圧設定", @"静压设置": @"静水圧設定", @"消防静压默认设置": @"消防静水圧の既定値",
         @"ufloorheight3.2（3.2:层高；可设置范围2-12米；默认3米）": @"ufloorheight3.2（3.2:階高；範囲2～12m；既定3m）",
         @"公网 IP": @"パブリック IP", @"IP 地址查询": @"IP 検索", @"输入 IPv4 地址": @"IPv4 アドレスを入力",
         @"号码归属地": @"電話番号の地域", @"座机归属地": @"固定電話の地域", @"号码格式不正确": @"電話番号の形式が正しくありません",
         @"未找到该号段": @"番号帯が見つかりません", @"地区未收录": @"地域情報なし", @"过去天数": @"経過日数", @"剩余天数": @"残り日数",
         @"相差天数": @"日数差", @"开始日期": @"開始日", @"结束日期": @"終了日", @"今天": @"今日", @"点击屏幕选择颜色": @"クリックして色を選択",
         @"不可用": @"利用できません", @"颜色": @"色", @"HEX（无 #）": @"HEX（#なし）", @"HEX + Alpha": @"HEX + アルファ", @"摄氏度": @"摂氏", @"华氏度": @"華氏", @"开尔文": @"ケルビン",
-        @"本地时间": @"現地時刻", @"目标时区": @"対象タイムゾーン", @"Unix 秒": @"Unix 秒", @"Unix 毫秒": @"Unix ミリ秒",
+        @"当地时区时间": @"現地のタイムゾーン時刻", @"时区时间": @"タイムゾーン時刻", @"纽约时间": @"ニューヨーク時間", @"洛杉矶时间": @"ロサンゼルス時間", @"旧金山时间": @"サンフランシスコ時間", @"芝加哥时间": @"シカゴ時間", @"伦敦时间": @"ロンドン時間", @"巴黎时间": @"パリ時間", @"东京时间": @"東京時間", @"首尔时间": @"ソウル時間", @"新加坡时间": @"シンガポール時間", @"香港时间": @"香港時間", @"台北时间": @"台北時間", @"悉尼时间": @"シドニー時間", @"奥克兰时间": @"オークランド時間", @"北京时区时间": @"北京時間", @"北京时间": @"北京時間", @"上海时间": @"上海時間", @"迪拜时间": @"ドバイ時間", @"Unix 秒": @"Unix 秒", @"Unix 毫秒": @"Unix ミリ秒",
         @"日期格式": @"日付形式", @"日期间隔": @"日付の間隔", @"时区或时间戳": @"タイムゾーンまたはタイムスタンプ", @"时间戳超出范围": @"タイムスタンプ範囲外",
+        @"utime时间戳": @"utime タイムスタンプ", @"转换 Unix 秒／毫秒；不带参数时显示输入时刻快照": @"Unix 秒／ミリ秒を変換；引数なしでは入力時の時刻を表示",
+        @"utime时区／城市": @"utime タイムゾーン／都市", @"支持城市拼音，例如：niuyue、dongjing": @"都市名のピンインを入力（例: niuyue、dongjing）",
+        @"输入 Unix 秒／毫秒、时区名或城市拼音（如 niuyue）": @"Unix 秒／ミリ秒、タイムゾーン ID、都市名のピンインを入力（例: niuyue）",
         @"单位不支持": @"未対応の単位", @"温度超出范围": @"温度範囲外", @"数值超出范围": @"数値範囲外",
         @"货币换算": @"通貨換算", @"汇率查询失败": @"為替レートの取得に失敗",
         @"英里": @"マイル", @"英尺": @"フィート", @"英寸": @"インチ", @"码": @"ヤード", @"公里": @"キロメートル", @"米": @"メートル", @"厘米": @"センチメートル", @"毫米": @"ミリメートル",
@@ -508,14 +517,14 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"水柱高度": @"水柱高度", @"层高设置": @"層高設定", @"设置": @"設定",
         @"最不利点最低静压": @"最不利點最低靜壓",
         @"扣除静压后理论楼层": @"扣除靜壓後理論樓層",
-        @"消防静压设置": @"消防靜壓設定", @"消防静压默认设置": @"消防靜壓預設設定",
+        @"消防静压设置": @"消防靜壓設定", @"静压设置": @"靜壓設定", @"消防静压默认设置": @"消防靜壓預設設定",
         @"ufloorheight3.2（3.2:层高；可设置范围2-12米；默认3米）": @"ufloorheight3.2（3.2:層高；可設定範圍2-12米；預設3米）",
         @"最大面板宽度": @"最大面板寬度", @"宽度格式不正确": @"寬度格式不正確", @"本地 IP": @"本機 IP", @"公网 IP": @"公網 IP",
         @"IP 地址查询": @"IP 位址查詢", @"输入 IPv4 地址": @"輸入 IPv4 位址", @"号码归属地": @"電話號碼歸屬地", @"座机归属地": @"市話歸屬地",
         @"号码格式不正确": @"號碼格式不正確", @"未找到该号段": @"找不到此號段", @"地区未收录": @"未收錄此地區",
         @"过去天数": @"已過天數", @"剩余天数": @"剩餘天數", @"相差天数": @"相差天數", @"开始日期": @"開始日期", @"结束日期": @"結束日期", @"今天": @"今天",
         @"点击屏幕选择颜色": @"點擊螢幕選取顏色", @"不可用": @"無法使用", @"颜色": @"顏色", @"HEX（无 #）": @"HEX（無 #）", @"HEX + Alpha": @"HEX + Alpha", @"摄氏度": @"攝氏度", @"华氏度": @"華氏度", @"开尔文": @"克耳文",
-        @"本地时间": @"本機時間", @"目标时区": @"目標時區", @"Unix 秒": @"Unix 秒", @"Unix 毫秒": @"Unix 毫秒",
+        @"当地时区时间": @"當地時區時間", @"时区时间": @"時區時間", @"纽约时间": @"紐約時間", @"洛杉矶时间": @"洛杉磯時間", @"旧金山时间": @"舊金山時間", @"芝加哥时间": @"芝加哥時間", @"伦敦时间": @"倫敦時間", @"巴黎时间": @"巴黎時間", @"东京时间": @"東京時間", @"首尔时间": @"首爾時間", @"新加坡时间": @"新加坡時間", @"香港时间": @"香港時間", @"台北时间": @"台北時間", @"悉尼时间": @"雪梨時間", @"奥克兰时间": @"奧克蘭時間", @"北京时区时间": @"北京時間", @"北京时间": @"北京時間", @"上海时间": @"上海時間", @"迪拜时间": @"杜拜時間", @"Unix 秒": @"Unix 秒", @"Unix 毫秒": @"Unix 毫秒",
         @"日期格式": @"日期格式", @"日期间隔": @"日期間隔", @"时区或时间戳": @"時區或時間戳", @"时间戳超出范围": @"時間戳超出範圍",
         @"单位不支持": @"不支援的單位", @"温度超出范围": @"溫度超出範圍", @"数值超出范围": @"數值超出範圍",
         @"货币换算": @"貨幣換算", @"汇率查询失败": @"匯率查詢失敗",
@@ -531,6 +540,9 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"末尾类别码：1一类高层公共建筑；2二类高层公共建筑／多层公共建筑；3其他": @"末尾類別碼：1 一類高層公共建築；2 二類高層公共建築／多層公共建築；3 其他",
         @"ufiredefault1-0.15 设置类别1静压MPa；类别2默认0.07；类别3默认0.01（用户参考值）": @"ufiredefault1-0.15 設定類別1靜壓MPa；類別2預設0.07；類別3預設0.01（使用者參考值）",
         @"u<语言> 设置界面语言": @"使用 u<語言> 設定介面語言", @"语言": @"語言",
+        @"utime时间戳": @"utime 時間戳", @"转换 Unix 秒／毫秒；不带参数时显示输入时刻快照": @"轉換 Unix 秒／毫秒；不帶參數時顯示輸入當下的時間快照",
+        @"utime时区／城市": @"utime 時區／城市", @"支持城市拼音，例如：niuyue、dongjing": @"輸入城市拼音，例如：niuyue、dongjing",
+        @"输入 Unix 秒／毫秒、时区名或城市拼音（如 niuyue）": @"輸入 Unix 秒／毫秒、時區名稱或城市拼音（例如 niuyue）",
         @"下一页／上一页，同左右方向键": @"上一頁／下一頁，同左右方向鍵", @"颜色格式": @"顏色格式",
         @"输入完整地址 · 例如 uip8.8.8.8": @"輸入完整位址，例如 uip8.8.8.8", @"输入停顿后自动查询": @"停止輸入後自動查詢",
         @"简体中文": @"簡體中文", @"繁體中文": @"繁體中文", @"English": @"英文", @"한국어": @"韓文", @"日本語": @"日文",
@@ -539,8 +551,374 @@ static NSString *LocalizedQueryText(NSString *text) {
     };
   });
   NSDictionary<NSString *, NSString *> *table = tables[language];
-  NSString *localized = table[text];
+  static NSDictionary<NSString *, NSDictionary<NSString *, NSString *> *> *supplemental;
+  static dispatch_once_t supplementalToken;
+  dispatch_once(&supplementalToken, ^{
+    supplemental = @{
+      @"en": @{
+        @"宽度请输入 200–2000 的整数": @"Enter an integer from 200–2000",
+        @"宽度范围为 200–2000 pt": @"Width must be 200–2000 pt",
+        @"无法保存面板宽度设置": @"Could not save panel width",
+        @"请输入 200–2000 的整数": @"Enter an integer from 200–2000",
+        @"请输入 2–12 米，例如 ufloorheight3.2": @"Enter 2–12 m, e.g. ufloorheight3.2",
+        @"层高请输入 2–12 米，例如 ufloorheight3.2": @"Enter 2–12 m, e.g. ufloorheight3.2",
+        @"无法保存层高设置": @"Could not save floor height",
+        @"单位换算": @"Unit conversion", @"货币换算": @"Currency conversion",
+        @"请输入类别 1–3 和 0–2.4 MPa 内的正数": @"Enter category 1–3 and a positive value up to 2.4 MPa",
+        @"无法保存消防静压默认值": @"Could not save fire static-pressure defaults",
+        @"数值超出范围": @"Value out of range", @"单位不支持": @"Unsupported unit",
+        @"温度超出范围": @"Temperature out of range", @"日期格式": @"Date format",
+        @"日期间隔": @"Date interval", @"时间戳超出范围": @"Timestamp out of range",
+        @"时区或时间戳": @"Time zone or timestamp", @"本地 IP": @"Local IP",
+        @"公网 IP": @"Public IP", @"IP 地址查询": @"IP lookup",
+        @"号码格式不正确": @"Invalid phone number", @"号码归属地": @"Phone region",
+        @"座机归属地": @"Landline region", @"号段归属地": @"Phone prefix region",
+        @"未找到该号段": @"Prefix not found", @"地区未收录": @"Region unavailable",
+        @"点击屏幕选择颜色": @"Click to pick a color", @"未选择颜色；按空格重新取色": @"No color selected; press Space to sample again",
+        @"或输入 rgb(r, g, b) / rgba(r, g, b, a)": @"or enter rgb(r, g, b) / rgba(r, g, b, a)",
+        @"输入 #RGB、#RGBA、#RRGGBB、#RRGGBBAA": @"Enter #RGB, #RGBA, #RRGGBB or #RRGGBBAA",
+        @"仅支持公元 0001–9999 年": @"Supported years: 0001–9999",
+        @"单日期 YYYYMMDD；双日期用单个 .、- 或空格分隔": @"Single date: YYYYMMDD; separate two dates with one ., - or space",
+        @"双日期格式：YYYYMMDD.YYYYMMDD（分隔符用单个 .、- 或空格）": @"Two dates: YYYYMMDD.YYYYMMDD (separate with one ., - or space)",
+        @"无效日期；双日期请用 YYYYMMDD.YYYYMMDD": @"Invalid date; use YYYYMMDD.YYYYMMDD for a date range",
+        @"正在获取每日参考汇率…": @"Loading daily reference rates…",
+        @"网络不可用或服务暂不可达": @"Network unavailable or service unreachable",
+        @"暂无汇率数据": @"No exchange-rate data", @"该币种暂不受支持": @"This currency is not currently supported",
+        @"请缩小输入金额": @"Try a smaller amount", @"请缩小输入数值": @"Try a smaller value",
+        @"不能低于绝对零度 -273.15 °C": @"Cannot be below absolute zero (−273.15 °C)",
+        @"格式：uconv数值单位，如 5kg、5MPa、100rmb": @"Format: uconv<number><unit>, e.g. 5kg, 5MPa or 100rmb",
+        @"长度、质量、体积、温度、压力、电气或货币单位": @"Length, mass, volume, temperature, pressure, electrical or currency units",
+        @"正在查询公网 IP 和地区…": @"Looking up public IP and location…",
+        @"正在查询 IP 地区和网络信息…": @"Looking up IP location and network…",
+        @"公网 IP 查询失败（网络不可用或服务限流）": @"Public IP lookup failed (network unavailable or rate limited)",
+        @"未返回 IP 地区信息": @"No IP location data returned",
+        @"输入停止后自动查询": @"Lookup starts after you pause typing",
+        @"输入停顿后自动查询": @"Lookup starts after you pause typing",
+        @"输入完整地址 · 例如 uip8.8.8.8": @"Enter a full address, e.g. uip8.8.8.8",
+        @"本地号段库未收录该号码，或号码格式不正确": @"Number not found in the local prefix database, or invalid format",
+        @"未知运营商": @"Unknown carrier", @"中国移动": @"China Mobile", @"中国联通": @"China Unicom",
+        @"中国电信": @"China Telecom", @"中国电信虚拟运营商": @"China Telecom MVNO",
+        @"中国联通虚拟运营商": @"China Unicom MVNO", @"中国移动虚拟运营商": @"China Mobile MVNO",
+        @"中国广电": @"China Broadnet", @"区号": @"Area code", @"继续输入": @"Continue entering",
+        @"继续输入本地号码": @"enter the local number to continue", @"参考汇率": @"reference rate",
+        @"大约几层": @"Approx. floors", @"层高设置": @"Floor height setting",
+        @"类别1": @"Category 1", @"类别2": @"Category 2", @"类别3": @"Category 3",
+        @"公开结果暂不可用": @"Public lookup is temporarily unavailable", @"未连接": @"Not connected", @"不可用": @"Unavailable"
+      },
+      @"ko": @{
+        @"宽度请输入 200–2000 的整数": @"200–2000 사이의 정수를 입력하세요",
+        @"宽度范围为 200–2000 pt": @"너비는 200–2000pt여야 합니다",
+        @"无法保存面板宽度设置": @"패널 너비를 저장할 수 없습니다",
+        @"请输入 200–2000 的整数": @"200–2000 사이의 정수를 입력하세요",
+        @"请输入 2–12 米，例如 ufloorheight3.2": @"2–12m를 입력하세요 (예: ufloorheight3.2)",
+        @"层高请输入 2–12 米，例如 ufloorheight3.2": @"층고 2–12m를 입력하세요 (예: ufloorheight3.2)",
+        @"无法保存层高设置": @"층고 설정을 저장할 수 없습니다",
+        @"单位换算": @"단위 변환", @"货币换算": @"통화 변환", @"数值超出范围": @"값 범위 초과",
+        @"请输入类别 1–3 和 0–2.4 MPa 内的正数": @"분류 1–3과 0–2.4MPa 범위의 양수를 입력하세요",
+        @"无法保存消防静压默认值": @"소방 정압 기본값을 저장할 수 없습니다",
+        @"单位不支持": @"지원하지 않는 단위", @"温度超出范围": @"온도 범위 초과",
+        @"日期格式": @"날짜 형식", @"日期间隔": @"날짜 간격", @"时间戳超出范围": @"타임스탬프 범위 초과",
+        @"时区或时间戳": @"시간대 또는 타임스탬프", @"本地 IP": @"로컬 IP", @"公网 IP": @"공인 IP",
+        @"IP 地址查询": @"IP 조회", @"号码格式不正确": @"전화번호 형식이 올바르지 않습니다",
+        @"号码归属地": @"전화번호 지역", @"座机归属地": @"유선전화 지역", @"号段归属地": @"전화번호 대역 지역",
+        @"未找到该号段": @"번호 대역을 찾을 수 없습니다", @"地区未收录": @"지역 정보 없음",
+        @"点击屏幕选择颜色": @"화면을 클릭해 색상 선택", @"未选择颜色；按空格重新取色": @"색상이 선택되지 않았습니다. Space를 눌러 다시 샘플링",
+        @"或输入 rgb(r, g, b) / rgba(r, g, b, a)": @"또는 rgb(r, g, b) / rgba(r, g, b, a) 입력",
+        @"输入 #RGB、#RGBA、#RRGGBB、#RRGGBBAA": @"#RGB, #RGBA, #RRGGBB 또는 #RRGGBBAA 입력",
+        @"仅支持公元 0001–9999 年": @"지원 연도: 0001–9999",
+        @"单日期 YYYYMMDD；双日期用单个 .、- 或空格分隔": @"단일 날짜: YYYYMMDD; 두 날짜는 ., - 또는 공백 하나로 구분",
+        @"双日期格式：YYYYMMDD.YYYYMMDD（分隔符用单个 .、- 或空格）": @"두 날짜: YYYYMMDD.YYYYMMDD (., - 또는 공백 하나로 구분)",
+        @"无效日期；双日期请用 YYYYMMDD.YYYYMMDD": @"잘못된 날짜입니다. 범위는 YYYYMMDD.YYYYMMDD 형식으로 입력하세요",
+        @"正在获取每日参考汇率…": @"일일 참고 환율을 불러오는 중…", @"网络不可用或服务暂不可达": @"네트워크를 사용할 수 없거나 서비스에 연결할 수 없습니다",
+        @"暂无汇率数据": @"환율 데이터 없음", @"该币种暂不受支持": @"현재 지원하지 않는 통화입니다",
+        @"请缩小输入金额": @"더 작은 금액을 입력하세요", @"请缩小输入数值": @"더 작은 값을 입력하세요",
+        @"不能低于绝对零度 -273.15 °C": @"절대 영도(−273.15 °C)보다 낮을 수 없습니다",
+        @"格式：uconv数值单位，如 5kg、5MPa、100rmb": @"형식: uconv<값><단위> (예: 5kg, 5MPa, 100rmb)",
+        @"长度、质量、体积、温度、压力、电气或货币单位": @"길이, 질량, 부피, 온도, 압력, 전기 또는 통화 단위",
+        @"正在查询公网 IP 和地区…": @"공인 IP 및 위치 조회 중…", @"正在查询 IP 地区和网络信息…": @"IP 위치 및 네트워크 정보 조회 중…",
+        @"公网 IP 查询失败（网络不可用或服务限流）": @"공인 IP 조회 실패 (네트워크 오류 또는 요청 제한)",
+        @"未返回 IP 地区信息": @"IP 위치 정보가 반환되지 않았습니다", @"输入停止后自动查询": @"입력을 멈추면 자동 조회",
+        @"输入停顿后自动查询": @"입력을 멈추면 자동 조회", @"输入完整地址 · 例如 uip8.8.8.8": @"전체 주소 입력 (예: uip8.8.8.8)",
+        @"本地号段库未收录该号码，或号码格式不正确": @"로컬 번호 대역 데이터에 없거나 형식이 올바르지 않습니다",
+        @"继续输入本地号码": @"현지 번호를 계속 입력하세요", @"未知运营商": @"알 수 없는 통신사",
+        @"中国移动": @"China Mobile", @"中国联通": @"China Unicom", @"中国电信": @"China Telecom",
+        @"中国电信虚拟运营商": @"China Telecom MVNO", @"中国联通虚拟运营商": @"China Unicom MVNO",
+        @"中国移动虚拟运营商": @"China Mobile MVNO", @"中国广电": @"China Broadnet",
+        @"区号": @"지역 번호", @"继续输入": @"계속 입력",
+        @"参考汇率": @"참고 환율", @"大约几层": @"대략 몇 층", @"层高设置": @"층고 설정",
+        @"类别1": @"분류 1", @"类别2": @"분류 2", @"类别3": @"분류 3",
+        @"公开结果暂不可用": @"조회 결과를 사용할 수 없습니다", @"未连接": @"연결되지 않음", @"不可用": @"사용할 수 없음"
+      },
+      @"ja": @{
+        @"宽度请输入 200–2000 的整数": @"幅は200～2000の整数で入力してください",
+        @"宽度范围为 200–2000 pt": @"幅は200～2000 ptの範囲で指定してください",
+        @"无法保存面板宽度设置": @"パネル幅を保存できません",
+        @"请输入 200–2000 的整数": @"200～2000の整数を入力してください",
+        @"请输入 2–12 米，例如 ufloorheight3.2": @"2～12 mで入力（例: ufloorheight3.2）",
+        @"层高请输入 2–12 米，例如 ufloorheight3.2": @"階高は2～12 mで入力（例: ufloorheight3.2）",
+        @"无法保存层高设置": @"階高設定を保存できません",
+        @"单位换算": @"単位変換", @"货币换算": @"通貨換算", @"数值超出范围": @"数値範囲外",
+        @"请输入类别 1–3 和 0–2.4 MPa 内的正数": @"分類1～3と0～2.4 MPaの正数を入力してください",
+        @"无法保存消防静压默认值": @"消防静水圧の既定値を保存できません",
+        @"单位不支持": @"未対応の単位", @"温度超出范围": @"温度範囲外", @"日期格式": @"日付形式",
+        @"日期间隔": @"日付の間隔", @"时间戳超出范围": @"タイムスタンプ範囲外", @"时区或时间戳": @"タイムゾーンまたはタイムスタンプ",
+        @"本地 IP": @"ローカル IP", @"公网 IP": @"パブリック IP", @"IP 地址查询": @"IP 検索",
+        @"号码格式不正确": @"電話番号の形式が正しくありません", @"号码归属地": @"電話番号の地域",
+        @"座机归属地": @"固定電話の地域", @"号段归属地": @"電話番号帯の地域", @"未找到该号段": @"番号帯が見つかりません",
+        @"地区未收录": @"地域情報なし", @"点击屏幕选择颜色": @"画面をクリックして色を選択", @"未选择颜色；按空格重新取色": @"色が未選択です。Spaceで再サンプリング",
+        @"或输入 rgb(r, g, b) / rgba(r, g, b, a)": @"または rgb(r, g, b) / rgba(r, g, b, a) を入力",
+        @"输入 #RGB、#RGBA、#RRGGBB、#RRGGBBAA": @"#RGB、#RGBA、#RRGGBB、#RRGGBBAA を入力",
+        @"仅支持公元 0001–9999 年": @"対応年: 0001～9999", @"单日期 YYYYMMDD；双日期用单个 .、- 或空格分隔": @"単日: YYYYMMDD、2つの日付は ., - または空白1つで区切る",
+        @"双日期格式：YYYYMMDD.YYYYMMDD（分隔符用单个 .、- 或空格）": @"2日付: YYYYMMDD.YYYYMMDD（., - または空白1つで区切る）",
+        @"无效日期；双日期请用 YYYYMMDD.YYYYMMDD": @"日付が無効です。範囲は YYYYMMDD.YYYYMMDD で入力してください",
+        @"正在获取每日参考汇率…": @"日次参考為替レートを取得中…", @"网络不可用或服务暂不可达": @"ネットワークまたはサービスに接続できません",
+        @"暂无汇率数据": @"為替レートデータがありません", @"该币种暂不受支持": @"この通貨は現在サポートされていません",
+        @"请缩小输入金额": @"金額を小さくしてください", @"请缩小输入数值": @"値を小さくしてください",
+        @"不能低于绝对零度 -273.15 °C": @"絶対零度（−273.15 °C）未満にはできません",
+        @"格式：uconv数值单位，如 5kg、5MPa、100rmb": @"形式: uconv<数値><単位>（例: 5kg、5MPa、100rmb）",
+        @"长度、质量、体积、温度、压力、电气或货币单位": @"長さ、質量、体積、温度、圧力、電気または通貨の単位",
+        @"正在查询公网 IP 和地区…": @"パブリック IP と地域を検索中…", @"正在查询 IP 地区和网络信息…": @"IP の地域とネットワーク情報を検索中…",
+        @"公网 IP 查询失败（网络不可用或服务限流）": @"パブリック IP の検索に失敗（ネットワークエラーまたは制限）",
+        @"未返回 IP 地区信息": @"IP 地域情報がありません", @"输入停止后自动查询": @"入力停止後に自動検索",
+        @"输入停顿后自动查询": @"入力停止後に自動検索", @"输入完整地址 · 例如 uip8.8.8.8": @"完全なアドレスを入力（例: uip8.8.8.8）",
+        @"本地号段库未收录该号码，或号码格式不正确": @"ローカル番号帯データにないか、形式が正しくありません",
+        @"继续输入本地号码": @"市内番号を続けて入力", @"未知运营商": @"不明な通信事業者",
+        @"中国移动": @"China Mobile", @"中国联通": @"China Unicom", @"中国电信": @"China Telecom",
+        @"中国电信虚拟运营商": @"China Telecom MVNO", @"中国联通虚拟运营商": @"China Unicom MVNO",
+        @"中国移动虚拟运营商": @"China Mobile MVNO", @"中国广电": @"China Broadnet", @"区号": @"市外局番",
+        @"继续输入": @"続けて入力", @"参考汇率": @"参考為替レート",
+        @"大约几层": @"およその階数", @"层高设置": @"階高設定", @"类别1": @"分類1", @"类别2": @"分類2", @"类别3": @"分類3",
+        @"公开结果暂不可用": @"検索結果を利用できません", @"未连接": @"未接続", @"不可用": @"利用できません"
+      }
+    };
+  });
+  NSString *localized = table[text] ?: supplemental[language][text];
   if (localized) return localized;
+  static NSDictionary<NSString *, NSDictionary<NSString *, NSString *> *> *dynamicWords;
+  static dispatch_once_t dynamicWordsToken;
+  dispatch_once(&dynamicWordsToken, ^{
+    dynamicWords = @{
+      @"en": @{
+        @"一类高层公共建筑": @"Class I high-rise public building", @"二类高层公共建筑／多层公共建筑": @"Class II high-rise/multistory public building",
+        @"其他（用户参考值）": @"Other (user reference)", @"其他": @"Other",
+        @"Google": @"Google", @"Bing": @"Bing", @"百度": @"Baidu", @"搜狗": @"Sogou",
+        @"区号": @"area code", @"继续输入": @"continue entering", @"继续输入本地号码": @"enter the local number to continue",
+        @"参考汇率": @"reference rate", @"未知运营商": @"Unknown carrier",
+        @"芝加哥": @"Chicago", @"广州": @"Guangzhou", @"沈阳": @"Shenyang", @"南京": @"Nanjing", @"武汉": @"Wuhan",
+        @"成都": @"Chengdu", @"西安": @"Xi'an", @"杭州": @"Hangzhou", @"深圳": @"Shenzhen", @"桂林": @"Guilin", @"昆明": @"Kunming",
+        @"北京": @"Beijing", @"上海": @"Shanghai", @"天津": @"Tianjin", @"重庆": @"Chongqing",
+        @"湖北": @"Hubei", @"湖南": @"Hunan", @"广东": @"Guangdong", @"广西": @"Guangxi", @"四川": @"Sichuan", @"浙江": @"Zhejiang", @"江苏": @"Jiangsu", @"山东": @"Shandong", @"河南": @"Henan", @"河北": @"Hebei", @"福建": @"Fujian", @"安徽": @"Anhui", @"江西": @"Jiangxi", @"辽宁": @"Liaoning", @"吉林": @"Jilin", @"黑龙江": @"Heilongjiang", @"云南": @"Yunnan", @"贵州": @"Guizhou", @"陕西": @"Shaanxi", @"甘肃": @"Gansu", @"青海": @"Qinghai", @"海南": @"Hainan", @"山西": @"Shanxi", @"内蒙古": @"Inner Mongolia", @"宁夏": @"Ningxia", @"新疆": @"Xinjiang", @"西藏": @"Tibet"
+      },
+      @"ko": @{
+        @"一类高层公共建筑": @"1급 고층 공공 건축물", @"二类高层公共建筑／多层公共建筑": @"2급 고층/다층 공공 건축물",
+        @"其他（用户参考值）": @"기타 (사용자 참고값)", @"其他": @"기타", @"百度": @"Baidu", @"搜狗": @"Sogou",
+        @"区号": @"지역 번호", @"继续输入": @"계속 입력", @"继续输入本地号码": @"현지 번호를 계속 입력하세요",
+        @"参考汇率": @"참고 환율", @"未知运营商": @"알 수 없는 통신사",
+        @"北京": @"베이징", @"上海": @"상하이", @"天津": @"톈진", @"重庆": @"충칭", @"广州": @"광저우", @"沈阳": @"선양", @"南京": @"난징", @"武汉": @"우한", @"成都": @"청두", @"西安": @"시안", @"杭州": @"항저우", @"深圳": @"선전", @"桂林": @"구이린", @"昆明": @"쿤밍",
+        @"湖北": @"후베이", @"湖南": @"후난", @"广东": @"광둥", @"广西": @"광시", @"四川": @"쓰촨", @"浙江": @"저장", @"江苏": @"장쑤", @"山东": @"산둥", @"河南": @"허난", @"河北": @"허베이", @"福建": @"푸젠", @"安徽": @"안후이", @"江西": @"장시", @"辽宁": @"랴오닝", @"吉林": @"지린", @"黑龙江": @"헤이룽장", @"云南": @"윈난", @"贵州": @"구이저우", @"陕西": @"산시", @"甘肃": @"간쑤", @"青海": @"칭하이", @"海南": @"하이난", @"山西": @"산시", @"内蒙古": @"내몽골", @"宁夏": @"닝샤", @"新疆": @"신장", @"西藏": @"티베트"
+      },
+      @"ja": @{
+        @"一类高层公共建筑": @"一類高層公共建築", @"二类高层公共建筑／多层公共建筑": @"二類高層／多層公共建築",
+        @"其他（用户参考值）": @"その他（ユーザー参考値）", @"其他": @"その他", @"百度": @"Baidu", @"搜狗": @"Sogou",
+        @"区号": @"市外局番", @"继续输入": @"続けて入力", @"继续输入本地号码": @"市内番号を続けて入力",
+        @"参考汇率": @"参考為替レート", @"未知运营商": @"不明な通信事業者",
+        @"北京": @"北京", @"上海": @"上海", @"天津": @"天津", @"重庆": @"重慶", @"广州": @"広州", @"沈阳": @"瀋陽", @"南京": @"南京", @"武汉": @"武漢", @"成都": @"成都", @"西安": @"西安", @"杭州": @"杭州", @"深圳": @"深圳", @"桂林": @"桂林", @"昆明": @"昆明",
+        @"湖北": @"湖北", @"湖南": @"湖南", @"广东": @"広東", @"广西": @"広西", @"四川": @"四川", @"浙江": @"浙江", @"江苏": @"江蘇", @"山东": @"山東", @"河南": @"河南", @"河北": @"河北", @"福建": @"福建", @"安徽": @"安徽", @"江西": @"江西", @"辽宁": @"遼寧", @"吉林": @"吉林", @"黑龙江": @"黒竜江", @"云南": @"雲南", @"贵州": @"貴州", @"陕西": @"陝西", @"甘肃": @"甘粛", @"青海": @"青海", @"海南": @"海南", @"山西": @"山西", @"内蒙古": @"内モンゴル", @"宁夏": @"寧夏", @"新疆": @"新疆", @"西藏": @"チベット"
+      },
+      @"zh-Hant": @{}
+    };
+  });
+  NSDictionary<NSString *, NSString *> *words = dynamicWords[language];
+  if ([text hasSuffix:@" 天"]) {
+    NSString *count = [text substringToIndex:text.length - 2];
+    NSScanner *scanner = [NSScanner scannerWithString:count];
+    long long days = 0;
+    if ([scanner scanLongLong:&days] && scanner.isAtEnd) {
+      NSDictionary<NSString *, NSString *> *suffixes = @{
+        @"en": (llabs(days) == 1 ? @" day" : @" days"),
+        @"ko": @"일", @"ja": @"日", @"zh-Hant": @" 天"
+      };
+      return [count stringByAppendingString:suffixes[language] ?: @" 天"];
+    }
+  }
+  NSString *searchSuffix = @" 搜索当前候选";
+  if ([text hasSuffix:searchSuffix]) {
+    NSString *engine = [text substringToIndex:text.length - searchSuffix.length];
+    NSString *translatedEngine = words[engine] ?: table[engine] ?: engine;
+    NSDictionary<NSString *, NSString *> *suffixes = @{
+      @"en": @" search current candidate", @"ko": @" 현재 후보 검색",
+      @"ja": @" 現在の候補を検索", @"zh-Hant": @" 搜尋目前候選詞"
+    };
+    return [translatedEngine stringByAppendingString:suffixes[language] ?: searchSuffix];
+  }
+  NSArray<NSString *> *wordKeys = [words.allKeys sortedArrayUsingComparator:
+      ^NSComparisonResult(NSString *left, NSString *right) {
+    return left.length > right.length ? NSOrderedAscending :
+        (left.length < right.length ? NSOrderedDescending : NSOrderedSame);
+  }];
+  for (NSString *key in wordKeys)
+    if ([text containsString:key])
+      text = [text stringByReplacingOccurrencesOfString:key withString:words[key]];
+  NSString *floorSavedPrefix = @"楼层估算层高已设为 ";
+  if ([text hasPrefix:floorSavedPrefix]) {
+    NSString *value = [text substringFromIndex:floorSavedPrefix.length];
+    NSDictionary<NSString *, NSString *> *templates = @{
+      @"en": @"Floor estimate height set to %@ m", @"ko": @"층수 추정 층고를 %@m로 설정했습니다",
+      @"ja": @"階数推定の階高を%@ mに設定しました", @"zh-Hant": @"樓層估算層高已設為%@"
+    };
+    return [NSString stringWithFormat:templates[language] ?: text, value];
+  }
+  NSString *fireSavedPrefix = @"类别 ";
+  NSString *fireSavedMiddle = @" 消防静压参考值已设为 ";
+  NSRange fireSavedRange = [text rangeOfString:fireSavedMiddle];
+  if ([text hasPrefix:fireSavedPrefix] && fireSavedRange.location != NSNotFound) {
+    NSString *category = [text substringWithRange:NSMakeRange(
+        fireSavedPrefix.length, fireSavedRange.location - fireSavedPrefix.length)];
+    NSString *value = [text substringFromIndex:NSMaxRange(fireSavedRange)];
+    NSDictionary<NSString *, NSString *> *templates = @{
+      @"en": @"Category %@ fire static-pressure reference set to %@ MPa",
+      @"ko": @"분류 %@ 소방 정압 참고값을 %@MPa로 설정했습니다",
+      @"ja": @"分類%@の消防静水圧参考値を%@ MPaに設定しました",
+      @"zh-Hant": @"類別%@消防靜壓參考值已設為%@ MPa"
+    };
+    return [NSString stringWithFormat:templates[language] ?: text, category, value];
+  }
+  if ([text containsString:@" · "] && [text containsString:@" MPa"] &&
+      [text containsString:@"（建筑高度超过100米应按0.15 MPa）"]) {
+    NSString *value = [[text componentsSeparatedByString:@" · "] lastObject];
+    value = [value stringByReplacingOccurrencesOfString:@"（建筑高度超过100米应按0.15 MPa）" withString:@""];
+    NSDictionary<NSString *, NSString *> *templates = @{
+      @"en": @"Minimum static pressure at the most unfavorable point · %@ MPa (use 0.15 MPa for buildings over 100 m)",
+      @"ko": @"최불리점 최소 정압 · %@MPa (높이 100m 초과 시 0.15MPa 적용)",
+      @"ja": @"最不利点の最低静水圧 · %@ MPa（高さ100m超は0.15 MPa）",
+      @"zh-Hant": @"最不利點最低靜壓 · %@ MPa（建築高度超過100米按0.15 MPa）"
+    };
+    return [NSString stringWithFormat:templates[language] ?: text, value];
+  }
+  if (words.count && [text hasPrefix:@"低于 "]) {
+    NSString *value = [text substringFromIndex:3];
+    if ([language isEqualToString:@"en"]) return [NSString stringWithFormat:@"Below %@ static-pressure reference", value];
+    if ([language isEqualToString:@"ko"]) return [NSString stringWithFormat:@"%@ 정압 참고값 미만", value];
+    if ([language isEqualToString:@"ja"]) return [NSString stringWithFormat:@"%@ 静水圧の参考値未満", value];
+  }
+  if (words.count && [text hasPrefix:@"当前 "] && [text containsString:@" m；"]) {
+    NSString *value = [[text componentsSeparatedByString:@" m；"] firstObject];
+    value = [value substringFromIndex:3];
+    NSDictionary<NSString *, NSString *> *prefixes = @{
+      @"en": @"Current floor height ", @"ko": @"현재 층고 ", @"ja": @"現在の階高 ",
+      @"zh-Hant": @"目前層高 "
+    };
+    NSString *hint = LocalizedQueryText(
+        @"ufloorheight3.2（3.2:层高；可设置范围2-12米；默认3米）");
+    return [NSString stringWithFormat:@"%@%@ m; %@", prefixes[language] ?: @"当前 ", value,
+        LocalizedQueryText(hint)];
+  }
+  NSRegularExpression *floorPressureExpression = [NSRegularExpression
+      regularExpressionWithPattern:@"^(.+?)层（扣除(.+?) MPa静压；按层高(.+?)米；未计管网损失）$"
+      options:0 error:nil];
+  NSTextCheckingResult *floorPressureMatch = [floorPressureExpression
+      firstMatchInString:text options:0 range:NSMakeRange(0, text.length)];
+  if (floorPressureMatch.numberOfRanges == 4) {
+    NSString *(^capture)(NSUInteger) = ^NSString *(NSUInteger index) {
+      return [text substringWithRange:[floorPressureMatch rangeAtIndex:index]];
+    };
+    NSDictionary<NSString *, NSString *> *templates = @{
+      @"en": @"%@ floors (after reserving %@ MPa static pressure; %@ m per floor; pipe losses excluded)",
+      @"ko": @"%@층 (정압 %@MPa 제외, 층고 %@m 기준; 배관 손실 미포함)",
+      @"ja": @"%@階（静水圧%@ MPa控除、階高%@ m、配管損失を含まない）",
+      @"zh-Hant": @"%@層（扣除%@ MPa靜壓；按層高%@米；未計管網損失）"
+    };
+    return [NSString stringWithFormat:templates[language] ?: text,
+        capture(1), capture(2), capture(3)];
+  }
+  NSString *floorSaveSuffix = @" m · 停止输入约 1 秒后保存";
+  if ([text hasSuffix:floorSaveSuffix]) {
+    NSString *height = [text substringToIndex:text.length - floorSaveSuffix.length];
+    NSDictionary<NSString *, NSString *> *templates = @{
+      @"en": @"%@ m · saved after a 1-second pause", @"ko": @"%@m · 입력을 1초 멈추면 저장",
+      @"ja": @"%@ m · 1秒停止後に保存", @"zh-Hant": @"%@ m · 停止輸入約 1 秒後儲存"
+    };
+    return [NSString stringWithFormat:templates[language] ?: text, height];
+  }
+  if ([text hasPrefix:@"类别1："] && [text containsString:@"（自定义）"]) {
+    NSRegularExpression *settingExpression = [NSRegularExpression
+        regularExpressionWithPattern:@"类别1：(.+?) MPa（>100米按(.+?)）；类别2：(.+?) MPa；类别3：(.+?) MPa（自定义）"
+        options:0 error:nil];
+    NSTextCheckingResult *match = [settingExpression firstMatchInString:text
+        options:0 range:NSMakeRange(0, text.length)];
+    if (match.numberOfRanges == 5) {
+      NSString *(^capture)(NSUInteger) = ^NSString *(NSUInteger index) {
+        return [text substringWithRange:[match rangeAtIndex:index]];
+      };
+      NSDictionary<NSString *, NSString *> *templates = @{
+        @"en": @"Category 1: %@ MPa (use %@ above 100 m); category 2: %@ MPa; category 3: %@ MPa (custom)",
+        @"ko": @"분류 1: %@MPa (100m 초과 시 %@ 적용); 분류 2: %@MPa; 분류 3: %@MPa (사용자 지정)",
+        @"ja": @"分類1: %@ MPa（高さ100m超は%@を適用）；分類2: %@ MPa；分類3: %@ MPa（カスタム）",
+        @"zh-Hant": @"類別1：%@ MPa（>100米按%@）；類別2：%@ MPa；類別3：%@ MPa（自訂）"
+      };
+      return [NSString stringWithFormat:templates[language] ?: text,
+          capture(1), capture(2), capture(3), capture(4)];
+    }
+  }
+  if ([text hasPrefix:@"格式：ufiredefault1-0.15"] ) {
+    NSDictionary<NSString *, NSString *> *formats = @{
+      @"en": @"Format: ufiredefault1-0.15 (category-static pressure in MPa; value must be >0 and ≤2.4)",
+      @"ko": @"형식: ufiredefault1-0.15 (분류-정압 MPa; 0 초과, 2.4 이하)",
+      @"ja": @"形式: ufiredefault1-0.15（分類-静水圧 MPa；0超、2.4以下）",
+      @"zh-Hant": @"格式：ufiredefault1-0.15（類別1-靜壓MPa；數值大於0且不超過2.4）"
+    };
+    return formats[language] ?: text;
+  }
+  if ([text hasPrefix:@"ufiredefault1-0.15（类别1-压力MPa"] ) {
+    NSDictionary<NSString *, NSString *> *hints = @{
+      @"en": @"ufiredefault1-0.15 (category-pressure in MPa; category 2 default 0.07; category 3 default 0.01)",
+      @"ko": @"ufiredefault1-0.15 (분류-정압 MPa; 분류 2 기본 0.07; 분류 3 기본 0.01)",
+      @"ja": @"ufiredefault1-0.15（分類-静水圧 MPa；分類2の既定0.07；分類3の既定0.01）",
+      @"zh-Hant": @"ufiredefault1-0.15（類別1-壓力MPa；類別2預設0.07；類別3預設0.01）"
+    };
+    return hints[language] ?: text;
+  }
+  if ([text hasPrefix:@"类别 "] && [text containsString:@" 参考静压 "] &&
+      [text containsString:@"停顿约 1 秒保存"]) {
+    NSRegularExpression *expression = [NSRegularExpression
+        regularExpressionWithPattern:@"类别 (\\d) 参考静压 (.+?) MPa · 停顿约 1 秒保存"
+        options:0 error:nil];
+    NSTextCheckingResult *match = [expression firstMatchInString:text options:0
+        range:NSMakeRange(0, text.length)];
+    if (match.numberOfRanges == 3) {
+      NSString *category = [text substringWithRange:[match rangeAtIndex:1]];
+      NSString *value = [text substringWithRange:[match rangeAtIndex:2]];
+      NSDictionary<NSString *, NSString *> *templates = @{
+        @"en": @"Category %@ reference static pressure: %@ MPa · saved after a 1-second pause",
+        @"ko": @"분류 %@ 참고 정압: %@MPa · 1초 입력 중단 후 저장",
+        @"ja": @"分類%@の参考静水圧: %@ MPa · 1秒停止後に保存",
+        @"zh-Hant": @"類別%@參考靜壓：%@ MPa · 停頓約 1 秒後儲存"
+      };
+      return [NSString stringWithFormat:templates[language] ?: text, category, value];
+    }
+  }
+  if (words.count && [text hasSuffix:@"搜索引擎"]) {
+    NSRange range = [text rangeOfString:@"已设为"];
+    if (range.location != NSNotFound) {
+      NSString *engine = [text substringToIndex:range.location];
+      NSString *shortcut = [[text substringFromIndex:range.location + range.length]
+          stringByReplacingOccurrencesOfString:@"搜索引擎" withString:@""];
+      NSDictionary<NSString *, NSString *> *templates = @{
+        @"en": @"%@ is now the search engine for %@", @"ko": @"%@을(를) %@ 검색 엔진으로 설정했습니다",
+        @"ja": @"%@を%@の検索エンジンに設定しました", @"zh-Hant": @"%@已設為%@搜尋引擎"
+      };
+      NSString *localizedEngine = words[engine] ?: engine;
+      return [NSString stringWithFormat:templates[language] ?: @"%@已设为%@搜索引擎",
+          localizedEngine, shortcut];
+    }
+  }
+  NSString *timeZonePrefix = @"时区时间（";
+  if ([text hasPrefix:timeZonePrefix] && [text hasSuffix:@"）"]) {
+    NSString *zoneName = [text substringWithRange:NSMakeRange(
+        timeZonePrefix.length, text.length - timeZonePrefix.length - 1)];
+    NSString *localizedPrefix = table[@"时区时间"] ?: @"时区时间";
+    return [NSString stringWithFormat:@"%@（%@）", localizedPrefix, zoneName];
+  }
   NSRange unitSuffix = [text rangeOfString:@" ("];
   if (unitSuffix.location != NSNotFound && [text hasSuffix:@")"]) {
     NSString *unitName = [text substringToIndex:unitSuffix.location];
@@ -1388,6 +1766,48 @@ static NSString *FloorEstimateResult(double floors, double floorHeight) {
   return [NSString stringWithFormat:@"%@层（按层高%@米估算约在%@层）", count, height, count];
 }
 
+static NSString *PressureFloorEstimateResult(double floors, double floorHeight,
+                                              NSInteger category,
+                                              BOOL showCategory) {
+  NSString *count = [NSString stringWithFormat:@"%.1f", floors];
+  NSString *height = UtilityNumber(floorHeight);
+  if (!showCategory) {
+    if ([QueryUILanguage() isEqualToString:@"en"])
+      return [NSString stringWithFormat:@"%@ floors (at %@ m/floor)", count, height];
+    if ([QueryUILanguage() isEqualToString:@"ko"])
+      return [NSString stringWithFormat:@"%@층 (층고 %@m 기준)", count, height];
+    if ([QueryUILanguage() isEqualToString:@"ja"])
+      return [NSString stringWithFormat:@"%@階（階高%@ mで換算）", count, height];
+    if ([QueryUILanguage() isEqualToString:@"zh-Hant"])
+      return [NSString stringWithFormat:@"%@層（按層高%@米估算）", count, height];
+    return [NSString stringWithFormat:@"%@层（按层高%@米估算）", count, height];
+  }
+  NSString *localizedCategory = nil;
+  NSString *language = QueryUILanguage();
+  if (category == 1) {
+    NSDictionary *names = @{@"zh-Hans": @"一类高层", @"zh-Hant": @"一類高層",
+        @"en": @"Class I high-rise", @"ko": @"1급 고층", @"ja": @"一類高層"};
+    localizedCategory = names[language];
+  } else if (category == 2) {
+    NSDictionary *names = @{@"zh-Hans": @"二类高层", @"zh-Hant": @"二類高層",
+        @"en": @"Class II high-rise/multistory", @"ko": @"2급 고층/다층", @"ja": @"二類高層／多層"};
+    localizedCategory = names[language];
+  } else {
+    NSDictionary *names = @{@"zh-Hans": @"其它建筑", @"zh-Hant": @"其他建築",
+        @"en": @"Other buildings", @"ko": @"기타 건축물", @"ja": @"その他の建築物"};
+    localizedCategory = names[language];
+  }
+  if ([language isEqualToString:@"en"])
+    return [NSString stringWithFormat:@"%@ floors (at %@ m/floor; %@ static-pressure estimate)", count, height, localizedCategory];
+  if ([language isEqualToString:@"ko"])
+    return [NSString stringWithFormat:@"%@층 (층고 %@m, %@ 정압 추정)", count, height, localizedCategory];
+  if ([language isEqualToString:@"ja"])
+    return [NSString stringWithFormat:@"%@階（階高%@ m、%@の静水圧による推定）", count, height, localizedCategory];
+  if ([language isEqualToString:@"zh-Hant"])
+    return [NSString stringWithFormat:@"%@層（按層高%@米、%@靜壓估算）", count, height, localizedCategory];
+  return [NSString stringWithFormat:@"%@层（按层高%@米、%@静压估算）", count, height, localizedCategory];
+}
+
 static NSString *FloorHeightSettingHint(void) {
   NSString *language = QueryUILanguage();
   if ([language isEqualToString:@"en"])
@@ -1397,8 +1817,24 @@ static NSString *FloorHeightSettingHint(void) {
   if ([language isEqualToString:@"ja"])
     return @"ufloorheight3.2（3.2:階高；範囲2～12m；既定3m）";
   if ([language isEqualToString:@"zh-Hant"])
-    return @"ufloorheight3.2（3.2:層高；可設定範圍2-12米；預設3米）";
-  return @"ufloorheight3.2（3.2:层高；可设置范围2-12米；默认3米）";
+    return @"ufloorheight3.2（3.2：層高；可設定範圍2-12米；預設3米）";
+  return @"ufloorheight3.2（3.2：层高；可设置范围2-12米；默认3米）";
+}
+
+static NSString *FireStaticPressureSettingHint(void) {
+  NSString *class1 = UtilityNumber(QueryFireStaticPressureMPa(1));
+  NSString *class2 = UtilityNumber(QueryFireStaticPressureMPa(2));
+  NSString *other = UtilityNumber(QueryFireStaticPressureMPa(3));
+  NSString *language = QueryUILanguage();
+  if ([language isEqualToString:@"en"])
+    return [NSString stringWithFormat:@"ufiredefault1-0.15 (Class I: %@ MPa; Class II: %@ MPa; other buildings: %@ MPa; default: 0.01 MPa)", class1, class2, other];
+  if ([language isEqualToString:@"ko"])
+    return [NSString stringWithFormat:@"ufiredefault1-0.15 (1급 고층: %@MPa; 2급/다층: %@MPa; 기타 건축물: %@MPa; 기본값: 0.01MPa)", class1, class2, other];
+  if ([language isEqualToString:@"ja"])
+    return [NSString stringWithFormat:@"ufiredefault1-0.15（一類高層: %@ MPa；二類高層: %@ MPa；その他の建築物: %@ MPa；既定値: 0.01 MPa）", class1, class2, other];
+  if ([language isEqualToString:@"zh-Hant"])
+    return [NSString stringWithFormat:@"ufiredefault1-0.15（一類高層：%@MPa；二類高層：%@MPa；其他建築：%@MPa；預設0.01MPa）", class1, class2, other];
+  return [NSString stringWithFormat:@"ufiredefault1-0.15（一类高层：%@MPa；二类高层：%@MPa；其它建筑：%@MPa；默认0.01MPa）", class1, class2, other];
 }
 
 static BOOL ParseFireStaticPressureDefault(NSString *payload,
@@ -1419,6 +1855,23 @@ static BOOL ParseFireStaticPressureDefault(NSString *payload,
   return YES;
 }
 
+static NSString * __attribute__((unused)) TimeZoneCityLabel(NSTimeZone *zone) {
+  static NSDictionary<NSString *, NSString *> *labels;
+  static dispatch_once_t token;
+  dispatch_once(&token, ^{
+    labels = @{
+      @"America/New_York": @"纽约时间", @"America/Los_Angeles": @"洛杉矶时间",
+      @"America/Chicago": @"芝加哥时间", @"Europe/London": @"伦敦时间",
+      @"Europe/Paris": @"巴黎时间", @"Asia/Tokyo": @"东京时间",
+      @"Asia/Seoul": @"首尔时间", @"Asia/Singapore": @"新加坡时间",
+      @"Asia/Hong_Kong": @"香港时间", @"Asia/Taipei": @"台北时间",
+      @"Australia/Sydney": @"悉尼时间", @"Pacific/Auckland": @"奥克兰时间",
+      @"Asia/Shanghai": @"北京时间", @"Asia/Dubai": @"迪拜时间"
+    };
+  });
+  return labels[zone.name] ?: [NSString stringWithFormat:@"时区时间（%@）", zone.name];
+}
+
 static NSArray<NSArray<NSString *> *> *RowsForTimeQuery(void) {
   NSString *payload = UtilityPayload(query_text, @"time");
   NSString *value = [payload stringByTrimmingCharactersInSet:
@@ -1426,6 +1879,8 @@ static NSArray<NSArray<NSString *> *> *RowsForTimeQuery(void) {
   if (!query_time_snapshot) query_time_snapshot = [NSDate date];
   NSDate *date = query_time_snapshot;
   NSTimeZone *displayZone = NSTimeZone.localTimeZone;
+  NSString *timeZoneLabel = nil;
+  BOOL hasExplicitTimeZone = NO;
   if (value.length && ![value isEqualToString:@"now"]) {
     NSScanner *scanner = [NSScanner scannerWithString:value];
     scanner.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
@@ -1436,21 +1891,59 @@ static NSArray<NSArray<NSString *> *> *RowsForTimeQuery(void) {
         return @[@[@"时间戳超出范围", @"仅支持公元 0001–9999 年"]];
       date = [NSDate dateWithTimeIntervalSince1970:timestamp];
     } else if (value.length) {
-      NSTimeZone *zone = [NSTimeZone timeZoneWithName:value];
+      static NSDictionary<NSString *, NSString *> *aliases;
+      static NSDictionary<NSString *, NSString *> *cityLabels;
+      static NSDictionary<NSString *, NSString *> *aliasLabels;
+      static dispatch_once_t aliasToken;
+      dispatch_once(&aliasToken, ^{
+        aliases = @{
+          @"niuyue": @"America/New_York", @"luoshanji": @"America/Los_Angeles",
+          @"jiujinshan": @"America/Los_Angeles", @"zhijiage": @"America/Chicago",
+          @"lundun": @"Europe/London", @"bali": @"Europe/Paris",
+          @"dongjing": @"Asia/Tokyo", @"shouer": @"Asia/Seoul",
+          @"xinjiapo": @"Asia/Singapore", @"xianggang": @"Asia/Hong_Kong",
+          @"taibei": @"Asia/Taipei", @"xini": @"Australia/Sydney",
+          @"aokelan": @"Pacific/Auckland", @"beijing": @"Asia/Shanghai",
+          @"shanghai": @"Asia/Shanghai", @"dibai": @"Asia/Dubai"
+        };
+        cityLabels = @{
+          @"America/New_York": @"纽约时间", @"America/Los_Angeles": @"洛杉矶时间",
+          @"America/Chicago": @"芝加哥时间", @"Europe/London": @"伦敦时间",
+          @"Europe/Paris": @"巴黎时间", @"Asia/Tokyo": @"东京时间",
+          @"Asia/Seoul": @"首尔时间", @"Asia/Singapore": @"新加坡时间",
+          @"Asia/Hong_Kong": @"香港时间", @"Asia/Taipei": @"台北时间",
+          @"Australia/Sydney": @"悉尼时间", @"Pacific/Auckland": @"奥克兰时间",
+          @"Asia/Shanghai": @"北京时间", @"Asia/Dubai": @"迪拜时间"
+        };
+        aliasLabels = @{
+          @"jiujinshan": @"旧金山时间", @"beijing": @"北京时间",
+          @"shanghai": @"上海时间"
+        };
+      });
+      NSString *zoneName = aliases[value.lowercaseString] ?: value;
+      NSTimeZone *zone = [NSTimeZone timeZoneWithName:zoneName];
       if (!zone) return @[
-        @[@"时区或时间戳", @"输入 Unix 秒／毫秒，或时区名如 Asia/Tokyo"]
+        @[@"时区或时间戳", @"输入 Unix 秒／毫秒、时区名或城市拼音（如 niuyue）"]
       ];
       displayZone = zone;
+      timeZoneLabel = aliasLabels[value.lowercaseString] ?: cityLabels[zone.name];
+      hasExplicitTimeZone = YES;
     }
   }
   int64_t seconds = (int64_t)floor(date.timeIntervalSince1970);
-  return @[
-    @[@"本地时间", FormatDateForZone(date, NSTimeZone.localTimeZone)],
-    @[@"目标时区", FormatDateForZone(date, displayZone)],
+  NSMutableArray<NSArray<NSString *> *> *rows = [NSMutableArray arrayWithArray:@[
+    @[TimeZoneCityLabel(NSTimeZone.localTimeZone), FormatDateForZone(date, NSTimeZone.localTimeZone)],
+  ]];
+  if (hasExplicitTimeZone) {
+    NSString *label = timeZoneLabel ?: [NSString stringWithFormat:@"时区时间（%@）", displayZone.name];
+    [rows addObject:@[label, FormatDateForZone(date, displayZone)]];
+  }
+  [rows addObjectsFromArray:@[
     @[@"UTC", FormatDateForZone(date, [NSTimeZone timeZoneForSecondsFromGMT:0])],
     @[@"Unix 秒", [NSString stringWithFormat:@"%lld", (long long)seconds]],
     @[@"Unix 毫秒", [NSString stringWithFormat:@"%lld", (long long)llround(date.timeIntervalSince1970 * 1000.0)]]
-  ];
+  ]];
+  return rows;
 }
 
 static NSArray<NSArray<NSString *> *> *RowsForDateQuery(void) {
@@ -1763,16 +2256,20 @@ static NSArray<NSArray<NSString *> *> *RowsForUnitInput(NSString *payload) {
     @"millicoulomb": @"mc", @"毫库仑": @"mc",
     @"microcoulomb": @"μc", @"微库仑": @"μc", @"uc": @"μc", @"µc": @"μc"
   };
-  NSInteger fireCategory = 0;
+  NSInteger fireCategory = 3;
+  BOOL fireCategorySpecified = NO;
   if (inputUnit.length > 1) {
     unichar finalCharacter = [inputUnit characterAtIndex:inputUnit.length - 1];
-    if (finalCharacter >= '1' && finalCharacter <= '3') {
+    if (finalCharacter >= '0' && finalCharacter <= '9') {
       NSString *unitWithoutCategory =
           [inputUnit substringToIndex:inputUnit.length - 1];
       NSString *normalizedUnit = aliases[unitWithoutCategory] ?: unitWithoutCategory;
       if ([@[@"pa", @"kpa", @"mpa", @"kgf/cm²", @"mmhg", @"mh2o"]
           containsObject:normalizedUnit]) {
-        fireCategory = finalCharacter - '0';
+        NSInteger requestedCategory = finalCharacter - '0';
+        fireCategory = (requestedCategory == 1 || requestedCategory == 2) ?
+            requestedCategory : 3;
+        fireCategorySpecified = YES;
         inputUnit = unitWithoutCategory;
       }
     }
@@ -1962,31 +2459,12 @@ static NSArray<NSArray<NSString *> *> *RowsForUnitInput(NSString *payload) {
     [rows addObject:@[label, result]];
   }
   if (dimension == STUnitPressure) {
-    if (fireCategory > 0) {
-      double minimumMPa = QueryFireStaticPressureMPa(fireCategory);
-      double minimumPa = minimumMPa * 1000000.0;
-      NSString *categoryName = fireCategory == 1 ? @"一类高层公共建筑" :
-          fireCategory == 2 ? @"二类高层公共建筑／多层公共建筑" : @"其他（用户参考值）";
-      NSString *reference = [NSString stringWithFormat:@"%@ · %@ MPa%@",
-          categoryName, UtilityNumber(minimumMPa),
-          fireCategory == 1 ? @"（建筑高度超过100米应按0.15 MPa）" : @""];
-      [rows addObject:@[@"最不利点最低静压", reference]];
-      double availablePa = baseValue - minimumPa;
-      NSString *fireEstimate = availablePa > 0 ?
-          [NSString stringWithFormat:@"%@层（扣除%@ MPa静压；按层高%@米；未计管网损失）",
-              UtilityNumber(availablePa / (9806.65 * configuredFloorHeight)),
-              UtilityNumber(minimumMPa), UtilityNumber(configuredFloorHeight)] :
-          [NSString stringWithFormat:@"低于 %@ MPa 静压参考值",
-              UtilityNumber(minimumMPa)];
-      [rows addObject:@[@"扣除静压后理论楼层", fireEstimate]];
-      [rows addObject:@[@"消防静压设置",
-          @"ufiredefault1-0.15（类别1-压力MPa；类别2默认0.07；类别3默认0.01）"]];
-    } else {
-      double floors = baseValue / (9806.65 * configuredFloorHeight);
-      [rows addObject:@[@"大约几层",
-          FloorEstimateResult(floors, configuredFloorHeight)]];
-      [rows addObject:@[@"层高设置", FloorHeightSettingHint()]];
-    }
+    double floors = baseValue / (9806.65 * configuredFloorHeight);
+    [rows addObject:@[@"大约几层",
+        PressureFloorEstimateResult(floors, configuredFloorHeight,
+                                    fireCategory, fireCategorySpecified)]];
+    [rows addObject:@[@"层高设置", FloorHeightSettingHint()]];
+    [rows addObject:@[@"静压设置", FireStaticPressureSettingHint()]];
   }
   return rows;
 }
@@ -2489,6 +2967,22 @@ static NSString *PhoneRegionForDigits(NSString *digits) {
   return [NSString stringWithFormat:@"%@ %@ · %@", fields[0], fields[1], carrierName];
 }
 
+static NSString *QueryIPResponseLanguage(void) {
+  // ipwho.is supports English, Simplified Chinese and Japanese, but not
+  // Korean or Traditional Chinese. Traditional output is converted locally.
+  NSString *language = QueryUILanguage();
+  if ([language isEqualToString:@"ja"]) return @"ja";
+  if ([language hasPrefix:@"zh-"]) return @"zh-CN";
+  return @"en";
+}
+
+static NSString *LocalizedIPCountry(NSString *countryName, NSString *countryCode) {
+  if (!countryCode.length) return countryName ?: @"";
+  NSString *localizedName = [[NSLocale localeWithLocaleIdentifier:QueryUILanguage()]
+      displayNameForKey:NSLocaleCountryCode value:countryCode.uppercaseString];
+  return localizedName.length ? localizedName : (countryName ?: @"");
+}
+
 static void ScheduleIPLookup(NSString *targetIP) {
   BOOL isPublicIPLookup = [query_text isEqualToString:@"ip"];
   BOOL isSpecificIPLookup = NO;
@@ -2518,8 +3012,8 @@ static void ScheduleIPLookup(NSString *targetIP) {
     }
     components.queryItems = @[
       [NSURLQueryItem queryItemWithName:@"fields"
-                                  value:@"success,ip,country,region,city,connection"],
-      [NSURLQueryItem queryItemWithName:@"lang" value:@"zh-CN"]
+                                  value:@"success,ip,country,country_code,region,city,connection"],
+      [NSURLQueryItem queryItemWithName:@"lang" value:QueryIPResponseLanguage()]
     ];
     NSMutableURLRequest *request = [NSMutableURLRequest
         requestWithURL:components.URL
@@ -2541,8 +3035,11 @@ static void ScheduleIPLookup(NSString *targetIP) {
         } else {
           NSString *ip = [json[@"ip"] isKindOfClass:NSString.class] ? json[@"ip"] : @"";
           if (isPublicIPLookup) query_ip_public_ip = ip.length ? ip : nil;
-          NSString *country = [json[@"country"] isKindOfClass:NSString.class] ?
+          NSString *countrySource = [json[@"country"] isKindOfClass:NSString.class] ?
               json[@"country"] : @"";
+          NSString *countryCode = [json[@"country_code"] isKindOfClass:NSString.class] ?
+              json[@"country_code"] : @"";
+          NSString *country = LocalizedIPCountry(countrySource, countryCode);
           NSString *region = [json[@"region"] isKindOfClass:NSString.class] ?
               json[@"region"] : @"";
           NSString *city = [json[@"city"] isKindOfClass:NSString.class] ?
@@ -3383,7 +3880,8 @@ static NSArray<NSArray<NSString *> *> *QueryHelpEntries(void) {
     @[@"⌘C", @"复制当前结果信息"],
     @[@"空格", @"复制当前候选词；取色时选定颜色或重新取色"],
     @[@"ucolorRRGGBB / rgb(...) ", @"支持省略 #；方向键选格式，⌘C复制颜色值"],
-    @[@"utime时间戳／时区", @"查看本地、目标时区、UTC 与 Unix 秒／毫秒"],
+    @[@"utime时间戳", @"转换 Unix 秒／毫秒；不带参数时显示输入时刻快照"],
+    @[@"utime时区／城市", @"支持城市拼音，例如：niuyue、dongjing"],
     @[@"udate日期", @"8 位日期可直接换算；双日期用 .、- 或空格分隔"],
     @[@"umaxwidth数字", @"设置 U 面板最大宽度（200–2000 pt，默认 400）"],
     @[@"层高设置", @"ufloorheight3.2（3.2:层高；可设置范围2-12米；默认3米）"],

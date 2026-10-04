@@ -361,17 +361,18 @@ int main(void) {
     TestPagination();
     TestPanelWrapping();
     NSArray *rows = RowsForUnitInput(@"1000pa");
-    assert(rows.count == 8);
+    assert(rows.count == 9);
     ExpectValue(rows, @"帕 (Pa)", 1000);
     ExpectValue(rows, @"千帕 (kPa)", 1);
     ExpectValue(rows, @"兆帕 (MPa)", 0.001);
     ExpectValue(rows, @"公斤压力 (kgf/cm²)", 1000 / 98066.5);
     ExpectValue(rows, @"毫米汞柱 (mmHg)", 1000 / 133.3224);
     ExpectValue(rows, @"水柱高度 (mH₂O)", 1000 / 9806.65);
-    assert([rows[6][1] isEqualToString:@"0.0层（按层高3米估算约在0.0层）"]);
+    assert([rows[6][1] isEqualToString:@"0.0层（按层高3米估算）"]);
     assert([rows[7][0] isEqualToString:@"层高设置"]);
     assert([rows[7][1] isEqualToString:
-        @"ufloorheight3.2（3.2:层高；可设置范围2-12米；默认3米）"]);
+        @"ufloorheight3.2（3.2：层高；可设置范围2-12米；默认3米）"]);
+    assert([rows[8][0] isEqualToString:@"静压设置"]);
     ExpectValue(RowsForUnitInput(@"2.6mp"), @"帕 (Pa)", 2600000);
     ExpectValue(RowsForUnitInput(@"2.6MP"), @"兆帕 (MPa)", 2.6);
     ExpectValue(RowsForUnitInput(@"2.6kp"), @"帕 (Pa)", 2600);
@@ -381,17 +382,25 @@ int main(void) {
     NSArray *fireClass2 = RowsForUnitInput(@"2.6MPa2");
     NSArray *fireClass3 = RowsForUnitInput(@"2.6MP3");
     assert(fireClass1.count == 9 && fireClass1Long.count == 9);
-    assert([fireClass1[6][0] isEqualToString:@"最不利点最低静压"]);
-    assert([fireClass1[6][1] containsString:@"0.1 MPa"]);
-    assert([fireClass1[7][0] isEqualToString:@"扣除静压后理论楼层"]);
-    assert(fabs([fireClass1[7][1] doubleValue] - 85.0) < 0.1);
-    assert([fireClass2[6][1] containsString:@"0.07 MPa"]);
-    assert(fabs([fireClass2[7][1] doubleValue] -
-        (2600000.0 - 70000.0) / (9806.65 * 3.0)) < 0.1);
-    assert([fireClass3[6][1] containsString:@"0.01 MPa"]);
-    assert([fireClass3[6][1] containsString:@"用户参考值"]);
-    assert(fabs([fireClass3[7][1] doubleValue] -
-        (2600000.0 - 10000.0) / (9806.65 * 3.0)) < 0.1);
+    assert([fireClass1[6][0] isEqualToString:@"大约几层"]);
+    assert([fireClass1[6][1] isEqualToString:
+        @"88.4层（按层高3米、一类高层静压估算）"]);
+    assert([fireClass1[7][0] isEqualToString:@"层高设置"]);
+    assert([fireClass1[7][1] isEqualToString:
+        @"ufloorheight3.2（3.2：层高；可设置范围2-12米；默认3米）"]);
+    assert([fireClass1[8][0] isEqualToString:@"静压设置"]);
+    assert([fireClass1[8][1] isEqualToString:
+        @"ufiredefault1-0.15（一类高层：0.1MPa；二类高层：0.07MPa；其它建筑：0.01MPa；默认0.01MPa）"]);
+    assert([fireClass2[6][1] isEqualToString:
+        @"88.4层（按层高3米、二类高层静压估算）"]);
+    assert([fireClass3[6][1] isEqualToString:
+        @"88.4层（按层高3米、其它建筑静压估算）"]);
+    NSArray *fireDefault = RowsForUnitInput(@"2.6mpa");
+    NSArray *fireOtherDigit = RowsForUnitInput(@"2.6mpa9");
+    assert([fireDefault[6][1] isEqualToString:@"88.4层（按层高3米估算）"]);
+    assert([fireOtherDigit[6][1] isEqualToString:
+        @"88.4层（按层高3米、其它建筑静压估算）"]);
+    assert([fireDefault[8][0] isEqualToString:@"静压设置"]);
     NSInteger fireCategory = 0;
     double firePressureMPa = 0;
     assert(ParseFireStaticPressureDefault(@"1-0.15", &fireCategory,
@@ -401,7 +410,7 @@ int main(void) {
     for (NSString *input in @[@"1kgf/cm2", @"1KGF/CM²", @"1kg/cm^2",
                               @"1kg/cm2", @"1公斤压力", @"1千克力每平方厘米"]) {
       NSArray *converted = RowsForUnitInput(input);
-      assert(converted.count == 8);
+      assert(converted.count == 9);
       ExpectValue(converted, @"帕 (Pa)", 98066.5);
     }
     ExpectValue(RowsForUnitInput(@"760MMHG"), @"帕 (Pa)", 101325.024);
@@ -411,7 +420,7 @@ int main(void) {
     ExpectValue(RowsForUnitInput(@"2层"), @"帕 (Pa)", 2 * 3.0 * 9806.65);
     NSArray *twoPointOneFloors = RowsForUnitInput(@"61.781895KPA");
     assert([twoPointOneFloors[6][1] isEqualToString:
-        @"2.1层（按层高3米估算约在2.1层）"]);
+        @"2.1层（按层高3米估算）"]);
     assert([twoPointOneFloors[7][0] isEqualToString:@"层高设置"]);
     ExpectValue(RowsForUnitInput(@"0.061781895MPA"), @"帕 (Pa)", 61781.895);
     ExpectValue(RowsForUnitInput(@"760MmHg"), @"帕 (Pa)", 101325.024);

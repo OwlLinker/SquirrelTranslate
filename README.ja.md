@@ -68,14 +68,15 @@ Squirrel の簡体字中国語入力ソースが有効で、編集可能な入�
 | `unihao` | クエリーセッションの既定 Rime スキーマで中国語候補、訳、発音記号を表示 |
 | `ucolor`、`uyanse` | macOS の色拡大鏡と結果パネルを開きます。矢印キーでサンプル点を物理ピクセル単位で移動し、Space またはクリックで色を確定して拡大鏡を閉じます。Space で再開できます。画面収録権限は使わず、拡大率は macOS が制御します。 |
 | `ucolorRRGGBB`、`ucolor#RRGGBB` | `#` あり／なし HEX、アルファ付き HEX、RGB(A)、HSL(A)、HSV(A) に変換。`rgb(255,0,0)`、`rgba(255,0,0,0.5)` も対応。矢印で形式を選び、`⌘C` で値をコピーします。 |
-| `utime` | 入力時点のローカル時刻、UTC、Unix タイムスタンプを固定表示 |
+| `utime` | 入力時点のローカルタイムゾーン時刻、UTC、Unix タイムスタンプを固定表示 |
 | `utime1727683200`、`utime1727683200000` | Unix 秒／ミリ秒を日時に変換 |
 | `utimeAsia/Tokyo` | 有効なタイムゾーンの現在時刻を表示 |
+| `utimeniuyue`、`utimedongjing` | 都市名のピンインでニューヨーク／東京の時刻を検索します。Mac のローカル時刻も、北京時間のように都市名付きで表示します。都市入力はピンインのみ対応し、有効な IANA タイムゾーン ID も入力できます。その他のピンイン別名: `lundun`、`luoshanji`、`jiujinshan`、`zhijiage`、`bali`、`shouer`、`xinjiapo`、`xianggang`、`taibei`、`xini`、`aokelan`、`beijing`、`shanghai`、`dibai`。 |
 | `udate20261002`、`udate2026-10-02` | 過去日数／残日数／今日と開始日・終了日を表示 |
 | `udate20261001.20261002` | 2つの日付の差と開始日・終了日を表示。区切りは `.`, `-`, 空白1つ |
 | `uconv5`、`uconv5.5` | 長さ、質量、温度、体積、圧力、電気量の一般的な変換を表示。入力単位を推測しません。 |
 | `uconv5mi`、`uconv72f`、`uconv5kg` | 指定単位のカテゴリ内で変換（長さ、質量、体積、温度など） |
-| `uconv1000pa`、`uconv1kpa`、`uconv1mpa`、`uconv760mmhg`、`uconv1kgf/cm2` | 圧力単位と静水換算階数を表示します。消防給水がその階数まで届く意味ではありません。`mp`/`mpa` の末尾に 1/2/3 を付けると消防静圧参考値を適用します。1 は既定 0.10MPa（高さ100m超は0.15）、2 は0.07MPa、3 はユーザー参考値0.01MPaです。 |
+| `uconv1000pa`、`uconv1kpa`、`uconv1mpa`、`uconv760mmhg`、`uconv1kgf/cm2` | 圧力結果に階数目安、階高設定、静圧設定の3行を表示します。階数は圧力と階高から直接算出し、静圧を差し引きません。`mp`/`mpa` の末尾 `1` は一類高層、`2` は二類高層／多層、数字なしまたはその他の数字はその他建築物（3）です。数字を明示した場合のみ推定行に分類を表示します。 |
 | `uconv3mH2O`、`uconv3floor` | 水柱高さまたは階数から理論圧力を換算。既定階高は3.0mです。建物の実際の給水能力を示すものではありません。 |
 | `uconv220v`、`uconv2a`、`uconv500w`、`uconv10kohm`、`uconv1kwh`、`uconv60hz`、`uconv100uf` | 電圧、電流、電力、抵抗、エネルギー、周波数、静電容量、インダクタンス、電荷を同じ物理量カテゴリ内で変換します。回路公式による推定はしません。`mW`/`MW`、`mWh`/`MWh` など SI 記号は大文字小文字を区別します。 |
 | `uconv100rmb`、`uconv100usa`、`uconv100jp`、`uconv100uk` | 主要通貨を換算します。日付付きの参考レートであり、リアルタイム取引レートではありません。ネットワークには通貨コードだけを送信し、入力金額は送りません。別名: `rmb/cn`、`usa/us`、`jp`、`uk`。 |
@@ -86,7 +87,7 @@ Squirrel の簡体字中国語入力ソースが有効で、編集可能な入�
 | `umaxwidth600` | パネル最大幅を600ptに設定（範囲200～2000、既定400）。画面の空き幅が優先されます。 |
 | `ufloorheight3.2` | 階高設定: `ufloorheight3.2（3.2:階高；設定範囲2～12m；既定3m）` |
 | `ufiredefault1-0.15` | 分類1の消防静圧参考値を0.15MPaに設定。分類1～3、0超～2.4MPa。分類3の0.01MPaは規定値ではなくユーザー参考値です。 |
-| `ulangzh`、`ulangtw`、`ulangen`、`ulangko`、`ulangja` | パネルの表示言語を切り替えて保存。`ulang` で選択肢を表示します。 |
+| `ulangzh`、`ulangtw`、`ulangen`、`ulangko`、`ulangja` | U パネルを簡体字中国語、繁体字中国語、英語、韓国語、日本語に切り替えます。機能名、結果の説明、ヘルプ、エラー、状態表示も選択言語に切り替わります。`ulang` で選択肢を表示します。 |
 
 ### 互換性と制限
 
@@ -104,9 +105,9 @@ Squirrel の簡体字中国語入力ソースが有効で、編集可能な入�
 
 ## インストール
 
-### ビルド済みプレビュー版 v0.1.0-preview.1
+### ビルド済みプレビュー版 v0.1.0-preview.2
 
-[macOS Universal パッケージをダウンロード](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.1/SquirrelTranslate-v0.1.0-preview.1-macos-universal-preview.zip)（arm64 / x86_64、3.06 MB）。公開版クエリブリッジ、URL ヘルパー、インストールスクリプト、ドキュメント、ビルド済み成果物を含みます。非公開の翻訳連携は含まれません。
+[macOS Universal パッケージをダウンロード](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip)（arm64 / x86_64、3.06 MB）。公開版クエリブリッジ、URL ヘルパー、インストールスクリプト、ドキュメント、ビルド済み成果物を含みます。非公開の翻訳連携は含まれません。
 
 Apple Developer ID による署名および公証はありません。macOS の警告が表示される場合があります。インストールには有効で安定したローカル署名 ID が必要で、Squirrel のアクセシビリティ権限を求められる場合があります。macOS 26.6.2（Apple Silicon）でビルドし、Squirrel 1.1.2 で検証しました。arm64 / x86_64 を含みますが、他の macOS、Squirrel、Rime スキーマとの互換性は未検証です。公開ビルド、単位変換、公開プロバイダー解析テストは通過しています。
 

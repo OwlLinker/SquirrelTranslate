@@ -68,14 +68,15 @@ All commands begin with `u`. Type parameters directly after the keyword, without
 | `unihao` | Show Chinese candidates, translations, and phonetics using the query session's default Rime schema |
 | `ucolor`, `uyanse` | Open the system color magnifier and results panel. Arrow keys move the sample point by one physical pixel; Space or click confirms the color and closes the magnifier. Space can resume sampling. No Screen Recording permission is used; macOS controls magnifier zoom. |
 | `ucolorRRGGBB`, `ucolor#RRGGBB` | Convert to HEX (with/without `#`), HEX with alpha, RGB(A), HSL(A), HSV(A); also accepts `rgb(255,0,0)` and `rgba(255,0,0,0.5)`. Arrows select a format; `⌘C` copies its value. |
-| `utime` | Show local time, UTC, and Unix timestamps, fixed to the instant the query was entered |
+| `utime` | Show the time for the city/time zone configured on this Mac (for example, Beijing time or Tokyo time), UTC, and Unix timestamps, fixed to the instant the query was entered |
 | `utime1727683200`, `utime1727683200000` | Convert Unix seconds or milliseconds to date and time |
 | `utimeAsia/Tokyo` | Show the current time in a valid time zone |
+| `utimeniuyue`, `utimedongjing` | Look up New York or Tokyo time using city pinyin. The panel also shows this Mac's local city/time-zone time, with a named label such as Beijing time. City input accepts pinyin only; valid IANA time-zone IDs are also accepted. Other pinyin aliases include `lundun`, `luoshanji`, `jiujinshan`, `zhijiage`, `bali`, `shouer`, `xinjiapo`, `xianggang`, `taibei`, `xini`, `aokelan`, `beijing`, `shanghai`, and `dibai`. |
 | `udate20261002`, `udate2026-10-02` | Show days ago, days remaining, or today, plus start and end dates |
 | `udate20261001.20261002` | Show the day difference and start/end dates; separate dates with one `.`, `-`, or space |
 | `uconv5`, `uconv5.5` | Show common length, mass, temperature, volume, pressure, and electrical conversions; no source unit is guessed |
 | `uconv5mi`, `uconv72f`, `uconv5kg` | Convert within the specified unit category, such as length, mass, volume, or temperature |
-| `uconv1000pa`, `uconv1kpa`, `uconv1mpa`, `uconv760mmhg`, `uconv1kgf/cm2` | Convert pressure units and estimate equivalent static-water floors; this does not mean fire-water supply can reach those floors. Append category `1`/`2`/`3` to `mp` or `mpa` to apply the fire static-pressure reference and estimate theoretical remaining head. Category 1 defaults to 0.10 MPa (0.15 MPa above 100 m); category 2 to 0.07 MPa; category 3 uses a custom 0.01 MPa reference. |
+| `uconv1000pa`, `uconv1kpa`, `uconv1mpa`, `uconv760mmhg`, `uconv1kgf/cm2` | Pressure results include floor estimate, floor-height setting, and static-pressure settings. Floors are calculated directly from pressure and floor height without subtracting static pressure; this is not a fire-water supply prediction. A suffix `1` after `mp`/`mpa` means class I high-rise; `2` means class II high-rise/multistory; missing or other numeric suffixes mean other buildings (3). Only an explicit numeric suffix adds the category label to the estimate. |
 | `uconv3mH2O`, `uconv3floor` | Convert water-column height or floor count to theoretical pressure; default floor height is 3.0 m. This is not a prediction of a building's actual water supply. |
 | `uconv220v`, `uconv2a`, `uconv500w`, `uconv10kohm`, `uconv1kwh`, `uconv60hz`, `uconv100uf` | Convert voltage, current, power, resistance, energy, frequency, capacitance, inductance, and charge within each same-dimension category. No circuit formulas are inferred. SI symbols such as `mW`/`MW` and `mWh`/`MWh` remain case-sensitive. |
 | `uconv100rmb`, `uconv100usa`, `uconv100jp`, `uconv100uk` | Convert common currencies. Daily reference rates include dates and are not live trading quotes. Network requests send currency codes, not the entered amount. Aliases include `rmb/cn`, `usa/us`, `jp`, and `uk`. |
@@ -86,7 +87,7 @@ All commands begin with `u`. Type parameters directly after the keyword, without
 | `umaxwidth600` | Set maximum panel width to 600 pt (range 200–2000; default 400), subject to screen space |
 | `ufloorheight3.2` | Floor height setting: `ufloorheight3.2 (3.2: floor height; configurable range 2–12 m; default 3 m)` |
 | `ufiredefault1-0.15` | Set category 1's fire static-pressure reference to 0.15 MPa. Categories are 1–3; values must be >0 and ≤2.4 MPa. Category 3's 0.01 MPa is a user reference, not a universal code value. |
-| `ulangzh`, `ulangtw`, `ulangen`, `ulangko`, `ulangja` | Set the panel interface language; `ulang` lists options. Choice is saved immediately. |
+| `ulangzh`, `ulangtw`, `ulangen`, `ulangko`, `ulangja` | Switch the U panel to Simplified Chinese, Traditional Chinese, English, Korean or Japanese. Feature labels, result descriptions, help, errors and status messages follow the selected language; enter `ulang` to see options. |
 
 ### Compatibility and boundaries
 
@@ -104,9 +105,9 @@ Passing a build or unit test does not establish end-to-end compatibility on an u
 
 ## Install
 
-### Prebuilt preview v0.1.0-preview.1
+### Prebuilt preview v0.1.0-preview.2
 
-[Download the macOS Universal package](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.1/SquirrelTranslate-v0.1.0-preview.1-macos-universal-preview.zip) (arm64 / x86_64, 3.06 MB). It includes the public query bridge, URL helper, installation scripts, documentation, and prebuilt outputs; private translation integration is excluded.
+[Download the macOS Universal package](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip) (arm64 / x86_64, 3.06 MB). It includes the public query bridge, URL helper, installation scripts, documentation, and prebuilt outputs; private translation integration is excluded.
 
 This package is not signed with an Apple Developer ID or notarized. macOS may show security warnings. Installation requires a valid, stable local code-signing identity and may require Accessibility permission for Squirrel. It was built on macOS 26.6.2 (Apple Silicon) and checked with Squirrel 1.1.2. Although the package includes arm64 and x86_64 binaries, other macOS, Squirrel, and Rime schema combinations have not completed end-to-end testing. The public build, unit conversion tests, and public provider parser tests passed.
 

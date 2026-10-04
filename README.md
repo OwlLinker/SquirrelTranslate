@@ -68,14 +68,15 @@ U 面板中数字和标点直接作为查询内容输入，不会选择候选；
 | `unihao` | 按当前查询会话的默认 Rime 方案显示中文候选及翻译、音标 |
 | `ucolor`、`uyanse` | 打开系统取色放大镜和结果面板；方向键逐物理像素移动取样点，按空格或点击确认颜色并关闭放大镜，再按空格重新取色。该操作不使用屏幕录制权限；系统放大镜倍率由 macOS 控制。 |
 | `ucolorRRGGBB`、`ucolor#RRGGBB` | 将颜色转换为 HEX、无 `#` HEX、带透明度 HEX、RGB(A)、HSL(A)、HSV(A) 等格式；支持 `rgb(255,0,0)`、`rgba(255,0,0,0.5)`。方向键选择格式，`⌘C` 复制对应颜色值。 |
-| `utime` | 显示输入时刻的本地时间、UTC 和 Unix 时间戳；结果固定为本次输入时的快照。 |
+| `utime` | 显示本机所在城市的时区时间（如北京时间、东京时间）、UTC 和 Unix 时间戳；结果固定为本次输入时的快照。 |
 | `utime1727683200`、`utime1727683200000` | 将 Unix 秒或毫秒时间戳转换为日期时间。 |
 | `utimeAsia/Tokyo` | 显示该时区当前时间；也支持有效时区名。 |
+| `utimeniuyue`、`utimedongjing` | 用城市拼音查询纽约、东京时间；同时显示本机时区对应的城市时间（如北京时间），并以城市名称标记查询结果。也支持 `lundun`、`luoshanji`、`jiujinshan`、`zhijiage`、`bali`、`shouer`、`xinjiapo`、`xianggang`、`taibei`、`xini`、`aokelan`、`beijing`、`shanghai`、`dibai`。城市输入只支持拼音；有效 IANA 时区名仍可直接输入。 |
 | `udate20261002`、`udate2026-10-02` | 显示过去天数／剩余天数／今天，并列出开始日期和结束日期。 |
 | `udate20261001.20261002` | 显示两个日期相差天数及开始、结束日期；日期间可用一个点、连字符或空格。 |
 | `uconv5`、`uconv5.5` | 显示常用长度、质量、温度、体积、压力和电气量换算快捷列表；没有指定单位时不会猜测输入单位。 |
 | `uconv5mi`、`uconv72f`、`uconv5kg` | 按指定单位显示所属类别换算。支持长度、质量、体积、温度；例如 `mi` 英里、`f` 华氏度、`kg` 千克。 |
-| `uconv1000pa`、`uconv1kpa`、`uconv1mpa`、`uconv760mmhg`、`uconv1kgf/cm2` | 压力换算并估算静水等效楼层数，不代表消防供水可达楼层。末尾加类别码可查询消防静压参考并扣除后估算理论剩余水头：`...mp1`／`...mpa1` 为一类高层公共建筑，`2` 为二类高层公共建筑／多层公共建筑，`3` 为其他（用户参考值 0.01 MPa）。类别 1 默认 0.10 MPa，超过 100 m 应用 0.15 MPa；类别 2 默认 0.07 MPa。输入单位不区分大小写，输出使用标准符号。 |
+| `uconv1000pa`、`uconv1kpa`、`uconv1mpa`、`uconv760mmhg`、`uconv1kgf/cm2` | 压力换算并显示“大约几层”“层高设置”“静压设置”三条。楼层数按压力与层高直接估算，不扣除静压，不代表消防供水可达楼层。`mp`／`mpa` 后缀 `1` 为一类高层、`2` 为二类高层／多层公共建筑；无后缀或其他数字按其他建筑（3）处理。仅有数字后缀时，楼层结果括号附带对应类别的静压估算说明。 |
 | `uconv3mH2O`、`uconv3floor` | 按静水压力关系从水柱高度或楼层数反算压力；默认每层 3.0 m。结果为理论估算，不代表建筑实际供水能力。 |
 | `uconv220v`、`uconv2a`、`uconv500w`、`uconv10kohm`、`uconv1kwh`、`uconv60hz`、`uconv100uf` | 电压、电流、功率、电阻、电能、频率、电容、电感、电荷的同量纲换算；不根据电路公式推算其他量。单位别名通常不区分大小写；`mW`/`MW`、`mWh`/`MWh` 等 SI 符号按大小写区分。 |
 | `uconv100rmb`、`uconv100usa`、`uconv100jp`、`uconv100uk` | 以人民币、美元、日元、英镑等常见币种换算。显示带日期的每日参考汇率，不是实时交易报价；网络请求只发送币种代码，不发送输入金额。支持 `rmb/cn`、`usa/us`、`jp`、`uk` 等别名。 |
@@ -86,7 +87,7 @@ U 面板中数字和标点直接作为查询内容输入，不会选择候选；
 | `umaxwidth600` | 将面板最大宽度设为 600 pt。范围 200–2000 pt，默认 400 pt；实际宽度仍受显示器可用空间限制。 |
 | `ufloorheight3.2` | 层高设置：`ufloorheight3.2（3.2:层高；可设置范围2-12米；默认3米）`。 |
 | `ufiredefault1-0.15` | 将类别 1 的消防静压参考值改为 0.15 MPa；类别码为 1–3，压力范围大于 0 且不超过 2.4 MPa。类别 3 默认 0.01 MPa 是用户参考值，不是规范统一值。 |
-| `ulangzh`、`ulangtw`、`ulangen`、`ulangko`、`ulangja` | 将 U 面板界面切换为简体中文、繁体中文、英文、韩文或日文；切换后立即显示确认提示并保存设置。输入 `ulang` 查看选项。 |
+| `ulangzh`、`ulangtw`、`ulangen`、`ulangko`、`ulangja` | 将 U 面板切换为简体中文、繁体中文、英文、韩文或日文。所有功能标签、结果说明、帮助、错误及状态提示随语言切换；输入 `ulang` 查看选项。 |
 | `ugoogle1`、`ubing1`、`ubaidu2` | 设置 `⌃G` 使用的默认搜索引擎或 `⌃B` 使用的第二搜索引擎；支持 Google、Bing、百度、DuckDuckGo、Yahoo、Brave、搜狗、Yandex。设置保存在用户配置中。 |
 
 这是 Squirrel 进程内插件，不是完整的文本输入替代器。它依赖辅助功能事件监听和鼠须管 Rime 会话；只在兼容的鼠须管输入源与中文默认方案下声明支持。
@@ -124,9 +125,9 @@ U 面板中数字和标点直接作为查询内容输入，不会选择候选；
 
 按下面顺序安装公开版进程内面板。安装会重新签名并重启鼠须管；先保存其他应用中的工作。不要用项目中其他安装脚本替代这里的 `install_query_bridge.sh`。
 
-### 使用预构建预览包 v0.1.0-preview.1
+### 使用预构建预览包 v0.1.0-preview.2
 
-[下载 macOS Universal 安装包](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.1/SquirrelTranslate-v0.1.0-preview.1-macos-universal-preview.zip)（arm64 / x86_64，3.06 MB）。包含公开版查询桥、URL 工具、安装脚本、文档和预构建产物，不包含私有翻译集成。
+[下载 macOS Universal 安装包](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip)（arm64 / x86_64，3.06 MB）。包含公开版查询桥、URL 工具、安装脚本、文档和预构建产物，不包含私有翻译集成。
 
 安装包未使用 Apple Developer ID 签名，且未经公证；首次安装时 macOS 可能显示安全提示。安装需要有效的本地稳定代码签名身份；使用相关功能时，macOS 可能要求为 Squirrel 授予辅助功能权限。构建环境为 macOS 26.6.2（Apple Silicon），验证输入法版本为 Squirrel 1.1.2。安装包包含 arm64 和 x86_64 架构；其他 macOS、Squirrel 版本及 Rime 输入方案尚未完成端到端验证。公开版构建、单位换算测试和公开服务解析测试已通过。
 

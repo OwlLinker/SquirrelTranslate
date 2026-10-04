@@ -68,14 +68,15 @@ Squirrel 간체 중국어 입력 소스가 활성화되어 있고 편집 가능�
 | `unihao` | 조회 세션의 기본 Rime 스키마로 중국어 후보, 번역, 발음 표시 |
 | `ucolor`, `uyanse` | 시스템 색상 돋보기와 결과 패널을 엽니다. 방향키로 샘플 지점을 물리 픽셀 하나씩 이동하고 Space 또는 클릭으로 색상을 확정해 돋보기를 닫습니다. Space로 다시 샘플링할 수 있습니다. 화면 기록 권한은 사용하지 않으며 확대율은 macOS가 제어합니다. |
 | `ucolorRRGGBB`, `ucolor#RRGGBB` | `#` 유무 HEX, 알파 HEX, RGB(A), HSL(A), HSV(A)로 변환하고 `rgb(255,0,0)`, `rgba(255,0,0,0.5)`도 허용합니다. 화살표로 형식을 선택하고 `⌘C`로 값을 복사합니다. |
-| `utime` | 입력 순간의 로컬 시간, UTC, Unix 타임스탬프를 고정 표시 |
+| `utime` | 입력 순간의 현지 시간대 시간, UTC, Unix 타임스탬프를 고정 표시 |
 | `utime1727683200`, `utime1727683200000` | Unix 초/밀리초를 날짜와 시간으로 변환 |
 | `utimeAsia/Tokyo` | 유효한 시간대의 현재 시간 표시 |
+| `utimeniuyue`, `utimedongjing` | 도시 병음으로 뉴욕 또는 도쿄 시간을 조회합니다. 패널은 이 Mac의 현지 도시/시간대 시간도 베이징 시간처럼 이름을 붙여 표시합니다. 도시 입력은 병음만 지원하며, 유효한 IANA 시간대 ID도 입력할 수 있습니다. 다른 병음 별칭은 `lundun`, `luoshanji`, `jiujinshan`, `zhijiage`, `bali`, `shouer`, `xinjiapo`, `xianggang`, `taibei`, `xini`, `aokelan`, `beijing`, `shanghai`, `dibai`입니다. |
 | `udate20261002`, `udate2026-10-02` | 지난 날짜 수/남은 날짜 수/오늘과 시작·종료 날짜 표시 |
 | `udate20261001.20261002` | 두 날짜 사이 일수와 시작·종료 날짜 표시; 날짜는 `.`, `-`, 공백 하나로 구분 |
 | `uconv5`, `uconv5.5` | 길이, 질량, 온도, 부피, 압력, 전기량의 일반 변환 목록 표시; 지정되지 않은 입력 단위는 추측하지 않음 |
 | `uconv5mi`, `uconv72f`, `uconv5kg` | 지정한 단위 범주 내에서 변환(길이, 질량, 부피, 온도 등) |
-| `uconv1000pa`, `uconv1kpa`, `uconv1mpa`, `uconv760mmhg`, `uconv1kgf/cm2` | 압력 단위와 정수두 환산 층수를 표시하며 소방 급수 가능 층수를 뜻하지 않습니다. `mp`/`mpa` 뒤에 1/2/3을 붙여 소방 정압 기준을 적용할 수 있습니다. 1번 기본 0.10MPa(100m 초과 시 0.15), 2번 0.07MPa, 3번 사용자 참고값 0.01MPa입니다. |
+| `uconv1000pa`, `uconv1kpa`, `uconv1mpa`, `uconv760mmhg`, `uconv1kgf/cm2` | 압력 결과에 층수 추정, 층고 설정, 정압 설정 3개 행을 표시합니다. 층수는 압력과 층고로 직접 계산하며 정압을 빼지 않습니다. `mp`/`mpa` 뒤의 `1`은 1급 고층, `2`는 2급 고층/다층이며 숫자가 없거나 다른 숫자면 기타 건축물(3)입니다. 숫자를 명시한 경우에만 추정 결과에 분류를 표시합니다. |
 | `uconv3mH2O`, `uconv3floor` | 수주 높이 또는 층수에서 이론 압력을 계산합니다. 기본 층고는 3.0m이며 실제 건물의 급수 능력을 예측하지 않습니다. |
 | `uconv220v`, `uconv2a`, `uconv500w`, `uconv10kohm`, `uconv1kwh`, `uconv60hz`, `uconv100uf` | 전압, 전류, 전력, 저항, 에너지, 주파수, 정전용량, 인덕턴스, 전하를 동일한 물리량 범주 안에서 변환합니다. 회로 공식을 추정 적용하지 않습니다. `mW`/`MW`, `mWh`/`MWh`처럼 SI 대소문자 구분 기호는 구분합니다. |
 | `uconv100rmb`, `uconv100usa`, `uconv100jp`, `uconv100uk` | 주요 통화를 환산합니다. 날짜가 포함된 일일 참고 환율이며 실시간 거래 시세가 아닙니다. 네트워크에는 통화 코드만 전송하고 입력 금액은 전송하지 않습니다. 별칭: `rmb/cn`, `usa/us`, `jp`, `uk`. |
@@ -86,7 +87,7 @@ Squirrel 간체 중국어 입력 소스가 활성화되어 있고 편집 가능�
 | `umaxwidth600` | 패널 최대 너비를 600pt로 설정(범위 200–2000, 기본 400); 화면 여유 공간에 따라 더 좁아질 수 있음 |
 | `ufloorheight3.2` | 층고 설정: `ufloorheight3.2 (3.2: 층고; 설정 범위 2–12m; 기본 3m)` |
 | `ufiredefault1-0.15` | 1번 소방 정압 참고값을 0.15MPa로 설정합니다. 1–3번, 0 초과 2.4MPa 이하. 3번의 0.01MPa는 규정값이 아닌 사용자 참고값입니다. |
-| `ulangzh`, `ulangtw`, `ulangen`, `ulangko`, `ulangja` | 패널 언어를 변경하고 저장합니다. `ulang`으로 옵션을 표시합니다. |
+| `ulangzh`, `ulangtw`, `ulangen`, `ulangko`, `ulangja` | U 패널을 중국어 간체·번체, 영어, 한국어 또는 일본어로 전환합니다. 기능 이름, 결과 설명, 도움말, 오류 및 상태 메시지도 선택한 언어로 표시됩니다. `ulang`으로 옵션을 확인합니다. |
 
 ### 호환성과 제한
 
@@ -104,9 +105,9 @@ Squirrel 간체 중국어 입력 소스가 활성화되어 있고 편집 가능�
 
 ## 설치
 
-### 사전 빌드 미리보기 v0.1.0-preview.1
+### 사전 빌드 미리보기 v0.1.0-preview.2
 
-[macOS Universal 패키지 다운로드](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.1/SquirrelTranslate-v0.1.0-preview.1-macos-universal-preview.zip) (arm64 / x86_64, 3.06 MB). 공개 쿼리 브리지, URL 도우미, 설치 스크립트, 문서 및 사전 빌드 결과물이 포함되며 비공개 번역 통합은 포함되지 않습니다.
+[macOS Universal 패키지 다운로드](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip) (arm64 / x86_64, 3.06 MB). 공개 쿼리 브리지, URL 도우미, 설치 스크립트, 문서 및 사전 빌드 결과물이 포함되며 비공개 번역 통합은 포함되지 않습니다.
 
 Apple Developer ID 서명과 공증은 없습니다. macOS 보안 경고가 표시될 수 있습니다. 설치하려면 유효하고 안정적인 로컬 코드 서명 ID가 필요하며 Squirrel 손쉬운 사용 권한을 요청할 수 있습니다. macOS 26.6.2 (Apple Silicon)에서 빌드하고 Squirrel 1.1.2에서 검증했습니다. arm64 및 x86_64 바이너리를 포함하지만 다른 macOS, Squirrel, Rime 스키마 조합은 검증되지 않았습니다. 공개 빌드, 단위 변환 및 공개 제공자 파서 테스트를 통과했습니다.
 

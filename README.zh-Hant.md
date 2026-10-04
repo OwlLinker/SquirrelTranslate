@@ -68,14 +68,15 @@ macOS 上 Squirrel（Rime）的候選翻譯與快速查詢面板，提供候選�
 | `unihao` | 使用查詢工作階段的預設 Rime 方案顯示中文候選詞、翻譯及音標 |
 | `ucolor`、`uyanse` | 開啟系統取色放大鏡及結果面板；方向鍵每次移動一個實體像素，按空格或點擊確認顏色並關閉放大鏡，再按空格可重新取色。不使用螢幕錄製權限，放大倍率由 macOS 控制。 |
 | `ucolorRRGGBB`、`ucolor#RRGGBB` | 轉換為有／無 `#` 的 HEX、含透明度 HEX、RGB(A)、HSL(A)、HSV(A)；亦支援 `rgb(255,0,0)`、`rgba(255,0,0,0.5)`。方向鍵選格式，`⌘C` 複製對應值。 |
-| `utime` | 顯示輸入當下的本機時間、UTC 與 Unix 時間戳；結果固定為該時刻快照 |
+| `utime` | 顯示輸入當下的當地時區時間、UTC 與 Unix 時間戳；結果固定為該時刻快照 |
 | `utime1727683200`、`utime1727683200000` | 將 Unix 秒或毫秒轉換為日期時間 |
 | `utimeAsia/Tokyo` | 顯示有效時區的目前時間 |
+| `utimeniuyue`、`utimedongjing` | 使用城市拼音查詢紐約或東京時間。面板也會以城市名稱顯示這台 Mac 的當地時區時間，例如「北京時間」。城市輸入僅支援拼音；也可輸入有效的 IANA 時區 ID。其他拼音別名：`lundun`、`luoshanji`、`jiujinshan`、`zhijiage`、`bali`、`shouer`、`xinjiapo`、`xianggang`、`taibei`、`xini`、`aokelan`、`beijing`、`shanghai`、`dibai`。 |
 | `udate20261002`、`udate2026-10-02` | 顯示已過天數／剩餘天數／今天，並列出開始與結束日期 |
 | `udate20261001.20261002` | 顯示兩個日期相差天數及開始、結束日期；日期間可用一個 `.`、`-` 或空格分隔 |
 | `uconv5`、`uconv5.5` | 顯示常用長度、質量、溫度、體積、壓力與電氣量換算；不會猜測未指定的輸入單位 |
 | `uconv5mi`、`uconv72f`、`uconv5kg` | 依指定單位顯示同類別換算，例如長度、質量、體積或溫度 |
-| `uconv1000pa`、`uconv1kpa`、`uconv1mpa`、`uconv760mmhg`、`uconv1kgf/cm2` | 換算壓力並估算靜水等效樓層；不代表消防供水可達樓層。於 `mp`/`mpa` 後加 1/2/3 套用消防靜壓參考值：類別1預設0.10MPa（超過100m為0.15），類別2為0.07MPa，類別3為使用者參考值0.01MPa。 |
+| `uconv1000pa`、`uconv1kpa`、`uconv1mpa`、`uconv760mmhg`、`uconv1kgf/cm2` | 壓力結果會顯示「大約幾層」「層高設定」「靜壓設定」三列。樓層數直接按壓力與層高估算，不扣除靜壓，也不代表消防供水高度。`mp`／`mpa` 後綴 `1` 為一類高層、`2` 為二類高層／多層公共建築；無後綴或其他數字皆按其他建築（3）處理。只有明確輸入數字後綴時，估算結果才顯示類別說明。 |
 | `uconv3mH2O`、`uconv3floor` | 依靜水壓關係從水柱高度或樓層數反算壓力；預設每層 3.0 m。這是理論估算，不代表建築實際供水能力。 |
 | `uconv220v`、`uconv2a`、`uconv500w`、`uconv10kohm`、`uconv1kwh`、`uconv60hz`、`uconv100uf` | 在相同物理量類別內換算電壓、電流、功率、電阻、電能、頻率、電容、電感與電荷；不套用電路公式推算其他量。`mW`/`MW`、`mWh`/`MWh` 等 SI 符號依大小寫區分。 |
 | `uconv100rmb`、`uconv100usa`、`uconv100jp`、`uconv100uk` | 換算常見貨幣。顯示附日期的每日參考匯率，非即時交易報價；網路請求只傳送幣別代碼，不傳輸輸入金額。別名包括 `rmb/cn`、`usa/us`、`jp`、`uk`。 |
@@ -86,7 +87,7 @@ macOS 上 Squirrel（Rime）的候選翻譯與快速查詢面板，提供候選�
 | `umaxwidth600` | 將面板最大寬度設為 600 pt（範圍 200–2000，預設 400），實際寬度受螢幕可用空間限制 |
 | `ufloorheight3.2` | 層高設定：`ufloorheight3.2（3.2:層高；可設定範圍2-12米；預設3米）` |
 | `ufiredefault1-0.15` | 將類別1消防靜壓參考值設為0.15MPa。類別1–3；壓力須大於0且不超過2.4MPa。類別3的0.01MPa為使用者參考值，並非統一規範值。 |
-| `ulangzh`、`ulangtw`、`ulangen`、`ulangko`、`ulangja` | 切換並儲存面板介面語言；輸入 `ulang` 查看選項 |
+| `ulangzh`、`ulangtw`、`ulangen`、`ulangko`、`ulangja` | 將 U 面板切換為簡體中文、繁體中文、英文、韓文或日文。功能標籤、結果說明、說明頁、錯誤及狀態提示都會隨語言切換；輸入 `ulang` 查看選項。 |
 
 ### 相容性與限制
 
@@ -104,9 +105,9 @@ macOS 上 Squirrel（Rime）的候選翻譯與快速查詢面板，提供候選�
 
 ## 安裝
 
-### 預先建置預覽版 v0.1.0-preview.1
+### 預先建置預覽版 v0.1.0-preview.2
 
-[下載 macOS Universal 套件](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.1/SquirrelTranslate-v0.1.0-preview.1-macos-universal-preview.zip)（arm64 / x86_64，3.06 MB）。套件包含公開版查詢橋接元件、URL 工具、安裝腳本、文件及預先建置產物，不包含私有翻譯整合。
+[下載 macOS Universal 套件](https://github.com/OwlLinker/SquirrelTranslate/releases/download/v0.1.0-preview.2/SquirrelTranslate-v0.1.0-preview.2-macos-universal-preview.zip)（arm64 / x86_64，3.06 MB）。套件包含公開版查詢橋接元件、URL 工具、安裝腳本、文件及預先建置產物，不包含私有翻譯整合。
 
 本套件未使用 Apple Developer ID 簽署，也未經公證；安裝時 macOS 可能顯示安全性提示。安裝需要有效且穩定的本機程式碼簽署身分，使用相關功能時也可能需要授予 Squirrel 輔助使用權限。套件於 macOS 26.6.2（Apple Silicon）建置，並以 Squirrel 1.1.2 驗證。雖包含 arm64 與 x86_64 架構，其他 macOS、Squirrel 版本及 Rime 輸入方案尚未完成端對端驗證。公開版建置、單位換算及公開服務解析測試均已通過。
 
