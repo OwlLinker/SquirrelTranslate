@@ -120,13 +120,21 @@ brew list --versions boost
 
 ### 2. 准备稳定的本地代码签名身份
 
-Squirrel 必须用稳定身份签名，才能避免每次重装都因签名变化而破坏辅助功能授权。本项目不会替你创建证书，也不会使用临时 ad-hoc 签名。检查 Keychain 中的身份：
+Squirrel 必须用稳定身份签名，才能避免每次重装都因签名变化而破坏辅助功能授权。本项目不会替你创建证书，也不会使用临时 ad-hoc 签名。若钥匙串中还没有本地签名身份，可按以下步骤创建自签名代码签名证书：
+
+1. 按 `⌘Space`，搜索并打开 **钥匙串访问（Keychain Access）**。确认该应用处于前台。
+2. 从屏幕顶部菜单栏选择 **钥匙串访问 → 证书助理（Certificate Assistant）→ 创建证书（Create a Certificate）…**。此命令在应用菜单栏中，不在钥匙串主窗口侧栏或工具栏中。
+3. 名称填写 `SquirrelTranslate Local Code Signing`；身份类型选择 **自签名根证书（Self Signed Root）**，证书类型选择 **代码签名（Code Signing）**，然后继续创建并完成向导。其他字段保持默认即可。
+4. 在钥匙串访问中找到刚创建的证书，确认它位于“登录”钥匙串且关联有同名私钥。双击证书并展开“信任”；如果验证仍显示不受信任，在“使用此证书时”选择“始终信任”，关闭窗口并在本机确认更改。只对自己刚创建的这个登录钥匙串证书做此设置。
+5. 在终端验证身份：
 
 ```bash
 security find-identity -v -p codesigning
 ```
 
-继续前，确认目标身份列在 `Valid identities` 下。只有 `Matching identities`、带 `CSSMERR_TP_NOT_TRUSTED`，或显示 `0 valid identities found` 都不够。安装时使用证书的完整名称；系统若询问是否允许 `codesign` 使用登录钥匙串中的密钥，请在本机完成验证并选择允许。不要把钥匙串密码或私钥发给任何人。
+继续前，确认目标身份列在 `Valid identities` 下。只有 `Matching identities`、带 `CSSMERR_TP_NOT_TRUSTED`，或显示 `0 valid identities found` 都不够；这种情况下回到钥匙串访问检查证书信任设置、登录钥匙串是否已解锁及证书是否关联私钥。安装时使用证书的完整名称；系统若询问是否允许 `codesign` 使用登录钥匙串中的密钥，请在本机完成验证并选择允许。不要把钥匙串密码或私钥发给任何人。
+
+此自签名身份仅供本机稳定签署和保留辅助功能授权使用；它不是 Apple Developer ID 证书，不会为应用提供 Apple 公证，也不适用于公开分发。详见 [Apple：创建自签名证书](https://support.apple.com/guide/keychain-access/kyca8916/mac) 和 [Apple：更改证书信任设置](https://support.apple.com/guide/keychain-access/kyca11871/mac)。
 
 ### 3. 停止旧的独立输入栏（如果曾安装）
 
