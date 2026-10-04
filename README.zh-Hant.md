@@ -4,6 +4,8 @@ macOS 上 Squirrel（Rime）的候選翻譯與快速查詢面板，提供候選�
 
 語言版本：[简体中文](./README.md) · [繁體中文](./README.zh-Hant.md) · [English](./README.en.md) · [한국어](./README.ko.md) · [日本語](./README.ja.md)
 
+產品介紹頁：[SquirrelTranslate](https://owllinker.github.io/SquirrelTranslate/)
+
 ## 核心功能示範
 
 以下動畫依 U 面板樣式製作，為操作示意而非實機錄影。手機號碼及本機／公網 IP 均已遮罩；指定 IP 範例顯示 `8.8.8.8` 的查詢結果。

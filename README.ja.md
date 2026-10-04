@@ -4,6 +4,8 @@ macOS の Squirrel（Rime）向け翻訳・クイック検索パネルです。�
 
 言語: [简体中文](./README.md) · [繁體中文](./README.zh-Hant.md) · [English](./README.en.md) · [한국어](./README.ko.md) · [日本語](./README.ja.md)
 
+製品紹介ページ：[SquirrelTranslate](https://owllinker.github.io/SquirrelTranslate/)
+
 ## 主な機能のデモ
 
 以下は U パネルのデザインに基づく操作例で、実機の画面録画ではありません。電話番号とローカル／パブリック IP はマスキングしています。指定 IP の例では `8.8.8.8` の検索結果を表示します。

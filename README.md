@@ -4,6 +4,8 @@
 
 语言版本： [简体中文](./README.md) · [繁體中文](./README.zh-Hant.md) · [English](./README.en.md) · [한국어](./README.ko.md) · [日本語](./README.ja.md)
 
+产品主页：[SquirrelTranslate](https://owllinker.github.io/SquirrelTranslate/)
+
 ## 核心功能演示
 
 以下是根据 U 面板样式制作的操作示意动图，并非当前运行环境的实机录屏。手机号和本机／公网 IP 地址均已遮罩；指定 IP 示例展示 `8.8.8.8` 的查询结果。

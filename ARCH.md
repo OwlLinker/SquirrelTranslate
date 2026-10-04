@@ -1,5 +1,13 @@
 # 技术设计
 
+## GitHub Pages 产品介绍页
+
+- 页面采用纯静态 HTML、CSS、JavaScript，放在 `docs/`，无需 npm、第三方 CDN、在线字体或跟踪脚本；复用 `docs/assets/` 内的项目示意动图。
+- 单页提供简体中文、繁体中文、英文、韩文和日文切换；文案须遵循 `PRD.md` 的功能、隐私与兼容性边界。
+- GitHub Actions 仅在 `main` 的页面或部署工作流更新时部署 `docs/` artifact 至 GitHub Pages；使用最小 `pages: write`、`id-token: write` 权限及 `github-pages` environment，不在 workflow 中读取或配置私密 secrets。
+- 使用官方 `configure-pages`、`upload-pages-artifact`、`deploy-pages` Actions。首次发布前，仓库 Pages publishing source 必须设为 GitHub Actions；未配置时 workflow 不应宣称已上线。
+- 站点目标 URL 为 `https://owllinker.github.io/SquirrelTranslate/`。页面及资源链接使用相对路径，以适配项目子路径部署；发布后在 GitHub Pages 部署成功后验证实际 URL、窄屏布局、语言切换和演示媒体加载。
+
 ## 查询面板界面语言
 
 - 原生查询桥从 `~/Library/Rime/input_translation.ui_language` 读取语言代码，缺省为 `zh-Hans`；支持 `zh-Hans`、`zh-Hant`、`en`、`ko`、`ja`。

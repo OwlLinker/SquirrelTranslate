@@ -4,6 +4,8 @@ A translation and quick-lookup panel for Squirrel (Rime) on macOS. It provides c
 
 Languages: [简体中文](./README.md) · [繁體中文](./README.zh-Hant.md) · [English](./README.en.md) · [한국어](./README.ko.md) · [日本語](./README.ja.md)
 
+Product website: [SquirrelTranslate](https://owllinker.github.io/SquirrelTranslate/)
+
 ## Core feature demos
 
 These illustrative animations follow the U panel design and are not live recordings. Phone numbers and local/public IP addresses are masked; the specified-IP example shows the lookup for `8.8.8.8`.

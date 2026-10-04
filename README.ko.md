@@ -4,6 +4,8 @@ macOS의 Squirrel(Rime)을 위한 번역 및 빠른 검색 패널입니다. 후�
 
 언어: [简体中文](./README.md) · [繁體中文](./README.zh-Hant.md) · [English](./README.en.md) · [한국어](./README.ko.md) · [日本語](./README.ja.md)
 
+제품 소개 페이지: [SquirrelTranslate](https://owllinker.github.io/SquirrelTranslate/)
+
 ## 핵심 기능 데모
 
 아래 애니메이션은 U 패널 디자인을 바탕으로 한 사용 예시이며 실제 화면 녹화가 아닙니다. 전화번호와 로컬/공인 IP는 가렸고, 지정 IP 예시는 `8.8.8.8` 조회 결과를 보여줍니다.
