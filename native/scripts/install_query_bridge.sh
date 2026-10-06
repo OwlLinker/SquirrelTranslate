@@ -60,4 +60,3 @@ else
 fi
 echo "Installed and enabled the in-process query bridge."
 echo "Installed: $url_helper_target"
-echo "Stop the standalone input bar before testing: $project_root/native/scripts/input_bar.sh stop"

@@ -1,6 +1,3 @@
 patch:
   "status_icon/show": false
   "unsafe/report_bundleid": true # 仅在本机向 Rime 传递应用 ID
-  # 查询助手没有可见输入框：在原生面板显示编码，避免单按 u 时隐藏面板。
-  "app_options/org.owllinker.SquirrelTranslate.InputBar/no_inline": true
-  "app_options/org.owllinker.SquirrelTranslate.InputBar/inline": false

@@ -76,7 +76,23 @@ static NSInteger query_utility_highlighted;
 static NSString *query_search_feedback;
 static NSString *query_search_feedback_title;
 static NSMutableDictionary<NSString *, NSString *> *query_public_translations;
+static NSMutableDictionary<NSString *, NSString *> *query_public_translation_texts;
 static NSMutableArray<NSString *> *query_public_translation_order;
+static NSSpeechSynthesizer *query_speech_synthesizer;
+static unichar query_repeat_action_character;
+static NSUInteger query_repeat_action_count;
+static NSString *query_repeat_action_base_text;
+static NSString *query_repeat_action_candidate;
+static CGKeyCode query_repeat_action_tail_keycode;
+static CFAbsoluteTime query_repeat_action_tail_deadline;
+typedef NS_ENUM(NSUInteger, STQueryTranslationAction) {
+  STQueryTranslationActionNone,
+  STQueryTranslationActionCopy,
+  STQueryTranslationActionSpeak,
+};
+static STQueryTranslationAction query_pending_translation_action;
+static NSString *query_pending_translation_candidate;
+static NSUInteger query_pending_translation_generation;
 static NSColorSampler *query_color_sampler;
 static NSColor *query_color_sample;
 static CGPoint query_color_cursor_position;
@@ -90,9 +106,16 @@ static NSUInteger query_color_confirmation_generation;
 static const int64_t kQueryColorSyntheticClickMarker = 0x5351434C;
 static AXError query_last_focus_error = kAXErrorSuccess;
 static void ShowQueryContext(void);
+static void HideQueryPanel(void);
 static NSString *SelectedQueryCandidate(void);
+static BOOL SetQueryInput(NSString *input);
+static void ResetQueryRepeatAction(void);
+static void PerformQueryTranslationAction(STQueryTranslationAction action,
+                                         NSString *translation);
 
 static void AdvanceQueryGeneration(void) {
+  query_pending_translation_action = STQueryTranslationActionNone;
+  query_pending_translation_candidate = nil;
   [query_currency_task cancel];
   query_currency_task = nil;
   query_currency_payload = nil;
@@ -138,6 +161,7 @@ static void QueryTranslationDidFinish(uint64_t generation, const char *word,
   NSString *wordValue = [NSString stringWithUTF8String:word];
   NSString *targetValue = [NSString stringWithUTF8String:target];
   NSMutableString *result = [NSMutableString stringWithUTF8String:translation];
+  NSString *translationText = [result copy];
   NSString *phoneticValue = phonetic && phonetic[0] ?
       [NSString stringWithUTF8String:phonetic] : nil;
   if (phoneticValue.length) [result appendFormat:@"  /%@/", phoneticValue];
@@ -145,18 +169,32 @@ static void QueryTranslationDidFinish(uint64_t generation, const char *word,
     if (!query_active || generation != query_utility_generation) return;
     if (!query_public_translations) {
       query_public_translations = [NSMutableDictionary dictionary];
+      query_public_translation_texts = [NSMutableDictionary dictionary];
       query_public_translation_order = [NSMutableArray array];
     }
     NSString *key = QueryTranslationKey(targetValue, wordValue);
     if (!query_public_translations[key])
       [query_public_translation_order addObject:key];
     query_public_translations[key] = result;
+    query_public_translation_texts[key] = translationText;
+    BOOL closeAfterPendingAction = NO;
+    if (query_pending_translation_action != STQueryTranslationActionNone &&
+        query_pending_translation_generation == generation &&
+        [query_pending_translation_candidate isEqualToString:wordValue]) {
+      STQueryTranslationAction action = query_pending_translation_action;
+      query_pending_translation_action = STQueryTranslationActionNone;
+      query_pending_translation_candidate = nil;
+      PerformQueryTranslationAction(action, translationText);
+      closeAfterPendingAction = YES;
+    }
     while (query_public_translation_order.count > 400) {
       NSString *oldest = query_public_translation_order.firstObject;
       [query_public_translation_order removeObjectAtIndex:0];
       [query_public_translations removeObjectForKey:oldest];
+      [query_public_translation_texts removeObjectForKey:oldest];
     }
     ShowQueryContext();
+    if (closeAfterPendingAction) HideQueryPanel();
   });
 }
 
@@ -375,6 +413,11 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"上屏当前候选的译文": @"Commit the selected translation", @"展开或收起当前候选的完整翻译": @"Expand or collapse the full translation",
         @"开启或关闭音标显示": @"Toggle phonetic display", @"用默认搜索引擎搜索当前候选": @"Search with the default engine",
         @"用第二搜索引擎搜索当前候选": @"Search with the second engine",
+        @"搜索首候选（默认／第二引擎）": @"Search the first candidate (default/secondary engine)",
+        @"复制首候选译文": @"Copy the first candidate's translation",
+        @"朗读首候选译文": @"Speak the first candidate's translation",
+        @"内部构建配置后用新闻扩展搜索首候选": @"Search the first candidate with the news extension when configured in an internal build",
+        @"公开版不执行动作（触发按键会被吞掉）": @"No action in the public build (the trigger is consumed)",
         @"复制当前结果信息": @"Copy the selected result", @"复制当前候选词；取色时选定颜色或重新取色": @"Copy candidate; confirm or resume color sampling",
         @"关闭快捷键帮助": @"Close shortcut help", @"打开或关闭本帮助": @"Toggle this help",
         @"上一页／下一页；每页最多 9 条": @"Previous/next page; up to 9 rows per page",
@@ -434,6 +477,9 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"开启或关闭候选翻译": @"후보 번역 켜기/끄기", @"朗读当前候选的译文": @"선택한 번역 읽기", @"上屏当前候选的译文": @"선택한 번역 입력",
         @"展开或收起当前候选的完整翻译": @"전체 번역 펼치기/접기", @"开启或关闭音标显示": @"발음기호 표시 켜기/끄기",
         @"用默认搜索引擎搜索当前候选": @"기본 검색 엔진으로 검색", @"用第二搜索引擎搜索当前候选": @"두 번째 검색 엔진으로 검색",
+        @"搜索首候选（默认／第二引擎）": @"첫 번째 후보 검색 (기본/보조 엔진)",
+        @"复制首候选译文": @"첫 번째 후보 번역 복사", @"朗读首候选译文": @"첫 번째 후보 번역 읽기",
+        @"内部构建配置后用新闻扩展搜索首候选": @"내부 버전에서 설정 후 뉴스 확장 프로그램으로 첫 번째 후보 검색", @"公开版不执行动作（触发按键会被吞掉）": @"공개 버전에서는 동작하지 않으며 입력을 소비합니다",
         @"复制当前结果信息": @"현재 결과 정보 복사",
         @"复制当前候选词；取色时选定颜色或重新取色": @"후보 복사; 색상 선택 또는 다시 샘플링", @"关闭快捷键帮助": @"단축키 도움말 닫기",
         @"打开或关闭本帮助": @"도움말 열기/닫기", @"上一页／下一页；每页最多 9 条": @"이전/다음 페이지 (최대 9개)",
@@ -490,6 +536,9 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"开启或关闭候选翻译": @"候補翻訳の切り替え", @"朗读当前候选的译文": @"選択した訳を読み上げる", @"上屏当前候选的译文": @"選択した訳を入力",
         @"展开或收起当前候选的完整翻译": @"訳文全体の表示／折りたたみ", @"开启或关闭音标显示": @"発音記号表示の切り替え",
         @"用默认搜索引擎搜索当前候选": @"既定の検索エンジンで検索", @"用第二搜索引擎搜索当前候选": @"第2検索エンジンで検索",
+        @"搜索首候选（默认／第二引擎）": @"第1候補を検索（既定／第2エンジン）",
+        @"复制首候选译文": @"第1候補の訳をコピー", @"朗读首候选译文": @"第1候補の訳を読み上げ",
+        @"内部构建配置后用新闻扩展搜索首候选": @"内部ビルドで設定後、ニュース拡張を使って先頭候補を検索", @"公开版不执行动作（触发按键会被吞掉）": @"公開版では動作せず、キー入力を消費します",
         @"复制当前结果信息": @"現在の結果をコピー",
         @"复制当前候选词；取色时选定颜色或重新取色": @"候補をコピー；色を確定／再サンプリング", @"关闭快捷键帮助": @"ショートカットヘルプを閉じる",
         @"打开或关闭本帮助": @"ヘルプの表示切り替え", @"上一页／下一页；每页最多 9 条": @"前／次のページ（最大9件）",
@@ -532,6 +581,9 @@ static NSString *LocalizedQueryText(NSString *text) {
         @"开启或关闭候选翻译": @"開啟或關閉候選翻譯", @"朗读当前候选的译文": @"朗讀目前候選詞的譯文", @"上屏当前候选的译文": @"輸入目前候選詞的譯文",
         @"展开或收起当前候选的完整翻译": @"展開或收合目前候選詞的完整翻譯", @"开启或关闭音标显示": @"開啟或關閉音標顯示",
         @"用默认搜索引擎搜索当前候选": @"使用預設搜尋引擎搜尋目前候選詞", @"用第二搜索引擎搜索当前候选": @"使用第二搜尋引擎搜尋目前候選詞",
+        @"搜索首候选（默认／第二引擎）": @"搜尋第一個候選詞（預設／第二搜尋引擎）",
+        @"复制首候选译文": @"複製第一個候選詞的譯文", @"朗读首候选译文": @"朗讀第一個候選詞的譯文",
+        @"内部构建配置后用新闻扩展搜索首候选": @"內部版本設定後使用新聞擴充功能搜尋第一筆候選", @"公开版不执行动作（触发按键会被吞掉）": @"公開版不執行動作（觸發按鍵會被攔截）",
         @"复制当前结果信息": @"複製目前結果資訊",
         @"复制当前候选词；取色时选定颜色或重新取色": @"複製目前候選詞；取色時確認或重新取色", @"关闭快捷键帮助": @"關閉快速鍵說明", @"打开或关闭本帮助": @"開啟或關閉本說明",
         @"umaxwidth数字": @"umaxwidth數字", @"ufloorheight数字": @"ufloorheight數字",
@@ -1160,15 +1212,64 @@ static NSString *QueryURLEncode(NSString *value) {
   return encoded;
 }
 
-static void OpenQuerySearch(CGKeyCode keycode) {
-  NSString *candidate = SelectedQueryCandidate();
-  if (!candidate.length) return;
+static BOOL OpenQuerySearchForCandidate(CGKeyCode keycode, NSString *candidate) {
+  if (!candidate.length) return NO;
 
   NSString *template = CurrentSearchEngineURL(keycode != kVK_ANSI_G);
   NSString *urlString = [template stringByReplacingOccurrencesOfString:@"{query}"
                                                               withString:QueryURLEncode(candidate)];
   NSURL *url = [NSURL URLWithString:urlString];
-  if (url) [[NSWorkspace sharedWorkspace] openURL:url];
+  return url && [[NSWorkspace sharedWorkspace] openURL:url];
+}
+
+static NSString *EscapeAppleScriptString(NSString *value) {
+  return [[value stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"]
+      stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
+}
+
+static BOOL OpenInternalNewsExtensionForCandidate(NSString *candidate) {
+#if defined(SQUIRREL_ENABLE_INTERNAL_NEWS_EXTENSION_ACTION)
+  if (!candidate.length) return NO;
+  NSString *templatePath =
+      [@"~/Library/Rime/input_translation.news-url-template"
+          stringByExpandingTildeInPath];
+  NSDictionary *attributes = [[NSFileManager defaultManager]
+      attributesOfItemAtPath:templatePath error:nil];
+  if ([attributes fileSize] > 8192) return NO;
+  NSString *urlTemplate = [NSString stringWithContentsOfFile:templatePath
+      encoding:NSUTF8StringEncoding error:nil];
+  urlTemplate = [urlTemplate stringByTrimmingCharactersInSet:
+      NSCharacterSet.whitespaceAndNewlineCharacterSet];
+  if (!urlTemplate.length ||
+      [urlTemplate rangeOfString:@"{query}"].location == NSNotFound) return NO;
+  NSString *urlString = [urlTemplate stringByReplacingOccurrencesOfString:
+      @"{query}" withString:QueryURLEncode(candidate)];
+  NSURLComponents *components = [NSURLComponents
+      componentsWithString:urlString];
+  if (![components.scheme.lowercaseString isEqualToString:@"chrome-extension"] ||
+      !components.host.length) return NO;
+
+  NSURL *browserAppURL = [[NSWorkspace sharedWorkspace]
+      URLForApplicationToOpenURL:[NSURL URLWithString:@"https://example.com"]];
+  NSString *bundleID = [NSBundle bundleWithURL:browserAppURL].bundleIdentifier;
+  if (!bundleID.length) return NO;
+  NSString *scriptSource = [NSString stringWithFormat:
+      @"tell application id \"%@\" to open location \"%@\"",
+      EscapeAppleScriptString(bundleID), EscapeAppleScriptString(urlString)];
+  NSAppleScript *script = [[NSAppleScript alloc]
+      initWithSource:scriptSource];
+  return [script executeAndReturnError:nil] != nil;
+#else
+  // The public build always consumes nnn but deliberately performs no action,
+  // even when the user happens to have the unpublished extension installed.
+  (void)candidate;
+  return NO;
+#endif
+}
+
+static void OpenQuerySearch(CGKeyCode keycode) {
+  ResetQueryRepeatAction();
+  OpenQuerySearchForCandidate(keycode, SelectedQueryCandidate());
 }
 
 static NSString *QueryMarkerPath(void) {
@@ -3757,6 +3858,7 @@ static NSString *SelectedQueryCandidate(void) {
 
 static void ToggleQueryHelp(void) {
   if (!query_active || !query_panel) return;
+  ResetQueryRepeatAction();
   if (!query_help_visible && !query_panel_position_pinned && query_panel.visible) {
     NSRect frame = query_panel.frame;
     query_panel_pinned_top_left = NSMakePoint(NSMinX(frame), NSMaxY(frame));
@@ -3768,6 +3870,7 @@ static void ToggleQueryHelp(void) {
 }
 
 static void CopySelectedQueryComment(void) {
+  ResetQueryRepeatAction();
   if (!query_active || !query_panel) return;
   STQueryBridgeViewV4 *view = QueryView();
   NSInteger selected = view.highlighted;
@@ -3779,7 +3882,149 @@ static void CopySelectedQueryComment(void) {
   [pasteboard setString:text forType:NSPasteboardTypeString];
 }
 
+static void CopyQueryTextToPasteboard(NSString *text) {
+  if (!text.length) return;
+  NSPasteboard *pasteboard = NSPasteboard.generalPasteboard;
+  [pasteboard clearContents];
+  [pasteboard setString:text forType:NSPasteboardTypeString];
+}
+
+static NSString *QueryTranslationText(NSString *candidate) {
+  NSString *target = QueryTargetForCandidate(candidate);
+  if (!target.length) return nil;
+  return query_public_translation_texts[QueryTranslationKey(target, candidate)];
+}
+
+static void PerformQueryTranslationAction(STQueryTranslationAction action,
+                                         NSString *translation) {
+  if (!translation.length) return;
+  if (action == STQueryTranslationActionCopy) {
+    CopyQueryTextToPasteboard(translation);
+  } else if (action == STQueryTranslationActionSpeak) {
+    if (!query_speech_synthesizer)
+      query_speech_synthesizer = [[NSSpeechSynthesizer alloc] initWithVoice:nil];
+    [query_speech_synthesizer stopSpeaking];
+    [query_speech_synthesizer startSpeakingString:translation];
+  }
+}
+
+static NSString *FirstActionableQueryCandidate(void) {
+  if (!query_active || !query_panel.visible || query_help_visible ||
+      query_search_feedback || IsKeywordInputMode()) return nil;
+  STQueryBridgeViewV4 *view = QueryView();
+  NSString *candidate = view.candidates.firstObject;
+  return candidate.length && ![candidate isEqualToString:@"·"] ? candidate : nil;
+}
+
+static void ResetQueryRepeatAction(void) {
+  query_repeat_action_character = 0;
+  query_repeat_action_count = 0;
+  query_repeat_action_base_text = nil;
+  query_repeat_action_candidate = nil;
+}
+
+static CGKeyCode QueryRepeatActionKeycode(unichar character) {
+  switch (character) {
+    case 'g': return kVK_ANSI_G;
+    case 'b': return kVK_ANSI_B;
+    case 'c': return kVK_ANSI_C;
+    case 'p': return kVK_ANSI_P;
+    case 'n': return kVK_ANSI_N;
+    default: return 0;
+  }
+}
+
+static BOOL HandleQueryRepeatAction(unichar character, BOOL autorepeat) {
+  if (autorepeat || (character != 'g' && character != 'b' &&
+                     character != 'c' && character != 'p' &&
+                     character != 'n') ||
+      IsKeywordInputMode() || query_help_visible || query_search_feedback ||
+      !query_panel.visible) {
+    ResetQueryRepeatAction();
+    return NO;
+  }
+
+  // Consume the rest of a qualifying run so it cannot arm the same action again.
+  if (query_repeat_action_character == character &&
+      query_repeat_action_count >= 3 && query_repeat_action_candidate.length &&
+      query_repeat_action_base_text &&
+      [query_text isEqualToString:query_repeat_action_base_text]) {
+    return YES;
+  }
+
+  if (query_repeat_action_character == character &&
+      query_repeat_action_candidate.length && query_repeat_action_base_text &&
+      query_repeat_action_count > 0 && query_repeat_action_count < 3) {
+    NSMutableString *expected = [query_repeat_action_base_text mutableCopy];
+    for (NSUInteger index = 0; index < query_repeat_action_count; ++index)
+      [expected appendFormat:@"%C", character];
+    if ([query_text isEqualToString:expected]) {
+      if (query_repeat_action_count == 1) {
+        query_repeat_action_count = 2;
+        return NO;
+      }
+      if (query_repeat_action_count >= 2) {
+        NSString *candidate = query_repeat_action_candidate;
+        NSString *baseText = query_repeat_action_base_text;
+        query_repeat_action_tail_keycode = QueryRepeatActionKeycode(character);
+        query_repeat_action_tail_deadline =
+            CFAbsoluteTimeGetCurrent() + 0.35;
+        query_repeat_action_count = 3;
+        query_text = [baseText mutableCopy];
+        query_phone_prefix_active = IsDirectPhoneQueryText(query_text);
+        query_utility_highlighted = 0;
+        AdvanceQueryGeneration();
+        SetQueryInput(query_text);
+        ShowQueryContext();
+
+        if (character == 'g' || character == 'b') {
+          if (OpenQuerySearchForCandidate(
+              character == 'g' ? kVK_ANSI_G : kVK_ANSI_B, candidate))
+            HideQueryPanel();
+        } else if (character == 'n') {
+          if (OpenInternalNewsExtensionForCandidate(candidate))
+            HideQueryPanel();
+        } else {
+          STQueryTranslationAction action = character == 'c' ?
+              STQueryTranslationActionCopy : STQueryTranslationActionSpeak;
+          NSString *translation = QueryTranslationText(candidate);
+          if (translation.length) {
+            PerformQueryTranslationAction(action, translation);
+            HideQueryPanel();
+          } else {
+            query_pending_translation_action = action;
+            query_pending_translation_candidate = candidate;
+            query_pending_translation_generation = query_utility_generation;
+            NSString *target = QueryTargetForCandidate(candidate);
+            if (target) {
+              SquirrelQueryTranslationRequest(candidate.UTF8String,
+                  target.UTF8String, (uint64_t)query_utility_generation,
+                  QueryTranslationDidFinish, NULL);
+            } else {
+              query_pending_translation_action = STQueryTranslationActionNone;
+              query_pending_translation_candidate = nil;
+            }
+          }
+        }
+        return YES;
+      }
+      return NO;
+    }
+  }
+
+  ResetQueryRepeatAction();
+  NSString *candidate = query_text.length ? FirstActionableQueryCandidate() : nil;
+  if (candidate.length) {
+    query_repeat_action_character = character;
+    query_repeat_action_count = 1;
+    query_repeat_action_base_text = [query_text copy];
+    query_repeat_action_candidate = candidate;
+  }
+  return NO;
+}
+
 static void CopySelectedQueryCandidate(void) {
+  ResetQueryRepeatAction();
   NSString *text = SelectedQueryCandidate();
   if (!text.length) return;
   NSPasteboard *pasteboard = NSPasteboard.generalPasteboard;
@@ -3849,6 +4094,11 @@ static NSInteger QueryPagingDirectionForEvent(CGEventRef event, CGKeyCode keycod
 static NSArray<NSArray<NSString *> *> *QueryHelpEntries(void) {
   NSString *defaultEngine = SearchEngineDisplayName(NO);
   NSString *secondaryEngine = SearchEngineDisplayName(YES);
+#if defined(SQUIRREL_ENABLE_INTERNAL_NEWS_EXTENSION_ACTION)
+  NSString *newsActionHelp = @"内部构建配置后用新闻扩展搜索首候选";
+#else
+  NSString *newsActionHelp = @"公开版不执行动作（触发按键会被吞掉）";
+#endif
   NSArray<NSArray<NSString *> *> *entries = @[
     @[@"⌃T", @"开启或关闭候选翻译"],
     @[@"⌃P", @"朗读当前候选的译文"],
@@ -3857,6 +4107,10 @@ static NSArray<NSArray<NSString *> *> *QueryHelpEntries(void) {
     @[@"⇧P", @"开启或关闭音标显示"],
     @[@"⌃G", [NSString stringWithFormat:@"%@ 搜索当前候选", defaultEngine]],
     @[@"⌃B", [NSString stringWithFormat:@"%@ 搜索当前候选", secondaryEngine]],
+    @[@"ggg / bbb", @"搜索首候选（默认／第二引擎）"],
+    @[@"ccc", @"复制首候选译文"],
+    @[@"ppp", @"朗读首候选译文"],
+    @[@"nnn", newsActionHelp],
     @[@"⌘C", @"复制当前结果信息"],
     @[@"空格", @"复制当前候选词；取色时选定颜色或重新取色"],
     @[@"ucolorRRGGBB / rgb(...) ", @"支持省略 #；方向键选格式，⌘C复制颜色值"],
@@ -3962,6 +4216,7 @@ static void HideQueryPanel(void) {
   query_utility_highlighted = 0;
   query_search_feedback = nil;
   query_search_feedback_title = nil;
+  ResetQueryRepeatAction();
   ++query_color_session_generation;
   query_color_sampler = nil;
   query_color_sample = nil;
@@ -4394,6 +4649,7 @@ static void ScheduleFireStaticPressureDefaultCommand(void) {
 }
 
 static void RemoveLastQueryCharacter(void) {
+  ResetQueryRepeatAction();
   if (query_text.length) {
     NSRange lastCharacter = [query_text
         rangeOfComposedCharacterSequenceAtIndex:query_text.length - 1];
@@ -4436,6 +4692,7 @@ static void PasteQueryText(void) {
     [normalized appendFormat:@"%C", character];
   }
   if (!normalized.length) return;
+  ResetQueryRepeatAction();
   query_search_feedback = nil;
   query_search_feedback_title = nil;
   [query_text appendString:normalized];
@@ -4642,6 +4899,9 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
   if (type == kCGEventKeyUp) {
     CGKeyCode released = (CGKeyCode)CGEventGetIntegerValueField(
         event, kCGKeyboardEventKeycode);
+    if (query_repeat_action_tail_keycode == released &&
+        CFAbsoluteTimeGetCurrent() <= query_repeat_action_tail_deadline)
+      return NULL;
     if ([query_paging_keyup_pending containsIndex:released]) {
       [query_paging_keyup_pending removeIndex:released];
       return NULL;
@@ -4709,6 +4969,17 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
   NSUInteger flags = CGEventGetFlags(event);
   CGKeyCode keycode = (CGKeyCode)CGEventGetIntegerValueField(
       event, kCGKeyboardEventKeycode);
+  if (query_repeat_action_tail_keycode) {
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    if (now > query_repeat_action_tail_deadline) {
+      query_repeat_action_tail_keycode = 0;
+    } else if (keycode == query_repeat_action_tail_keycode) {
+      query_repeat_action_tail_deadline = now + 0.35;
+      return NULL;
+    } else {
+      query_repeat_action_tail_keycode = 0;
+    }
+  }
   if (query_active && keycode == kVK_Space && query_space_keyup_pending &&
       CGEventGetIntegerValueField(event, kCGKeyboardEventAutorepeat))
     return NULL;
@@ -4746,6 +5017,7 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
     if (!query_paging_keyup_pending) query_paging_keyup_pending = [NSMutableIndexSet indexSet];
     [query_paging_keyup_pending addIndex:keycode];
     dispatch_async(dispatch_get_main_queue(), ^{
+      ResetQueryRepeatAction();
       if (!query_active || query_search_feedback) return;
       if (query_help_visible) {
         query_help_selected = QueryMovePage((NSInteger)QueryHelpEntries().count,
@@ -4823,7 +5095,11 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
     HideQueryPanel();
     return NULL;
   }
-  if (flags & (kCGEventFlagMaskCommand | kCGEventFlagMaskControl)) return event;
+  if (flags & (kCGEventFlagMaskCommand | kCGEventFlagMaskControl)) {
+    if (query_active)
+      dispatch_async(dispatch_get_main_queue(), ^{ ResetQueryRepeatAction(); });
+    return event;
+  }
   if (flags & kCGEventFlagMaskAlternate) {
     UniChar optionCharacters[4] = {0};
     UniCharCount optionLength = 0;
@@ -4850,6 +5126,7 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
     if (utilityCount > 0 && !query_search_feedback &&
         (QueryRowDirection(keycode) || QueryPageDirection(keycode))) {
       dispatch_async(dispatch_get_main_queue(), ^{
+        ResetQueryRepeatAction();
         if (!query_active || query_help_visible || query_search_feedback) return;
         NSInteger count = QueryUtilityCandidateCount();
         if (count <= 0) return;
@@ -4870,6 +5147,7 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
     }
     if (navigationKey) {
       dispatch_async(dispatch_get_main_queue(), ^{
+        ResetQueryRepeatAction();
         ProcessQueryKey(navigationKey);
         query_last_key_time = CFAbsoluteTimeGetCurrent();
       });
@@ -4911,6 +5189,8 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
   }
   if (!query_active) return event;
   BOOL keywordInput = IsKeywordInputMode();
+  BOOL autorepeat = CGEventGetIntegerValueField(event,
+      kCGKeyboardEventAutorepeat) != 0;
   BOOL plainDigit = character >= '0' && character <= '9' &&
       !(flags & (kCGEventFlagMaskCommand | kCGEventFlagMaskControl |
                  kCGEventFlagMaskAlternate | kCGEventFlagMaskShift));
@@ -4932,6 +5212,7 @@ static CGEventRef QueryEventTap(CGEventTapProxy proxy, CGEventType type,
       query_number_keyup_pending |= UINT64_C(1) << keycode;
     if (dateSeparatorSpace || phoneSeparatorSpace) query_space_keyup_pending = YES;
     dispatch_async(dispatch_get_main_queue(), ^{
+      if (HandleQueryRepeatAction(character, autorepeat)) return;
       query_search_feedback = nil;
       query_search_feedback_title = nil;
       [query_text appendFormat:@"%C", character];

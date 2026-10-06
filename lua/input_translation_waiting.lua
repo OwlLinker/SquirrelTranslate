@@ -1,3 +1,4 @@
+-- This is a synthetic Rime session tag, not a bundle that must be installed.
 local QUERY_CLIENT_APP = "org.owllinker.SquirrelTranslate.InputBar"
 local WAITING_TEXT = "·"
 

@@ -105,9 +105,9 @@ else
   rm -f "$HOME/Library/Rime/input_translation.status_injector.enabled"
 fi
 if [ "$install_query_bridge" = "1" ]; then
-  echo "In-process query bridge installed and enabled. Stop the standalone input bar before testing."
+  echo "In-process query bridge installed and enabled."
 else
-  echo "In-process query bridge not installed; standalone input bar mode is unchanged."
+  echo "In-process query bridge not installed."
 fi
 "$script_dir/sign_squirrel.sh" "$squirrel_app"
 mkdir -p "$(dirname "$lua_filter_target")"

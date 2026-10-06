@@ -36,6 +36,7 @@ fi
 
 # Do not let ignored local/private sources influence the public release build.
 BUILD_PRIVATE_TRANSLATION_INTEGRATION=OFF \
+ENABLE_INTERNAL_NEWS_EXTENSION_ACTION=OFF \
   SQUIRREL_APP="$squirrel_app" "$script_dir/build.sh"
 ctest --test-dir "$project_dir/build/out" --output-on-failure
 

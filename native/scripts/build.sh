@@ -8,6 +8,7 @@ dependency_dir="$build_dir/deps/librime"
 output_dir="$build_dir/out"
 squirrel_app=${SQUIRREL_APP:-/Library/Input Methods/Squirrel.app}
 private_translation=${BUILD_PRIVATE_TRANSLATION_INTEGRATION:-auto}
+internal_news_action=${ENABLE_INTERNAL_NEWS_EXTENSION_ACTION:-OFF}
 if [ "$private_translation" = "auto" ]; then
   if [ -f "$project_dir/src/translation_refresh.cc" ]; then
     private_translation=ON
@@ -45,7 +46,8 @@ cmake -S "$project_dir" -B "$output_dir" \
   -DRIME_SOURCE_DIR="$dependency_dir" \
   -DBOOST_INCLUDE_DIR="$boost_prefix/include" \
   -DSQUIRREL_APP="$squirrel_app" \
-  -DBUILD_PRIVATE_TRANSLATION_INTEGRATION="$private_translation"
+  -DBUILD_PRIVATE_TRANSLATION_INTEGRATION="$private_translation" \
+  -DENABLE_INTERNAL_NEWS_EXTENSION_ACTION="$internal_news_action"
 
 cmake --build "$output_dir" --config Release
 

@@ -11,6 +11,8 @@ local OPEN_URL_HELPER = RUNTIME_DIR .. "/bin/squirrel-open-url"
 local SHOW_ALL_HINTS_PROPERTY = shortcut_help.visible_property
 local SHOW_ALL_HINTS_INPUT_PROPERTY = shortcut_help.input_property
 local HELP_PAGE_PROPERTY = shortcut_help.page_property
+-- Kept as a synthetic session tag for compatibility with deployed Lua configs;
+-- no Input Bar application is installed or launched.
 local QUERY_CLIENT_APP = "org.owllinker.SquirrelTranslate.InputBar"
 
 local function is_english(text)
@@ -195,7 +197,7 @@ local function processor(key, env)
         local repr = key:repr()
         if not key:release() and not context:get_option("ascii_mode") then
             if input == "" and repr == "u" then
-                env.input_bar_prefix_pending = true
+                env.query_panel_prefix_pending = true
                 -- Keep the query prefix inside the same Rime composition.
                 -- Passing the first u through the normal schema can commit it
                 -- immediately, which makes the native candidate panel flash
@@ -205,21 +207,21 @@ local function processor(key, env)
                 context:set_property("_refresh_ui", "1")
                 state.set_composition_visible(context:has_menu())
                 return kAccepted
-            elseif env.input_bar_prefix_pending then
+            elseif env.query_panel_prefix_pending then
                 local letter = repr:match("^([A-Za-z])$") or repr:match("^Shift%+([A-Za-z])$")
                 if input == "u" and letter then
-                    env.input_bar_prefix_pending = false
+                    env.query_panel_prefix_pending = false
                     context:clear()
                     context:push_input(letter)
                     state.set_composition_visible(context:has_menu())
                     return kAccepted
                 elseif input ~= "u" or is_escape_key(key) then
-                    env.input_bar_prefix_pending = false
+                    env.query_panel_prefix_pending = false
                 end
             end
         end
     else
-        env.input_bar_prefix_pending = false
+        env.query_panel_prefix_pending = false
     end
     state.set_composition_visible(context:has_menu())
     local help_input = context:get_property(SHOW_ALL_HINTS_INPUT_PROPERTY) or ""

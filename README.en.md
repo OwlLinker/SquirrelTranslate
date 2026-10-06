@@ -58,6 +58,20 @@ With the Squirrel Simplified Chinese input source active and focus outside an ed
 
 Digits and punctuation are query input, not candidate-selection keys. A valid 8-digit date starts date conversion automatically. Tool results show up to 9 rows per page. Candidate labels stay on one line while result text wraps; the panel sizes itself and has a default maximum width of 400 pt. Set it with `umaxwidth<number>` (200–2000 pt); it saves after about one second of inactivity.
 
+### Candidate actions in the U panel
+
+When an ordinary Pinyin query is showing candidates, enter the same trigger letter three or more times consecutively to act once on the **first candidate in the list**. Extra identical letters in that run are consumed without triggering again, and trigger letters are removed from the query. Key auto-repeat does not count. These actions are available only for ordinary candidates, not tool results or the help page.
+
+| Input | Action |
+| --- | --- |
+| `ggg` / `bbb` | Search the first candidate with the default / secondary engine |
+| `ccc` | Copy the first candidate's translation |
+| `ppp` | Speak the first candidate's translation |
+| `nnn` | The public build consumes the trigger without action, even if a related extension is installed |
+
+If its translation is still loading, copy or speech waits for that translation. No translation-commit action is included.
+After a search, copy, speech, or internal news action succeeds, the U panel closes. Public-build `nnn` does nothing and leaves the panel open.
+
 ### Commands
 
 All commands begin with `u`. Type parameters directly after the keyword, without `:` or `=`. Use Backspace to edit or `⌘V` to paste longer input.
@@ -110,4 +124,4 @@ Passing a build or unit test does not establish end-to-end compatibility on an u
 
 This package is not signed with an Apple Developer ID or notarized. macOS may show security warnings. Installation requires a valid, stable local code-signing identity and may require Accessibility permission for Squirrel. It was built on macOS 26.6.2 (Apple Silicon) and checked with Squirrel 1.1.2. Although the package includes arm64 and x86_64 binaries, other macOS, Squirrel, and Rime schema combinations have not completed end-to-end testing. The public build, unit conversion tests, and public provider parser tests passed.
 
-**Installation flow:** Download and unzip the package, then follow the detailed [Chinese installation guide](./README.md#安装-u-面板): confirm compatibility, prepare your signing identity, and stop the legacy input bar if installed; skip build-tool setup and step 4 (build), then perform step 5 (install) and the permission and verification steps. Run commands from the extracted project folder. The preview package skips building only—it is not a one-click installer.
+**Installation flow:** Download and unzip the package, then follow the detailed [Chinese installation guide](./README.md#安装-u-面板): confirm compatibility and prepare your signing identity; skip build-tool setup and step 3 (build), then perform step 4 (install) and the permission and verification steps. Run commands from the extracted project folder. The preview package skips building only—it is not a one-click installer.

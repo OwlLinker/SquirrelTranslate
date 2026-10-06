@@ -99,38 +99,6 @@ static BOOL rime_has_candidate_menu(RimeSessionId session, BOOL *available) {
 
 static void install_escape_guard(void);
 
-static BOOL query_marker_active(void) {
-  const char *home = getenv("HOME");
-  if (!home) return NO;
-  char marker[PATH_MAX];
-  snprintf(marker, sizeof(marker), "%s/Library/Rime/input_translation.query.active", home);
-  if (access(marker, F_OK) != 0) return NO;
-
-  long marker_pid = 0;
-  FILE *file = fopen(marker, "r");
-  if (file) {
-    (void)fscanf(file, "%ld", &marker_pid);
-    fclose(file);
-  }
-
-  NSString *inputBarBundleID = @"org.owllinker.SquirrelTranslate.InputBar";
-  if (marker_pid > 0) {
-    NSRunningApplication *application =
-        [NSRunningApplication runningApplicationWithProcessIdentifier:(pid_t)marker_pid];
-    if ([application.bundleIdentifier isEqualToString:inputBarBundleID]) return YES;
-  } else {
-    // Older versions wrote an empty marker. Keep it only while the owner app
-    // is actually running; otherwise a crash leaves Rime permanently active.
-    for (NSRunningApplication *application in
-         [NSRunningApplication runningApplicationsWithBundleIdentifier:inputBarBundleID]) {
-      if (application.processIdentifier != getpid()) return YES;
-    }
-  }
-
-  unlink(marker);
-  return NO;
-}
-
 static void set_composition_visible(BOOL visible) {
   NSString *directory = [NSHomeDirectory() stringByAppendingPathComponent:
       @"Library/Rime"];
@@ -145,24 +113,8 @@ static void set_composition_visible(BOOL visible) {
 }
 
 static void escape_guard_deactivate(id self, SEL selector, id sender) {
-  if (!query_marker_active()) {
-    set_composition_visible(NO);
-    original_deactivate(self, selector, sender);
-    return;
-  }
-
-  trace_escape("deactivate=deferred_for_query");
-  id retained_self = self;
-  id retained_sender = sender;
-  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 300 * NSEC_PER_MSEC),
-                 dispatch_get_main_queue(), ^{
-    if (query_marker_active()) {
-      trace_escape("deactivate=suppressed_for_active_query");
-    } else {
-      set_composition_visible(NO);
-      original_deactivate(retained_self, selector, retained_sender);
-    }
-  });
+  set_composition_visible(NO);
+  original_deactivate(self, selector, sender);
 }
 
 static void retry_install(void) {

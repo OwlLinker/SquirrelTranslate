@@ -7,7 +7,7 @@ if [ "$mode" = "--check" ]; then
 else
   squirrel_app=${1:-${SQUIRREL_APP:-/Library/Input Methods/Squirrel.app}}
 fi
-identity=${SQUIRREL_SIGN_IDENTITY:-${ST_INPUT_BAR_SIGN_IDENTITY:-}}
+identity=${SQUIRREL_SIGN_IDENTITY:-}
 
 if [ -z "$identity" ]; then
   echo "A stable code-signing identity is required; refusing ad-hoc re-signing." >&2

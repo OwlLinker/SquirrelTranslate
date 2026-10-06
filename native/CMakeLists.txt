@@ -46,6 +46,9 @@ endif()
 option(BUILD_PRIVATE_TRANSLATION_INTEGRATION
   "Build the non-public full Rime translation integration when its source exists"
   ${_private_translation_default})
+option(ENABLE_INTERNAL_NEWS_EXTENSION_ACTION
+  "Enable the internal-only nnn action using a local URL template"
+  OFF)
 
 if(NOT EXISTS "${RIME_SOURCE_DIR}/src/rime/context.h")
   message(FATAL_ERROR "RIME_SOURCE_DIR must point to a librime source tree")
@@ -75,7 +78,6 @@ if(BUILD_PRIVATE_TRANSLATION_INTEGRATION AND
   add_library(rime_translation_refresh SHARED
     src/public_translation_providers.cc
     src/system_spell_suggestions.m
-    src/query_mode_bridge.m
     src/translation_refresh.cc
   )
   target_compile_features(rime_translation_refresh PRIVATE cxx_std_17)
@@ -147,6 +149,10 @@ add_library(squirrel_query_bridge SHARED
 )
 
 target_compile_features(squirrel_query_bridge PRIVATE cxx_std_17)
+if(ENABLE_INTERNAL_NEWS_EXTENSION_ACTION)
+  target_compile_definitions(squirrel_query_bridge PRIVATE
+    SQUIRREL_ENABLE_INTERNAL_NEWS_EXTENSION_ACTION=1)
+endif()
 
 set_target_properties(squirrel_query_bridge PROPERTIES
   OUTPUT_NAME "squirrel-query-bridge"
@@ -213,10 +219,6 @@ if(TARGET rime_translation_refresh)
     -Wall -Wextra -Wpedantic
   )
 endif()
-
-set_source_files_properties(src/query_mode_bridge.m PROPERTIES
-  COMPILE_OPTIONS "-fobjc-arc"
-)
 
 set_source_files_properties(src/squirrel_query_bridge.m PROPERTIES
   COMPILE_OPTIONS "-fobjc-arc"
