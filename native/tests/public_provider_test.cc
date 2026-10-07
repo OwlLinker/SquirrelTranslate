@@ -20,4 +20,16 @@ int main() {
       squirrel_translate_public::FetchMacDictionaryPhonetic("color");
   assert(squirrel_translate_public::FetchMacDictionaryPhonetic(
       "color; colour") == color_phonetic);
+  const squirrel_translate_public::Request request{"test", "en"};
+  const std::string source_path = __FILE__;
+  const std::string fixture = "file://" + source_path.substr(
+      0, source_path.find_last_of('/')) + "/deepl_response.json";
+  const squirrel_translate_public::ProviderConfig local_endpoint{
+      fixture, "TEST_ONLY"};
+  assert(squirrel_translate_public::Fetch("deepl", request,
+                                          local_endpoint) == "stdin verified");
+  const squirrel_translate_public::ProviderConfig invalid_header{
+      fixture, "TEST_ONLY\nInjected: header"};
+  assert(squirrel_translate_public::Fetch("deepl", request,
+                                          invalid_header).empty());
 }

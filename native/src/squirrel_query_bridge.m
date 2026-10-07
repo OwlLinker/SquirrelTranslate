@@ -50,6 +50,7 @@ static NSMutableString *query_text;
 static NSDate *query_time_snapshot;
 static struct timespec query_cache_mtime;
 static off_t query_cache_size = -1;
+static BOOL query_cache_refresh_pending;
 static CFAbsoluteTime query_last_key_time;
 static BOOL query_prefix_armed = YES;
 static CGFloat query_panel_max_width = 400;
@@ -164,6 +165,7 @@ static void QueryTranslationDidFinish(uint64_t generation, const char *word,
   NSString *translationText = [result copy];
   NSString *phoneticValue = phonetic && phonetic[0] ?
       [NSString stringWithUTF8String:phonetic] : nil;
+  if (!wordValue.length || !targetValue.length || !result.length) return;
   if (phoneticValue.length) [result appendFormat:@"  /%@/", phoneticValue];
   dispatch_async(dispatch_get_main_queue(), ^{
     if (!query_active || generation != query_utility_generation) return;
@@ -3111,8 +3113,11 @@ static void ScheduleIPLookup(NSString *targetIP) {
       dispatch_async(dispatch_get_main_queue(), ^{
         if (!query_active || generation != query_utility_generation ||
             ![query_text isEqualToString:queryAtSchedule]) return;
+        query_ip_task = nil;
+        id success = [json isKindOfClass:NSDictionary.class] ? json[@"success"] : nil;
         if (error || http.statusCode < 200 || http.statusCode >= 300 ||
-            ![json[@"success"] boolValue]) {
+            ![success respondsToSelector:@selector(boolValue)] ||
+            ![success boolValue]) {
           query_ip_details = @"公网 IP 查询失败（网络不可用或服务限流）";
         } else {
           NSString *ip = [json[@"ip"] isKindOfClass:NSString.class] ? json[@"ip"] : @"";
@@ -4206,6 +4211,7 @@ static void HideQueryPanel(void) {
   query_help_visible = NO;
   query_help_selected = 0;
   query_phone_prefix_active = NO;
+  query_cache_refresh_pending = NO;
   query_panel_position_pinned = NO;
   query_time_snapshot = nil;
   AdvanceQueryGeneration();
@@ -4736,7 +4742,12 @@ static BOOL TranslationCacheChanged(void) {
   NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:
       @"Library/Rime/input_translation.cache.tsv"];
   struct stat info;
-  if (stat(path.fileSystemRepresentation, &info) != 0) return NO;
+  if (stat(path.fileSystemRepresentation, &info) != 0) {
+    BOOL changed = query_cache_size != -1;
+    query_cache_size = -1;
+    query_cache_mtime = (struct timespec){0};
+    return changed;
+  }
   BOOL changed = info.st_size != query_cache_size ||
       info.st_mtimespec.tv_sec != query_cache_mtime.tv_sec ||
       info.st_mtimespec.tv_nsec != query_cache_mtime.tv_nsec;
@@ -4757,12 +4768,11 @@ static void StartQueryRefresh(void) {
       150 * NSEC_PER_MSEC, 20 * NSEC_PER_MSEC);
   dispatch_source_set_event_handler(query_refresh_source, ^{
     if (!query_active) return;
-    if (TranslationCacheChanged() &&
-        CFAbsoluteTimeGetCurrent() - query_last_key_time > 0.35) {
-      RebuildQuerySession();
-    } else {
-      ShowQueryContext();
-    }
+    if (TranslationCacheChanged()) query_cache_refresh_pending = YES;
+    if (query_cache_refresh_pending && !query_color_sampling_active &&
+        CFAbsoluteTimeGetCurrent() - query_last_key_time > 0.35 &&
+        RebuildQuerySession())
+      query_cache_refresh_pending = NO;
   });
   dispatch_resume(query_refresh_source);
 }
@@ -4791,6 +4801,7 @@ static BOOL StartQuery(void) {
   query_color_sample = nil;
   query_color_sampler_started = NO;
   query_last_key_time = CFAbsoluteTimeGetCurrent();
+  query_cache_refresh_pending = NO;
   TranslationCacheChanged();
   StartQueryRefresh();
   ShowQueryContext();

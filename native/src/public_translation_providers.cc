@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -106,16 +107,25 @@ std::string JsonAllFields(const std::string& json, const std::string& field) {
 }
 
 bool RunCommand(const std::vector<std::string>& arguments, std::string* output,
-                size_t output_limit, const Request& request) {
+                size_t output_limit, const Request& request,
+                const std::string& input = {}) {
   if (arguments.empty()) return false;
   int pipe_fds[2] = {-1, -1};
   if (pipe(pipe_fds) != 0) return false;
+  int input_fds[2] = {-1, -1};
+  if (!input.empty() && pipe(input_fds) != 0) {
+    close(pipe_fds[0]);
+    close(pipe_fds[1]);
+    return false;
+  }
 
   posix_spawn_file_actions_t actions;
   const int init_result = posix_spawn_file_actions_init(&actions);
   if (init_result != 0) {
     close(pipe_fds[0]);
     close(pipe_fds[1]);
+    if (input_fds[0] >= 0) close(input_fds[0]);
+    if (input_fds[1] >= 0) close(input_fds[1]);
     return false;
   }
   int action_result = posix_spawn_file_actions_adddup2(
@@ -124,10 +134,19 @@ bool RunCommand(const std::vector<std::string>& arguments, std::string* output,
     action_result = posix_spawn_file_actions_addclose(&actions, pipe_fds[0]);
   if (action_result == 0)
     action_result = posix_spawn_file_actions_addclose(&actions, pipe_fds[1]);
+  if (action_result == 0 && input_fds[0] >= 0)
+    action_result = posix_spawn_file_actions_adddup2(
+        &actions, input_fds[0], STDIN_FILENO);
+  if (action_result == 0 && input_fds[0] >= 0)
+    action_result = posix_spawn_file_actions_addclose(&actions, input_fds[0]);
+  if (action_result == 0 && input_fds[1] >= 0)
+    action_result = posix_spawn_file_actions_addclose(&actions, input_fds[1]);
   if (action_result != 0) {
     posix_spawn_file_actions_destroy(&actions);
     close(pipe_fds[0]);
     close(pipe_fds[1]);
+    if (input_fds[0] >= 0) close(input_fds[0]);
+    if (input_fds[1] >= 0) close(input_fds[1]);
     return false;
   }
 
@@ -143,9 +162,28 @@ bool RunCommand(const std::vector<std::string>& arguments, std::string* output,
       &child, arguments.front().c_str(), &actions, nullptr, argv.data(), environ);
   posix_spawn_file_actions_destroy(&actions);
   close(pipe_fds[1]);
+  if (input_fds[0] >= 0) close(input_fds[0]);
   if (spawn_result != 0) {
     close(pipe_fds[0]);
+    if (input_fds[1] >= 0) close(input_fds[1]);
     return false;
+  }
+  if (input_fds[1] >= 0) {
+    bool input_sent = fcntl(input_fds[1], F_SETNOSIGPIPE, 1) == 0;
+    size_t sent = 0;
+    while (input_sent && sent < input.size()) {
+      const ssize_t count = write(input_fds[1], input.data() + sent,
+                                  input.size() - sent);
+      if (count > 0) sent += static_cast<size_t>(count);
+      else if (count == 0 || errno != EINTR) input_sent = false;
+    }
+    close(input_fds[1]);
+    if (!input_sent) {
+      kill(child, SIGKILL);
+      while (waitpid(child, nullptr, 0) < 0 && errno == EINTR) {}
+      close(pipe_fds[0]);
+      return false;
+    }
   }
 
   int flags = fcntl(pipe_fds[0], F_GETFL, 0);
@@ -156,15 +194,26 @@ bool RunCommand(const std::vector<std::string>& arguments, std::string* output,
   bool child_finished = false;
   bool pipe_closed = false;
   bool cancelled = false;
+  bool forced_stop = false;
+  std::chrono::steady_clock::time_point cancellation_time;
   while (!pipe_closed || !child_finished) {
-    if (IsCancelled(request)) {
+    if (!cancelled && IsCancelled(request)) {
       cancelled = true;
+      cancellation_time = std::chrono::steady_clock::now();
       if (!child_finished) kill(child, SIGTERM);
+    } else if (cancelled && !forced_stop && !child_finished &&
+               std::chrono::steady_clock::now() - cancellation_time >=
+                   std::chrono::milliseconds(500)) {
+      forced_stop = true;
+      kill(child, SIGKILL);
     }
     struct pollfd descriptor {pipe_fds[0], POLLIN | POLLHUP | POLLERR, 0};
-    int ready = poll(&descriptor, 1, 50);
+    int ready = pipe_closed ? poll(nullptr, 0, 50) :
+                              poll(&descriptor, 1, 50);
     if (ready < 0 && errno == EINTR) continue;
-    if (ready > 0 && (descriptor.revents & (POLLIN | POLLHUP | POLLERR))) {
+    if (ready < 0) pipe_closed = true;
+    if (!pipe_closed && ready > 0 &&
+        (descriptor.revents & (POLLIN | POLLHUP | POLLERR))) {
       for (;;) {
         const ssize_t count = read(pipe_fds[0], buffer, sizeof(buffer));
         if (count > 0) {
@@ -383,6 +432,8 @@ std::string FetchBing(const Request& request, const ProviderConfig& config) {
 
 std::string FetchDeepL(const Request& request, const ProviderConfig& config) {
   if (config.api_key.empty()) return {};
+  if (config.api_key.size() > 1024 ||
+      config.api_key.find_first_of("\r\n") != std::string::npos) return {};
   const std::string endpoint = config.endpoint.empty()
                                    ? "https://api-free.deepl.com/v2/translate"
                                    : config.endpoint;
@@ -393,11 +444,13 @@ std::string FetchDeepL(const Request& request, const ProviderConfig& config) {
   const std::vector<std::string> arguments = {
       kCurlPath, "-L", "--silent", "--show-error", "--max-time", "5",
       "--connect-timeout", "2", "-X", "POST", endpoint,
-      "-H", "Authorization: DeepL-Auth-Key " + config.api_key,
+      "-H", "@-",
       "-H", "Content-Type: application/x-www-form-urlencoded",
       "--data-urlencode", "text=" + request.word,
       "--data-urlencode", "target_lang=" + target};
-  if (!RunCommand(arguments, &response, kOutputLimit, request)) return {};
+  const std::string header = "Authorization: DeepL-Auth-Key " +
+                             config.api_key + "\n";
+  if (!RunCommand(arguments, &response, kOutputLimit, request, header)) return {};
   return JsonField(response, "text");
 }
 

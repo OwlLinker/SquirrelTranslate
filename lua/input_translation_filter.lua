@@ -355,17 +355,13 @@ local function filter(input, env)
         if emoji_request_file == false then return false end
         return request_emoji_name(emoji, emoji_request_file)
     end
-    local function flush_request_files()
-        if request_file and request_file ~= false then request_file:flush() end
-        if emoji_request_file and emoji_request_file ~= false then
-            emoji_request_file:flush()
-        end
-    end
     local function close_request_files()
         if request_file and request_file ~= false then request_file:close() end
         if emoji_request_file and emoji_request_file ~= false then
             emoji_request_file:close()
         end
+        request_file = nil
+        emoji_request_file = nil
     end
     state.set_composition_visible(context:has_menu())
     local enabled = state.is_enabled()
@@ -553,7 +549,8 @@ local function filter(input, env)
             save_revealed(env.engine.context, revealed_order)
             revealed_changed = false
         end
-        flush_request_files()
+        -- Rime may stop pulling after this yield; close descriptors first.
+        close_request_files()
         yield(output)
     end
     if index == 0 and waiting_for_query_letter then
